@@ -48,6 +48,8 @@ export const api = {
   addKey: (t: string, provider: string, key: string, label: string) =>
     send<KeyRow>("POST", "/api/keys", t, { provider, key, label }),
   revealKey: (t: string, id: string) => get<{ id: string; key: string }>(`/api/keys/${id}/reveal`, t),
+  updateKey: (t: string, id: string, body: { label?: string; key?: string }) =>
+    send<{ updated: string }>("PUT", `/api/keys/${id}`, t, body),
   deleteKey: (t: string, id: string) => send<{ deleted: string }>("DELETE", `/api/keys/${id}`, t),
   async check(token: string): Promise<boolean> {
     try {

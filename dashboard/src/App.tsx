@@ -200,6 +200,7 @@ export default function App() {
             keys={keys}
             onAdd={async (p, k, l) => { await api.addKey(token, p, k, l); loadKeys(); }}
             onReveal={async (id) => (await api.revealKey(token, id)).key}
+            onUpdate={async (id, body) => { await api.updateKey(token, id, body); loadKeys(); }}
             onDelete={async (id) => { await api.deleteKey(token, id); loadKeys(); }}
           />
         )}

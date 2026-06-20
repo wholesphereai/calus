@@ -226,6 +226,20 @@ class Store:
                           "ORDER BY ts DESC LIMIT 1", (provider.strip().lower(),)).fetchone()
             return crypto.decrypt(r["ciphertext"]) if r else None
 
+    def update_key(self, kid: str, label=None, secret=None) -> bool:
+        sets, args = [], []
+        if label is not None:
+            sets.append("label = ?"); args.append(label.strip())
+        if secret:
+            sets.append("masked = ?"); args.append(crypto.mask(secret))
+            sets.append("ciphertext = ?"); args.append(crypto.encrypt(secret))
+        if not sets:
+            return True
+        args.append(kid)
+        with self._lock, self._conn() as c:
+            cur = c.execute(f"UPDATE vault SET {', '.join(sets)} WHERE id = ?", args)
+            return cur.rowcount > 0
+
     def delete_key(self, kid: str) -> bool:
         with self._lock, self._conn() as c:
             cur = c.execute("DELETE FROM vault WHERE id = ?", (kid,))

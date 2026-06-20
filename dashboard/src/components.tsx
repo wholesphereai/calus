@@ -238,17 +238,22 @@ export function LogDetail({ row, trace, onClose }: { row: LogRow; trace: LogRow[
 /* ===================== API key vault ===================== */
 const PROVIDERS = ["openai", "groq", "anthropic", "gemini", "mistral", "cohere", "together", "azure"];
 
-export function KeysPanel({ keys, onAdd, onReveal, onDelete }: {
+export function KeysPanel({ keys, onAdd, onReveal, onDelete, onUpdate }: {
   keys: KeyRow[];
   onAdd: (provider: string, key: string, label: string) => Promise<void>;
   onReveal: (id: string) => Promise<string>;
   onDelete: (id: string) => Promise<void>;
+  onUpdate: (id: string, body: { label?: string; key?: string }) => Promise<void>;
 }) {
   const [provider, setProvider] = useState("openai");
   const [label, setLabel] = useState("");
   const [secret, setSecret] = useState("");
   const [busy, setBusy] = useState(false);
   const [revealed, setRevealed] = useState<Record<string, string>>({});
+  const [copied, setCopied] = useState<string>("");
+  const [editing, setEditing] = useState<string>("");
+  const [editLabel, setEditLabel] = useState("");
+  const [editKey, setEditKey] = useState("");
 
   const add = async () => {
     if (!secret.trim()) return;
@@ -260,6 +265,16 @@ export function KeysPanel({ keys, onAdd, onReveal, onDelete }: {
     if (revealed[id]) { setRevealed((r) => { const n = { ...r }; delete n[id]; return n; }); return; }
     const full = await onReveal(id);
     setRevealed((r) => ({ ...r, [id]: full }));
+  };
+  const copy = async (id: string) => {
+    const full = revealed[id] || (await onReveal(id));
+    navigator.clipboard?.writeText(full);
+    setCopied(id); setTimeout(() => setCopied(""), 1200);
+  };
+  const startEdit = (k: KeyRow) => { setEditing(k.id); setEditLabel(k.label || ""); setEditKey(""); };
+  const saveEdit = async (id: string) => {
+    await onUpdate(id, { label: editLabel, ...(editKey.trim() ? { key: editKey.trim() } : {}) });
+    setEditing(""); setEditKey("");
   };
 
   return (
@@ -284,22 +299,38 @@ export function KeysPanel({ keys, onAdd, onReveal, onDelete }: {
             <tbody>
               {keys.map((k) => {
                 const isEnv = k.source === "env";
+                const isEditing = editing === k.id;
                 return (
                   <tr key={k.id} style={{ cursor: "default" }}>
                     <td><span className="owasp-pill">{k.provider}</span></td>
                     <td>
-                      {k.label || <span style={{ color: "var(--muted-2)" }}>—</span>}
+                      {isEditing ? (
+                        <input className="mono" style={{ width: 120 }} value={editLabel}
+                          placeholder="label" onChange={(e) => setEditLabel(e.target.value)} />
+                      ) : (k.label || <span style={{ color: "var(--muted-2)" }}>—</span>)}
                       {isEnv && <span className="finding" style={{ marginLeft: 8 }}>.env</span>}
                     </td>
-                    <td className="mono" style={{ fontSize: 12.5 }}>{revealed[k.id] || k.masked}</td>
+                    <td className="mono" style={{ fontSize: 12.5 }}>
+                      {isEditing ? (
+                        <input className="mono" style={{ width: 200 }} type="password" value={editKey}
+                          placeholder="new key (optional)" onChange={(e) => setEditKey(e.target.value)} />
+                      ) : (revealed[k.id] || k.masked)}
+                    </td>
                     <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-                      {isEnv ? (
-                        <span style={{ color: "var(--muted-2)", fontSize: 12 }}>read-only</span>
+                      {isEditing ? (
+                        <>
+                          <button className="btn sm" onClick={() => saveEdit(k.id)}>Save</button>{" "}
+                          <button className="btn ghost sm" onClick={() => setEditing("")}>Cancel</button>
+                        </>
                       ) : (
                         <>
-                          <button className="btn ghost sm" onClick={() => reveal(k.id)}>{revealed[k.id] ? "Hide" : "Reveal"}</button>
-                          {" "}
-                          <button className="btn ghost sm" onClick={() => onDelete(k.id)}>Delete</button>
+                          <button className="btn ghost sm" onClick={() => reveal(k.id)}>{revealed[k.id] ? "Hide" : "See full"}</button>{" "}
+                          <button className="btn ghost sm" onClick={() => copy(k.id)}>{copied === k.id ? "Copied" : "Copy"}</button>
+                          {!isEnv && <>{" "}
+                            <button className="btn ghost sm" onClick={() => startEdit(k)}>Edit</button>{" "}
+                            <button className="btn ghost sm" onClick={() => onDelete(k.id)}>Delete</button>
+                          </>}
+                          {isEnv && <span style={{ color: "var(--muted-2)", fontSize: 11, marginLeft: 6 }}>.env · read-only</span>}
                         </>
                       )}
                     </td>

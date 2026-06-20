@@ -378,14 +378,36 @@ async def api_keys_add(request: Request):
 
 @app.get("/api/keys/{kid}/reveal", dependencies=[Depends(require_admin)])
 async def api_keys_reveal(kid: str):
+    if kid.startswith("env:"):
+        import os
+        prov = kid.split(":", 1)[1]
+        var = next((v for v, p in _ENV_KEY_VARS.items() if p == prov), None)
+        full = (os.environ.get(var) or "").strip() if var else ""
+        if not full:
+            raise HTTPException(status_code=404, detail="not found")
+        return {"id": kid, "key": full}
     full = store.reveal_key(kid)
     if full is None:
         raise HTTPException(status_code=404, detail="not found")
     return {"id": kid, "key": full}
 
 
+@app.put("/api/keys/{kid}", dependencies=[Depends(require_admin)])
+async def api_keys_update(kid: str, request: Request):
+    if kid.startswith("env:"):
+        raise HTTPException(status_code=400, detail="env keys are read-only — edit proxy/.env")
+    body = await request.json()
+    label = body.get("label")
+    secret = (body.get("key") or body.get("secret") or "").strip() or None
+    if not store.update_key(kid, label=label, secret=secret):
+        raise HTTPException(status_code=404, detail="not found")
+    return {"updated": kid}
+
+
 @app.delete("/api/keys/{kid}", dependencies=[Depends(require_admin)])
 async def api_keys_delete(kid: str):
+    if kid.startswith("env:"):
+        raise HTTPException(status_code=400, detail="env keys are read-only — edit proxy/.env")
     if not store.delete_key(kid):
         raise HTTPException(status_code=404, detail="not found")
     return {"deleted": kid}
