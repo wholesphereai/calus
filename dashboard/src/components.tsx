@@ -66,16 +66,15 @@ export function Tag({ flagged }: { flagged: boolean }) {
   return <span className={"tag " + (flagged ? "attack" : "clean")}>{flagged ? "FLAGGED" : "CLEAN"}</span>;
 }
 
-/* a short, human label for WHY a call was flagged */
-export function flagLabel(c: { owasp?: string | null; owasp_name?: string | null; reasons: string[]; findings: string[] }): string {
-  if (c.owasp && c.owasp_name) return c.owasp_name;
+/* a full-sentence explanation of WHY a call was flagged (shown on press) */
+export function flagExplain(c: { owasp?: string | null; owasp_name?: string | null; reasons: string[]; findings: string[] }): string {
+  if (c.owasp && c.owasp_name) return `Matched ${c.owasp} — ${c.owasp_name}.`;
   const r = (c.reasons[0] || "").toLowerCase();
-  if (r.includes("similar")) return "matches known attack";
-  if (r.includes("obfusc") || r.includes("decoded")) return "obfuscated payload";
-  if (r.includes("behavioral") || r.includes("agency") || r.includes("tool")) return "risky agent action";
-  if (r.includes("regex") || r.includes("score")) return "matches attack pattern";
-  if (c.findings.length) return "secrets / PII present";
-  return "suspicious pattern";
+  if (r.includes("similar")) return "The text is very similar to a known attack in the signature set.";
+  if (r.includes("obfusc") || r.includes("decoded")) return "An obfuscated / encoded payload was decoded and matched an attack.";
+  if (r.includes("behavioral") || r.includes("agency") || r.includes("tool")) return "The agent's actions looked risky (e.g. excessive or high-risk tool calls).";
+  if (c.findings.length) return "The text contained secrets or PII (now redacted).";
+  return "The text matched one or more deterministic attack patterns.";
 }
 
 /* ===================== icons (monochrome, stroke=currentColor) ===================== */
@@ -202,7 +201,7 @@ export function CallsTable({ calls, onPick }: { calls: CallRow[]; onPick: (c: Ca
             <td className="mono" style={{ fontSize: 12 }}>{c.agent || "—"}</td>
             <td className="prompt-cell">{c.prompt || <span style={{ color: "var(--muted-2)" }}>—</span>}</td>
             <td><div className="model">{(c.model || "—").split("/").pop()}</div><div className="prov">{c.provider}</div></td>
-            <td><Tag flagged={c.flagged} />{c.flagged && <div className="flag-why">{flagLabel(c)}</div>}</td>
+            <td><Tag flagged={c.flagged} /></td>
             <td className="conf">{c.confidence != null ? c.confidence.toFixed(2) : "—"}</td>
             <td>
               <div className="toolrow">
@@ -243,12 +242,20 @@ export function AgentsTable({ agents, onPick }: { agents: AgentRow[]; onPick: (a
 }
 
 /* ===================== trace timeline (inside detail drawer) ===================== */
+function looksJson(t: string | null): boolean {
+  const s = (t || "").trim();
+  if (!(s.startsWith("{") || s.startsWith("["))) return false;
+  try { JSON.parse(s); return true; } catch { return false; }
+}
 function TraceTimeline({ rows }: { rows: LogRow[] }) {
   return (
     <div className="trace">
-      {rows.map((r) => (
+      {rows.map((r) => {
+        const isTool = r.direction === "input" && looksJson(r.text_redacted);
+        const lbl = r.direction === "output" ? "◂ model output" : isTool ? "↩ tool result" : "▸ user / prompt";
+        return (
         <div className={"tnode" + (r.flagged ? " flag" : "")} key={r.id}>
-          <div className="lbl">{r.direction === "input" ? "▸ user / prompt" : "◂ model output"} · {fmtTime(r.ts)} {r.flagged && "· FLAGGED"}</div>
+          <div className="lbl">{lbl} · {fmtTime(r.ts)} {r.flagged && "· FLAGGED"}</div>
           {r.text_redacted && (r.direction === "output"
             ? <div className="body"><Markdown text={r.text_redacted} /></div>
             : <div className="body trace-text">{r.text_redacted}</div>)}
@@ -258,11 +265,12 @@ function TraceTimeline({ rows }: { rows: LogRow[] }) {
               {t.arguments && <span className="args">{t.arguments}</span>}
             </div>
           ))}
-          {r.tools.length > 0 && r.direction === "input" && (
+          {r.tools.length > 0 && r.direction === "input" && !isTool && (
             <div className="toolrow" style={{ marginTop: 6 }}>{r.tools.map((t) => <span className="toolchip" key={t}>{t}</span>)}</div>
           )}
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -274,10 +282,7 @@ export function LogDetail({ call, trace, onClose }: { call: CallRow; trace: LogR
       <div className="drawer">
         <button className="close" onClick={onClose}>×</button>
         <h3>Call detail</h3>
-        <div style={{ marginBottom: 14, display: "flex", alignItems: "center", gap: 10 }}>
-          <Tag flagged={call.flagged} />
-          {call.flagged && <span style={{ color: "var(--fg-2)", fontSize: 13 }}>{flagLabel(call)}</span>}
-        </div>
+        <div style={{ marginBottom: 14 }}><Tag flagged={call.flagged} /></div>
         <div className="row"><span className="k">Agent</span><span className="mono">{call.agent || "—"}</span></div>
         <div className="row"><span className="k">Model</span><span className="mono">{call.model || "—"} · {call.provider}</span></div>
         <div className="row"><span className="k">Confidence</span><span className="mono">{call.confidence != null ? call.confidence.toFixed(3) : "—"}</span></div>
@@ -288,9 +293,11 @@ export function LogDetail({ call, trace, onClose }: { call: CallRow; trace: LogR
           <div className="blk"><div className="t">Secrets / PII found (redacted)</div>
             <div>{call.findings.map((f) => <span className="finding" key={f}>{f}</span>)}</div></div>
         )}
-        {call.reasons.length > 0 && (
-          <div className="blk"><div className="t">Why it flagged</div>
-            {call.reasons.map((r, i) => <div className="reason" key={i}>{r}</div>)}</div>
+        {call.flagged && (
+          <div className="blk"><div className="t">Why it was flagged</div>
+            <div className="flag-explain">{flagExplain(call)}</div>
+            {call.reasons.length > 0 && <div className="reason-tech mono">{call.reasons.join(" · ")}</div>}
+          </div>
         )}
         <div className="blk">
           <div className="t">Conversation — request → tool calls → output</div>
