@@ -204,7 +204,7 @@ export default function App() {
           />
         )}
 
-        {view === "connect" && <ConnectPanel base={api.base} />}
+        {view === "connect" && <ConnectPanel base={api.base} token={token} />}
       </main>
 
       {picked && <LogDetail row={picked} trace={trace} onClose={() => setPicked(null)} />}

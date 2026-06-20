@@ -270,6 +270,13 @@ async def healthz():
     return {"ok": True, "detector_ready": _detector_ready}
 
 
+@app.get("/api/admin-token", dependencies=[Depends(require_admin)])
+async def api_admin_token():
+    """Echo the current admin token to an already-authenticated client so it can
+    be copied for other devices / the proxy config. (You must already hold it.)"""
+    return {"token": ADMIN_TOKEN}
+
+
 @app.get("/api/stats", dependencies=[Depends(require_admin)])
 async def api_stats():
     return store.stats()

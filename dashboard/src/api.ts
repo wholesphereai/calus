@@ -28,6 +28,7 @@ async function send<T>(method: string, path: string, token: string, body?: unkno
 
 export const api = {
   base: BASE,
+  adminToken: (t: string) => get<{ token: string }>("/api/admin-token", t),
   stats: (t: string) => get<Stats>("/api/stats", t),
   threats: (t: string) => get<Threat[]>("/api/threats", t),
   timeseries: (t: string, hours = 24) => get<Bucket[]>(`/api/timeseries?hours=${hours}`, t),

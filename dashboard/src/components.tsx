@@ -314,9 +314,13 @@ function CodeBlock({ code }: { code: string }) {
   );
 }
 
-export function ConnectPanel({ base }: { base: string }) {
+export function ConnectPanel({ base, token }: { base: string; token: string }) {
   const [tab, setTab] = useState("env");
+  const [show, setShow] = useState(false);
+  const [copied, setCopied] = useState(false);
   const url = base.replace(/\/$/, "");
+  const masked = token.length > 8 ? `${token.slice(0, 4)}${"•".repeat(18)}${token.slice(-4)}` : "••••••••";
+  const copyToken = () => { navigator.clipboard?.writeText(token); setCopied(true); setTimeout(() => setCopied(false), 1200); };
   const snippets: Record<string, string> = {
     env: `# No code changes. Point any OpenAI-compatible app at Calus
 # by setting one environment variable, then run your app as usual.
@@ -359,6 +363,14 @@ llm = ChatOpenAI(
       <div className="banner">
         <b>Drop-in, no SDK.</b> Calus sits between your AI tools and the providers. Point your app at the URL below and every call gets
         instant threat detection, agent &amp; tool-call observability — with no code changes and nothing blocked.
+      </div>
+      <div className="row">
+        <span className="k">Admin token</span>
+        <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span className="mono" style={{ fontSize: 12.5 }}>{show ? token : masked}</span>
+          <button className="btn ghost sm" onClick={() => setShow(!show)}>{show ? "Hide" : "Reveal"}</button>
+          <button className="btn ghost sm" onClick={copyToken}>{copied ? "Copied" : "Copy"}</button>
+        </span>
       </div>
       <div className="row" style={{ borderBottom: "none", marginBottom: 6 }}>
         <span className="k">Your proxy endpoint</span>

@@ -37,13 +37,41 @@ class Settings:
     # These live in the environment only (e.g. OPENAI_API_KEY, ANTHROPIC_API_KEY,
     # GEMINI_API_KEY...). LiteLLM reads them directly. They are NEVER stored or logged.
 
+    def _token_path(self) -> str:
+        d = os.path.dirname(os.path.abspath(self.db_path)) or "."
+        return os.path.join(d, ".calus_admin_token")
+
     def ensure_admin_token(self) -> str:
-        if not self.admin_token:
-            import secrets
-            self.admin_token = secrets.token_urlsafe(24)
-            print(f"[calus-proxy] No CALUS_ADMIN_TOKEN set — generated one for this run:\n"
-                  f"             {self.admin_token}\n"
-                  f"             Set CALUS_ADMIN_TOKEN to keep it stable across restarts.")
+        # an explicit env token always wins
+        if self.admin_token:
+            return self.admin_token
+        # otherwise reuse a previously generated token so it stays STABLE across
+        # restarts (no need to re-paste it into the dashboard every time)
+        path = self._token_path()
+        try:
+            if os.path.exists(path):
+                tok = open(path, encoding="utf-8").read().strip()
+                if tok:
+                    self.admin_token = tok
+                    return tok
+        except Exception:
+            pass
+        # first run with no token set — generate one and persist it
+        import secrets
+        self.admin_token = secrets.token_urlsafe(24)
+        try:
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(self.admin_token)
+            try:
+                os.chmod(path, 0o600)        # owner-only where supported
+            except Exception:
+                pass
+        except Exception:
+            pass
+        print(f"[calus-proxy] No CALUS_ADMIN_TOKEN set — generated one and saved it to\n"
+              f"             {path}\n"
+              f"             token: {self.admin_token}\n"
+              f"             It will stay the same across restarts. Set CALUS_ADMIN_TOKEN to override.")
         return self.admin_token
 
 
