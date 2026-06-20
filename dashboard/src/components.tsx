@@ -66,6 +66,18 @@ export function Tag({ flagged }: { flagged: boolean }) {
   return <span className={"tag " + (flagged ? "attack" : "clean")}>{flagged ? "FLAGGED" : "CLEAN"}</span>;
 }
 
+/* a short, human label for WHY a call was flagged */
+export function flagLabel(c: { owasp?: string | null; owasp_name?: string | null; reasons: string[]; findings: string[] }): string {
+  if (c.owasp && c.owasp_name) return c.owasp_name;
+  const r = (c.reasons[0] || "").toLowerCase();
+  if (r.includes("similar")) return "matches known attack";
+  if (r.includes("obfusc") || r.includes("decoded")) return "obfuscated payload";
+  if (r.includes("behavioral") || r.includes("agency") || r.includes("tool")) return "risky agent action";
+  if (r.includes("regex") || r.includes("score")) return "matches attack pattern";
+  if (c.findings.length) return "secrets / PII present";
+  return "suspicious pattern";
+}
+
 /* ===================== icons (monochrome, stroke=currentColor) ===================== */
 const PATHS: Record<string, string> = {
   overview: "M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z",
@@ -190,7 +202,7 @@ export function CallsTable({ calls, onPick }: { calls: CallRow[]; onPick: (c: Ca
             <td className="mono" style={{ fontSize: 12 }}>{c.agent || "—"}</td>
             <td className="prompt-cell">{c.prompt || <span style={{ color: "var(--muted-2)" }}>—</span>}</td>
             <td><div className="model">{(c.model || "—").split("/").pop()}</div><div className="prov">{c.provider}</div></td>
-            <td><Tag flagged={c.flagged} /></td>
+            <td><Tag flagged={c.flagged} />{c.flagged && <div className="flag-why">{flagLabel(c)}</div>}</td>
             <td className="conf">{c.confidence != null ? c.confidence.toFixed(2) : "—"}</td>
             <td>
               <div className="toolrow">
@@ -262,7 +274,10 @@ export function LogDetail({ call, trace, onClose }: { call: CallRow; trace: LogR
       <div className="drawer">
         <button className="close" onClick={onClose}>×</button>
         <h3>Call detail</h3>
-        <div style={{ marginBottom: 14 }}><Tag flagged={call.flagged} /></div>
+        <div style={{ marginBottom: 14, display: "flex", alignItems: "center", gap: 10 }}>
+          <Tag flagged={call.flagged} />
+          {call.flagged && <span style={{ color: "var(--fg-2)", fontSize: 13 }}>{flagLabel(call)}</span>}
+        </div>
         <div className="row"><span className="k">Agent</span><span className="mono">{call.agent || "—"}</span></div>
         <div className="row"><span className="k">Model</span><span className="mono">{call.model || "—"} · {call.provider}</span></div>
         <div className="row"><span className="k">Confidence</span><span className="mono">{call.confidence != null ? call.confidence.toFixed(3) : "—"}</span></div>

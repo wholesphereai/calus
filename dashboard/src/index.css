@@ -6,6 +6,7 @@
   --panel: #121212;
   --panel-2: #171717;
   --hover: #1f1f1f;
+  --active: #2c2c2c;
   --line: #262626;
   --line-2: #333333;
   --fg: #f2f2f2;
@@ -25,6 +26,7 @@
   --panel: #ffffff;
   --panel-2: #fafafa;
   --hover: #f0f0f0;
+  --active: #e6e6e6;
   --line: #e6e6e6;
   --line-2: #d8d8d8;
   --fg: #0c0c0c;
@@ -78,7 +80,7 @@ button { font-family: inherit; cursor: pointer; }
   padding: 9px 11px; border-radius: 9px; font-size: 13.5px; font-weight: 500;
 }
 .nav button:hover { background: var(--hover); color: var(--fg); }
-.nav button.on { background: var(--ink-bg); color: var(--ink-fg); font-weight: 650; }
+.nav button.on { background: var(--active); color: var(--fg); font-weight: 650; }
 .nav .ic { width: 17px; height: 17px; flex: 0 0 auto; opacity: .9; }
 .nav .count { margin-left: auto; font-size: 11px; opacity: .7; font-family: var(--mono); }
 
@@ -151,6 +153,8 @@ tbody tr:hover { background: var(--hover); }
 .tag.clean { background: transparent; color: var(--muted); border: 1px solid var(--line-2); }
 .tag.attack { background: var(--ink-bg); color: var(--ink-fg); border: 1px solid var(--ink-bg); }
 
+.flag-why { font-size: 10.5px; color: var(--muted); margin-top: 4px; max-width: 150px; line-height: 1.3; }
+
 .finding, .toolchip { display: inline-block; font-family: var(--mono); font-size: 10.5px; padding: 2px 6px; border: 1px solid var(--line-2); border-radius: 5px; margin: 2px 4px 2px 0; color: var(--fg-2); }
 .toolchip::before { content: "\0192  "; color: var(--muted); }
 
@@ -215,12 +219,12 @@ tbody tr:hover { background: var(--hover); }
 .code .copy { position: absolute; top: 9px; right: 9px; background: #1a1a1a; border: 1px solid #333; color: #bbb; border-radius: 6px; padding: 4px 9px; font-size: 11px; }
 .tabs { display: inline-flex; gap: 4px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 9px; padding: 3px; margin-bottom: 14px; }
 .tabs button { background: transparent; border: 0; color: var(--muted); padding: 6px 13px; border-radius: 7px; font-size: 12.5px; font-weight: 550; }
-.tabs button.on { background: var(--ink-bg); color: var(--ink-fg); }
+.tabs button.on { background: var(--active); color: var(--fg); }
 
 /* chips / filters */
 .filters { display: inline-flex; gap: 6px; }
 .chip { background: transparent; border: 1px solid var(--line); color: var(--muted); border-radius: 7px; padding: 6px 12px; font-size: 12.5px; }
-.chip.on { background: var(--ink-bg); color: var(--ink-fg); border-color: var(--ink-bg); font-weight: 650; }
+.chip.on { background: var(--active); color: var(--fg); border-color: var(--line-2); font-weight: 650; }
 
 /* ---------- token gate ---------- */
 .gate { min-height: 100vh; display: grid; place-items: center; padding: 20px; }
