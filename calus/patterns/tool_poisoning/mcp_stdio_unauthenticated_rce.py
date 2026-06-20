@@ -1,0 +1,10 @@
+"""tool-poisoning: mcp-stdio-unauthenticated-rce  (6 patterns)"""
+
+PATTERNS = [
+    ('(?i)"command"\\s*:\\s*"(?:sh|bash|zsh|cmd\\.exe|cmd|powershell|pwsh)"\\s*[,}][^}]{0,300}"args"\\s*:\\s*\\[', 'critical', 'MCP server config JSON where command is a shell binary (sh/bash/cmd/powershell) — direct shell invocation via STDIO config, the CVE-2026-306'),
+    ('(?i)"command"\\s*:\\s*"(?:python|python3|ruby|perl|node|npx|uvx|deno|bun)"\\s*[,}][^}]{0,400}"args"\\s*:\\s*\\[[^\\]]*"-(?:c|e|-eval|-command|-exec)"\\s*,', 'critical', 'MCP server config where an interpreter is invoked with an inline-exec flag (-c/-e/--eval) — same bypass class as CVE-2026-40933 but via Chat'),
+    ('(?i)"transport(?:_type)?"\\s*:\\s*"stdio"\\s*[,}][^}]{0,600}"command"\\s*:\\s*"(?!(?:npx|uvx|node|python3?)\\s*["\\x27])[^"]{2,200}"', 'critical', 'STDIO transport config where the command value is not an expected MCP launcher (npx/uvx/python) — suspicious arbitrary binary in STDIO trans'),
+    ('(?i)(?:transport(?:_type)?\\s*[:=]\\s*["\\x27]?stdio["\\x27]?)[^\\n]{0,300}(?:command\\s*[:=]\\s*["\\x27](?:sh|bash|zsh|cmd|powershell|curl|wget|nc|ncat|netcat)["\\x27])', 'critical', 'Key-value style (YAML or Python dict) STDIO transport + shell/netcat command value — catches non-JSON serialization of the same attack\n'),
+    ('(?i)(?:CVE-2026-30617|GHSA-w94v-hq49-38vh)[^\\n]{0,200}(?:payload|inject|exploit|bypass|unauthenticated|rce|stdio|command)', 'critical', 'Explicit CVE-2026-30617 / GHSA reference combined with exploitation language — attack framing in skill or tool description\n'),
+    ('(?i)(?:chatchat|langchain.chatchat|Langchain.ChatChat)[^\\n]{0,150}(?:mcp[^\\n]{0,80}(?:unauthenticated|no.?auth|unprotected)|(?:unauthenticated|no.?auth)[^\\n]{0,80}mcp)', 'critical', 'ChatChat + MCP + no-auth framing in content — describes the attack surface in a way that could be used to guide exploitation\n'),
+]

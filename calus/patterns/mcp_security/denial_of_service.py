@@ -1,0 +1,18 @@
+"""calus: denial_of_service  (14 patterns)"""
+
+PATTERNS = [
+    ('(?i)(p.dos|prompt.dos|prompt.denial.of.service).{0,40}(token|resource|exhaust|cost)', 'high', 'p-dos-prompt-tokens-resource-exhaustion: Prompt Denial of Service (P-DoS) via Tools exploits MCP tool responses to inflate the LLM context w'),
+    ('(?i)(token.exhaust.{0,30}(tool|mcp|agent).{0,30}(cost|dos|resource.exhaust))', 'high', 'p-dos-prompt-tokens-resource-exhaustion: Prompt Denial of Service (P-DoS) via Tools exploits MCP tool responses to inflate the LLM context w'),
+    ('(?i)(0\\.5k.{0,20}16k|500.tokens?.{0,30}16[,.]?000.tokens?.{0,20}(tool|mcp|inject))', 'high', 'p-dos-prompt-tokens-resource-exhaustion: Prompt Denial of Service (P-DoS) via Tools exploits MCP tool responses to inflate the LLM context w'),
+    ('(?i)(resource.exhaust.{0,30}(tool.call|mcp|agent).{0,30}(cost|dos|token.bomb))', 'high', 'p-dos-prompt-tokens-resource-exhaustion: Prompt Denial of Service (P-DoS) via Tools exploits MCP tool responses to inflate the LLM context w'),
+    ('(?i)(tool.response.{0,30}(token.bomb|inflate|exhaust|dos).{0,30}(0\\.5k|500.token|cost))', 'high', 'p-dos-prompt-tokens-resource-exhaustion: Prompt Denial of Service (P-DoS) via Tools exploits MCP tool responses to inflate the LLM context w'),
+    ('(?i)(p.dos.{0,20}(agent|code.agent).{0,30}(dead.loop|infinite.loop|deadloop|endless))', 'high', 'p-dos-agent-deadloop-code-generation: P-DoS for Code Agents (>90% ASR) exploits code-generating agents by injecting instructions that cause '),
+    ('(?i)(agent.{0,20}(write|generate|create).{0,30}(dead.loop|infinite.loop|while.true).{0,30}(dos|exhaust))', 'high', 'p-dos-agent-deadloop-code-generation: P-DoS for Code Agents (>90% ASR) exploits code-generating agents by injecting instructions that cause '),
+    ('(?i)(code.agent.{0,30}(loop|infinite|deadloop).{0,30}(resource|exhaust|dos|halt))', 'high', 'p-dos-agent-deadloop-code-generation: P-DoS for Code Agents (>90% ASR) exploits code-generating agents by injecting instructions that cause '),
+    ('(?i)(injected.code.{0,30}(infinite.loop|dead.loop|while.true).{0,30}(agent|resource|crash))', 'high', 'p-dos-agent-deadloop-code-generation: P-DoS for Code Agents (>90% ASR) exploits code-generating agents by injecting instructions that cause '),
+    ('(?i)(corba.{0,20}(attack|dos|block)|contagious.recursive.block|recursive.blocking.attack)', 'high', 'corba-contagious-recursive-blocking-mas-dos: Contagious Recursive Blocking Attack (CORBA, Zhou 2025): Forces agents to generate infinite loo'),
+    ('(?i)(infinite.{0,20}(loop|delegation|subtask).{0,40}(agent|mas|multi.agent|orchestrat))', 'high', 'corba-contagious-recursive-blocking-mas-dos: Contagious Recursive Blocking Attack (CORBA, Zhou 2025): Forces agents to generate infinite loo'),
+    ('(?i)(subtask.{0,20}(delegation|loop|overflow).{0,40}(block|dos|deny|exhaust).{0,30}(agent|mas))', 'high', 'corba-contagious-recursive-blocking-mas-dos: Contagious Recursive Blocking Attack (CORBA, Zhou 2025): Forces agents to generate infinite loo'),
+    ('(?i)(agent.{0,20}(dos|denial.of.service|block|flood).{0,40}(subtask|delegation|recursive|loop|cascade))', 'high', 'corba-contagious-recursive-blocking-mas-dos: Contagious Recursive Blocking Attack (CORBA, Zhou 2025): Forces agents to generate infinite loo'),
+    ('(?i)(mas.{0,20}(dos|block|exhaust|halt|deny).{0,40}(recursive|subtask|delegation|infinite|loop))', 'high', 'corba-contagious-recursive-blocking-mas-dos: Contagious Recursive Blocking Attack (CORBA, Zhou 2025): Forces agents to generate infinite loo'),
+]

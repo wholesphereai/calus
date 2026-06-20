@@ -1,0 +1,12 @@
+"""tool-poisoning: vector-store-filter-injection  (8 patterns)"""
+
+PATTERNS = [
+    ('(?i)\\b(?:filter|filter_expr|filterExpression)\\b[^\\n]{0,40}(?:==|!=)\\s*\\d+[^\\n]{0,20}\\b(?:or|and)\\s+(?:1\\s*==\\s*1|true\\b|\\d+\\s*==\\s*\\d+|\\w+\\s*==\\s*\\d+)', 'high', 'Milvus filter field with numeric comparator followed by boolean chain into a tautology (or 1==1, or true, or id==N) — primary CVE-2026-41705'),
+    ('(?i)\\b(?:filter|filter_expr|filterExpression)\\b[^\\n]{0,80}\\\\?["\\x27][^\\n]{0,40}\\)\\s*(?:or|and)\\s+\\w+\\s*(?:==|in\\s*\\[)', 'high', 'Filter expression with closing-paren breakout followed by or/and and a fresh Milvus comparator/in-operator — quote-and-paren breakout'),
+    ('(?i)(?:MilvusVectorStore|milvus[-_]?client|milvus[-_]?service)\\b[^.\\n]{0,80}\\.(?:delete|similaritysearch|similarity_search|search)\\s*\\([^)\\n]{0,200}\\+\\s*\\w', 'high', 'MilvusVectorStore.delete()/similaritySearch() call whose argument list contains string concatenation — code-level smell that enables CVE-202'),
+    ('(?i)\\b(?:filter|filter_expr|filterExpression)\\b[^\\n]{0,40}\\bin\\s*\\[[^\\]\\n]{0,80}\\]\\s*(?:or|and)\\s+\\w+\\s*(?:==|!=)', 'high', 'Milvus `in[...]` clause followed by or/and boolean chaining into a fresh comparator — injection past the in-clause'),
+    ('(?i)\\b(?:filter|filter_expr|filterExpression)\\b[^\\n]{0,80}["\\x27]\\s*;\\s*(?:drop|delete|truncate|alter)\\s+(?:table|from|collection)\\b', 'high', 'Filter expression terminated with `;` followed by a destructive verb — classic injection terminator chain'),
+    ('(?i)[\\x27"]\\s+(?:or|and)\\s+(?:1\\s*=+\\s*1|true)\\s*(?:--(?=\\s|$|["\\x27\\)])|/\\*)', 'high', 'Canonical SQL/DSL tautology with sentinel comment-out terminator (-- at EOL or /*) — conservative shape that excludes markdown `#` heading f'),
+    ('(?i)\\blike\\s+\\\\?["\\x27]%\\\\?["\\x27]\\s+escape\\s+\\\\?["\\x27][\\\\\\\\\\w]{0,8}\\\\?["\\x27]', 'high', "Milvus `like '%' ESCAPE` bypass primitive (supports JSON-escaped quotes around the `%` literal and 0..8 backslash/word chars inside the esca"),
+    ('(?i)\\b(?:filter|filter_expr|filterExpression)\\b[^\\n]{0,80}\\)\\s+and\\s+\\w+\\s*==\\s*\\d+', 'high', 'Paren-breakout in filter expression followed by AND-chain with new numeric comparator — secondary breakout shape'),
+]

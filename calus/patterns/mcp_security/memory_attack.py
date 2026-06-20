@@ -1,0 +1,14 @@
+"""calus: memory_attack  (10 patterns)"""
+
+PATTERNS = [
+    ('(?i)(minja|memory.inj.{0,10}attack|progressive.shortening).{0,80}(memory|agent|inject|bridging)', 'high', 'minja-progressive-memory-injection: Memory INJection Attack (MINJA, Dong 2025, 68.9% avg ASR, 100% on specific pairs): Attack compromises ag'),
+    ('(?i)(indication.prompt.{0,40}(bridging.step|inject.memory|progressive|shortening))', 'high', 'minja-progressive-memory-injection: Memory INJection Attack (MINJA, Dong 2025, 68.9% avg ASR, 100% on specific pairs): Attack compromises ag'),
+    ('(?i)(bridging.step.{0,40}(memory|inject|poison|shortening|indication.prompt))', 'high', 'minja-progressive-memory-injection: Memory INJection Attack (MINJA, Dong 2025, 68.9% avg ASR, 100% on specific pairs): Attack compromises ag'),
+    ('(?i)(progressive.{0,20}(shorten|remov).{0,40}(inject|memory|poison|bridging|prompt))', 'high', 'minja-progressive-memory-injection: Memory INJection Attack (MINJA, Dong 2025, 68.9% avg ASR, 100% on specific pairs): Attack compromises ag'),
+    ('(?i)(memory.bank.{0,30}(inject|poison|corrupt|bridg).{0,60}(query.only|observation|no.direct.access))', 'high', 'minja-progressive-memory-injection: Memory INJection Attack (MINJA, Dong 2025, 68.9% avg ASR, 100% on specific pairs): Attack compromises ag'),
+    ('(?i)(sleeper.inject|cross.platform.memory|dormant.memory|memory.persist.cross).{0,60}(agent|discord|twitter|platform)', 'high', 'sleeper-cross-platform-memory-injection: Cross-Platform Sleeper Injections (Patlan 2025, 55.1% ASR against Claude Sonnet 3.7): Validated on '),
+    ('(?i)(inject.{0,20}(discord|slack|telegram).{0,40}(trigger|persist|dormant|twitter|x\\.com|platform))', 'high', 'sleeper-cross-platform-memory-injection: Cross-Platform Sleeper Injections (Patlan 2025, 55.1% ASR against Claude Sonnet 3.7): Validated on '),
+    ('(?i)(shared.memory.{0,30}(corrupt|inject|poison).{0,40}(cross.platform|multi.platform|persist))', 'high', 'sleeper-cross-platform-memory-injection: Cross-Platform Sleeper Injections (Patlan 2025, 55.1% ASR against Claude Sonnet 3.7): Validated on '),
+    ('(?i)(fake.memory|fabricated.history|memory.log.{0,20}(fake|fabricat|inject)).{0,60}(agent|elizaos|web3|crypto)', 'high', 'sleeper-cross-platform-memory-injection: Cross-Platform Sleeper Injections (Patlan 2025, 55.1% ASR against Claude Sonnet 3.7): Validated on '),
+    ('(?i)(elizaos|web3.agent).{0,40}(memory.inject|sleeper|cross.platform|dormant)', 'high', 'sleeper-cross-platform-memory-injection: Cross-Platform Sleeper Injections (Patlan 2025, 55.1% ASR against Claude Sonnet 3.7): Validated on '),
+]

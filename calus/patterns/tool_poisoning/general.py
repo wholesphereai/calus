@@ -1,0 +1,13 @@
+"""tool-poisoning: general  (9 patterns)"""
+
+PATTERNS = [
+    ('(?i)FastMCP\\s*\\(\\s*name\\s*=\\s*["\'][^"\']*[&|><^]', 'critical', 'Detects FastMCP initialization with server_name containing Windows command metacharacters (&, |, >, <, ^) that would be injected into cursor'),
+    ('(?i)generate_cursor_deeplink\\s*\\([^)]*[&|><^]', 'critical', 'Detects direct calls to generate_cursor_deeplink with arguments containing shell metacharacters that bypass proper URL encoding'),
+    ('(?i)open_deeplink\\s*\\([^)]*(?:cursor://[^)]*[&|><^]|shell\\s*=\\s*True)', 'critical', 'Detects open_deeplink calls with shell=True on Windows combined with unescaped cursor:// URLs containing command separators'),
+    ('(?i)"command"\\s*:\\s*"(?:(?:/(?:usr/)?bin/)?(?:bash|sh|zsh|dash)"|[^"]*[;&|`$])', 'high', 'MCP stdio config command is a raw shell or contains shell metacharacters'),
+    ('(?i)"args"\\s*:\\s*\\[[^\\]]*"(?:-c|-e|--eval|-Command)"\\s*,\\s*"[^"]*(?:import |require\\(|child_process|os\\.|exec|spawn|subprocess|System\\.)', 'high', 'MCP stdio config args pass a code-execution flag (-c/-e) with a payload'),
+    ('(?i)(?:169\\.254\\.169\\.254|metadata\\.google\\.internal|100\\.100\\.100\\.200|fd00:ec2::254)(?:[:/]|\\b)|\\bfile://(?:/?(?:etc|proc|root|home|var/run|sys)/)|\\bgopher://|\\bdict://', 'high', 'Fetch targets a cloud-metadata IP/host, a file:// system path, or a gopher/dict SSRF scheme'),
+    ('(?i)(?:create-mcp-server-stdio[^\\n]{0,200}\\bexec\\s*\\(\\s*(?:[`"\'\\x27][^`"\'\\x27\\n]{0,160}[`"\'\\x27]\\s*\\+|`[^`\\n]{0,160}\\$\\{)|\\bexec\\s*\\(\\s*(?:[`"\'\\x27][^`"\'\\x27\\n]{0,160}[`"\'\\x27]\\s*\\+|`[^`\\n]{0,160}\\$\\{)[^\\n]{0,200}create-mcp-server-stdio)', 'critical', 'Detects the create-mcp-server-stdio exec() construct that concatenates a variable into the shell command string (string + concatenation or t'),
+    ('(?i)create-mcp-server-stdio[^\\n]{0,200}\\bexec\\s*\\([^)\\n]{0,160}(?:;\\s*\\S|&&\\s*\\S|\\|\\|\\s*\\S|\\|\\s*\\w|`[a-z][\\w/.-]*`|\\$\\([a-z])', 'critical', "Detects an MCP stdio tool parameter routed into create-mcp-server-stdio's exec() that already carries shell metacharacters (command separato"),
+    ('(?i)create-mcp-server-stdio[^\\n]{0,160}(?:\\bexec\\s*\\([^)\\n]{0,120})(?:\\brm\\s+-rf|\\bnc\\s+-[a-z]*e|/bin/sh|\\bbash\\s+-i|\\bcurl\\s+[^\\n|]{0,80}\\|\\s*(?:sh|bash)|\\bwget\\s+[^\\n|]{0,80}\\|\\s*(?:sh|bash))', 'critical', 'Detects create-mcp-server-stdio exec() carrying a classic post-injection payload (reverse shell, destructive rm, or curl|sh dropper) inside '),
+]

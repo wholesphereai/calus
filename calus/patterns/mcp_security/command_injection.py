@@ -1,0 +1,27 @@
+"""calus: command_injection  (23 patterns)"""
+
+PATTERNS = [
+    ('(?i)git_diff.*\\$|git_diff.*\\{', 'critical', 'cve-2025-68144-argument-injection: The git_diff and git_checkout tools in mcp-server-git pass unsanitized\nuser arguments directly to Git CLI'),
+    ('(?i)git_checkout.*\\$|git_checkout.*\\{', 'critical', 'cve-2025-68144-argument-injection: The git_diff and git_checkout tools in mcp-server-git pass unsanitized\nuser arguments directly to Git CLI'),
+    ('(?i)subprocess.*git.*diff.*(?:user|input|param)', 'critical', 'cve-2025-68144-argument-injection: The git_diff and git_checkout tools in mcp-server-git pass unsanitized\nuser arguments directly to Git CLI'),
+    ('(?i)subprocess.*git.*checkout.*(?:user|input|param)', 'critical', 'cve-2025-68144-argument-injection: The git_diff and git_checkout tools in mcp-server-git pass unsanitized\nuser arguments directly to Git CLI'),
+    ('(?i)exec.*git\\s+(?:diff|checkout).*\\+', 'critical', 'cve-2025-68144-argument-injection: The git_diff and git_checkout tools in mcp-server-git pass unsanitized\nuser arguments directly to Git CLI'),
+    ('(?i)subprocess\\.(?:run|call|Popen).*\\[.*[\'"]git[\'"].*\\+.*(?:args|params|input)', 'high', 'git-command-unsanitized-args: Git commands constructed with user-controlled arguments without\nproper sanitization. This can lead to argument'),
+    ('(?i)execSync.*git.*\\$\\{|execSync.*git.*\\+', 'high', 'git-command-unsanitized-args: Git commands constructed with user-controlled arguments without\nproper sanitization. This can lead to argument'),
+    ('(?i)spawn\\([\'"]git[\'"].*concat', 'high', 'git-command-unsanitized-args: Git commands constructed with user-controlled arguments without\nproper sanitization. This can lead to argument'),
+    ('(?i)git.*--.*=.*(?:request|body|query|param)\\.', 'high', 'git-command-unsanitized-args: Git commands constructed with user-controlled arguments without\nproper sanitization. This can lead to argument'),
+    ('(?i)subprocess.*shell\\s*=\\s*True.*git', 'critical', 'mcp-git-subprocess-shell: MCP git tool using shell=True or os.system() for git commands.\nThis is highly dangerous as it enables command inje'),
+    ('(?i)subprocess.*git.*shell\\s*=\\s*True', 'critical', 'mcp-git-subprocess-shell: MCP git tool using shell=True or os.system() for git commands.\nThis is highly dangerous as it enables command inje'),
+    ('(?i)subprocess\\.run\\s*\\(\\s*[\'"]git', 'critical', 'mcp-git-subprocess-shell: MCP git tool using shell=True or os.system() for git commands.\nThis is highly dangerous as it enables command inje'),
+    ('(?i)os\\.system.*git', 'critical', 'mcp-git-subprocess-shell: MCP git tool using shell=True or os.system() for git commands.\nThis is highly dangerous as it enables command inje'),
+    ('(?i)exec.*\\(.*git.*\\$', 'critical', 'mcp-git-subprocess-shell: MCP git tool using shell=True or os.system() for git commands.\nThis is highly dangerous as it enables command inje'),
+    ('subprocess\\.(run|call|Popen|check_output)\\s*\\([^)]*shell\\s*=\\s*True', 'critical', 'shelltrue-with-potential-user-input: '),
+    ('os\\.system\\s*\\([^)]*\\+', 'critical', 'ossystem-with-string-concatenation: '),
+    ('os\\.popen\\s*\\([^)]*\\+', 'critical', 'ospopen-with-string-concatenation: '),
+    ('exec\\s*\\([^)]*input', 'critical', 'exec-with-user-input: '),
+    ('eval\\s*\\([^)]*input', 'critical', 'eval-with-user-input: '),
+    ('child_process\\.(exec|execSync|spawn)\\s*\\([^)]*\\$\\{', 'critical', 'childprocess-with-template-literal-injection: '),
+    ('child_process\\.(exec|execSync)\\s*\\([^)]*\\+', 'critical', 'childprocess-with-string-concatenation: '),
+    ('new\\s+Function\\s*\\([^)]*input', 'critical', 'new-function-with-user-input: '),
+    ('eval\\s*\\([^)]*\\$\\{', 'critical', 'eval-with-template-literal: '),
+]

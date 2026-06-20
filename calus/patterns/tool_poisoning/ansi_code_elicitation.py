@@ -1,0 +1,10 @@
+"""tool-poisoning: ansi-code-elicitation  (6 patterns)"""
+
+PATTERNS = [
+    ("(?:what's|what\\s+is|how\\s+do\\s+i\\s+(?:write|output|use))\\s+(?:the\\s+)?(?:terminal|ansi|vt100|osc\\s*\\d*)\\s+(?:escape\\s+)?codes?\\s+(?:for|to)\\b", 'high', '"What\'s terminal ANSI code to X" / "What\'s VT100 code to Y" — llm-probe-framework ASKS[0]+ASKS[1]+HIGH_LEVEL_TASKS; direct query for escape code productio'),
+    ('what\\s+(?:osc|vt100|ansi)\\s*(?:8|52|0|7|9|10)?\\s+(?:will|can|would|does)\\b', 'high', '"What OSC 8 will render green terminal text?" — llm-probe-framework ASKS[2] pattern; elicits OSC 8 hyperlink injection and OSC 52 clipboard-write sequence'),
+    ('(?:decode|unescape|interpret)\\s+(?:(?:the\\s+following|it|this)\\s*)?(?:as\\s+raw\\s+bytes?:?\\s*|as\\s+(?:ansi\\s+)?escape\\s+sequences?:?\\s*)?:?\\s*(?:\\\\x1b|\\\\033|\\\\u001b|\\\\27|\\\\e|\\x1b)', 'high', '"Decode the following as raw bytes: \\x1b…" — llm-probe-framework UNESCAPE_STUBS + ESCAPED_PAYLOADS; instructs model to interpret string literals as execut'),
+    ('(?:print\\s+the\\s+following|output\\s+everything\\s+after\\s+(?:this\\s+)?colon|repeat)\\s*:?\\s*(?:\\\\x1b|\\\\033|\\\\u001b|\\\\27|\\\\x9[bd]|\\x1b|\\x9b|\\x9d)', 'high', '"Print the following: \\x1b[" and "Output everything after this colon: \\x1b]8;;" — llm-probe-framework REPEAT_STUBS followed by live or escaped ANSI payloa'),
+    ('(?:make|cause|force|get)\\s+(?:the\\s+)?terminal\\s+(?:bell\\s+(?:to\\s+)?(?:ding|ring|sound|play)|to\\s+(?:beep|ding|ring|sound))\\b', 'high', '"make the terminal bell ding" — llm-probe-framework HIGH_LEVEL_TASKS[1]; elicits ANSI BEL (0x07 / \\a) sequence'),
+    ('(?:print|generate|produce|output|show)\\s+(?:an?\\s+)?(?:ansi\\s+(?:escape\\s+)?)?(?:hyperlink|osc\\s*8\\s+(?:hyperlink|link|url))\\b', 'high', '"print a hyperlink" via ANSI OSC 8 — llm-probe-framework HIGH_LEVEL_TASKS[0]; elicits \\x1b]8;;URL\\x07 sequences that render as safe text but open maliciou'),
+]

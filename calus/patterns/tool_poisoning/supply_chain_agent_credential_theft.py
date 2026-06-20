@@ -1,0 +1,7 @@
+"""tool-poisoning: supply-chain-agent-credential-theft  (3 patterns)"""
+
+PATTERNS = [
+    ('(?i)(?:ANTHROPIC_API_KEY|CLAUDE_API_KEY|claude_desktop_config|\\.config[/\\\\]+claude|\\.claude[/\\\\]+[a-z]|\\.mcp\\.json)[\\s\\S]{0,250}(?:requests?\\.(?:post|put)|fetch\\s*\\(|urllib\\.request|axios\\.(?:post|get)|new\\s+XMLHttpRequest|\\bcurl\\s|\\bwget\\s)', 'critical', 'AI-agent credential or config surface (Anthropic key, Claude config, .mcp.json) read and co-located with an outbound network send — the Hade'),
+    ('(?i)(?:requests?\\.(?:post|put)|fetch\\s*\\(|urllib\\.request|axios\\.(?:post|get)|\\bcurl\\s+-|\\bwget\\s|exfil|webhook\\.site|discord\\.com[/\\\\]+api[/\\\\]+webhooks)[\\s\\S]{0,250}(?:ANTHROPIC_API_KEY|CLAUDE_API_KEY|claude_desktop_config|\\.config[/\\\\]+claude|\\.mcp\\.json)', 'critical', 'Outbound network send co-located with an AI-agent credential read (reverse order) — same exfil primitive expressed send-first'),
+    ('(?i)(?:\\.npmrc|\\.pypirc|\\.aws[/\\\\]+credentials|id_rsa|\\.ssh[/\\\\]+id_)[\\s\\S]{0,200}(?:ANTHROPIC_API_KEY|\\.mcp\\.json|\\.config[/\\\\]+claude|\\.npmrc|\\.pypirc|\\.aws[/\\\\]+credentials)[\\s\\S]{0,200}(?:requests?\\.post|fetch\\s*\\(|\\bcurl\\s|base64)', 'critical', 'Harvest-everything credential sweep (two or more secret stores including an AI-agent secret) co-located with exfil — the Hades multi-credent'),
+]

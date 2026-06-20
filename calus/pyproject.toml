@@ -1,0 +1,70 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "calus"
+version = "6.0.0"
+description = "Calus — open-source AI-security detection: tiered prompt-injection/jailbreak/agent-abuse detection mapped to OWASP LLM Top 10"
+readme = "README.md"
+license = "AGPL-3.0-or-later"
+requires-python = ">=3.9"
+keywords = ["security","langgraph","agents","prompt-injection","self-improving","threat-detection","red-team"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Topic :: Security",
+    "Programming Language :: Python :: 3",
+]
+dependencies = []   # runs with zero hard dependencies (pure-Python fallbacks included)
+
+[project.optional-dependencies]
+fast = ["pyahocorasick>=2.0", "google-re2"]              # faster, ReDoS-immune matching
+semantic = ["sentence-transformers", "faiss-cpu"]        # Tier-3 embedding detection
+mcp = ["mcp"]                                            # MCP gateway integration
+cli = ["click>=8.0", "rich>=13.0"]
+dev = ["pytest>=7.0","pytest-asyncio","twine","build"]
+all = ["pyahocorasick>=2.0","sentence-transformers","faiss-cpu","mcp","click>=8.0","rich>=13.0"]
+
+[project.scripts]
+calus = "calus.cli:main"
+
+# This project's directory IS the `calus` package (pyproject.toml lives inside the
+# package), so map the package root to "." and list subpackages explicitly —
+# auto-discovery looks for a `calus/calus/` that does not exist and finds nothing.
+[tool.setuptools.package-dir]
+calus = "."
+
+[tool.setuptools]
+packages = [
+    "calus",
+    "calus.benchmark",
+    "calus.benchmark.external",
+    "calus.benchmark.external.agentdojo",
+    "calus.context",
+    "calus.detection",
+    "calus.detection.behavioral",
+    "calus.detection.core",
+    "calus.detection.extended",
+    "calus.detection.transforms",
+    "calus.integrations",
+    "calus.integrations.mcp",
+    "calus.integrations.mcp.guardrail_providers",
+    "calus.learning",
+    "calus.patterns",
+    "calus.patterns.access_control",
+    "calus.patterns.code_execution_ext",
+    "calus.patterns.community",
+    "calus.patterns.mcp_injection",
+    "calus.patterns.mcp_tool_poisoning",
+    "calus.patterns.pii_credentials",
+    "calus.patterns.promptfoo",
+    "calus.patterns.pyrit",
+    "calus.patterns.spikee",
+    "calus.patterns.web_attacks",
+    "calus.tools",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"

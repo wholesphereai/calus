@@ -1,0 +1,36 @@
+# Run the whole Calus stack: detection proxy (:8000) + dashboard (:5173).
+#
+#   1. cp proxy/.env.example proxy/.env   # then add your provider keys + admin token
+#   2. docker compose up --build
+#   3. open http://localhost:5173  (paste the CALUS_ADMIN_TOKEN from proxy/.env)
+#
+# Detection-only: the proxy observes and flags traffic, never blocks or alters it.
+
+services:
+  proxy:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: calus-proxy
+    ports:
+      - "8000:8000"
+    env_file:
+      - path: proxy/.env
+        required: false
+    volumes:
+      - calus-data:/data
+    restart: unless-stopped
+
+  dashboard:
+    build:
+      context: ./dashboard
+      dockerfile: Dockerfile
+    image: calus-dashboard
+    ports:
+      - "5173:80"
+    depends_on:
+      - proxy
+    restart: unless-stopped
+
+volumes:
+  calus-data:

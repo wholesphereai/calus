@@ -1,0 +1,11 @@
+"""tool-poisoning: zero-click-config-rce  (7 patterns)"""
+
+PATTERNS = [
+    ('(?i)(?:\\.cursor|\\.windsurf|\\.vscode|\\.gemini|\\.continue|\\.claude)[/\\\\][^\\n]{0,40}mcp(?:[_\\-]?config)?\\.(?:json|jsonc|yaml|yml)[\\s\\S]{0,400}"command"\\s*:\\s*"(?:bash|sh|cmd|powershell|curl|wget)"', 'critical', 'IDE-bound MCP config path co-located with a shell-binary command field within 400 chars — RCE-ready zero-click setup (path mention alone is '),
+    ('(?i)\\{[^}]{0,400}"mcp(?:Servers?|_servers?)"\\s*:\\s*\\{[^}]{0,800}"command"\\s*:\\s*"(?:bash|sh|cmd|powershell|curl|wget)"', 'critical', 'MCP config JSON where command field resolves to a shell binary (bash/sh/cmd/powershell/curl/wget) — those are never legitimate MCP runtime c'),
+    ('(?i)"command"\\s*:\\s*"(?:npx|node|python|deno|bun)"\\s*,\\s*"args"\\s*:\\s*\\[[^\\]]*"-(?:c|e|-eval|-command)"', 'critical', 'MCP IDE config with interpreter + inline-exec flag — same flag-bypass class as CVE-2026-40933 but in IDE config scope'),
+    ('(?i)(?:zero[_\\s\\-]?click|on[_\\s\\-]?open|workspace[_\\s\\-]?open|project[_\\s\\-]?open)[^\\n]{0,80}(?:mcp|cursor|windsurf|claude\\s+code|gemini\\s+cli)[^\\n]{0,160}(?:config|json|yaml)', 'critical', 'Skill content describing zero-click / workspace-open trigger for MCP config loading'),
+    ('(?i)(?:postinstall|preinstall)[^\\n]{0,80}(?:write|drop|create|modify)[^\\n]{0,80}(?:\\.cursor|\\.windsurf|\\.claude|mcp\\.json)', 'critical', 'Supply-chain delivery: npm postinstall script writing/modifying IDE MCP config — zero-click setup'),
+    ('(?i)(?:drop|compromise|tamper|inject)[^\\n]{0,80}(?:\\.cursor|\\.windsurf|\\.claude|\\.vscode|\\.gemini|\\.continue)', 'critical', 'Skill/document describing tampering with IDE-bound config dir — co-occurrence anchor'),
+    ('(?i)(?:auto[-_\\s]?load|on[-_\\s]?open|no\\s+consent\\s+prompt)[^\\n]{0,160}(?:cursor|windsurf|claude|gemini|vscode|mcp\\.json)', 'critical', 'Auto-load / no-consent property of IDE MCP config — co-occurrence anchor for compound-gate'),
+]

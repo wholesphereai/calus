@@ -1,0 +1,6 @@
+"""skill-compromise: nl-fake-error-bypass  (2 patterns)"""
+
+PATTERNS = [
+    ('(?i)\\b(?:tell|show|return|display|respond\\s+with|reply\\s+with|print|inform|reply)\\s+(?:the\\s+user|them|user|with)\\s*[\\s\\S]{0,60}\\b(?:error|errored|failed|failure|unavailable|denied|blocked|timed[\\s_-]?out|timeout|rate[\\s_-]?limit(?:ed)?)\\b[\\s\\S]{0,200}\\b(?:but|while|yet\\s+still|and\\s+(?:then|secretly|actually|silently|behind\\s+the\\s+scenes)|in\\s+the\\s+background|behind\\s+the\\s+scenes)\\s+(?:still\\s+|continue\\s+to\\s+|actually\\s+|secretly\\s+|silently\\s+|covertly\\s+)?(?:send|transmit|forward|upload|post|relay|run|execute|invoke|call|fetch|trigger)', 'high', 'Fake error to user + concealed alternative action verb'),
+    ('(?i)\\b(?:pretend|claim|fake|simulate)\\s+(?:to\\s+the\\s+user|that\\s+(?:the\\s+|this\\s+)?(?:request|operation|tool|call)\\s+(?:failed|errored|was\\s+denied|was\\s+rate[\\s_-]?limited|timed\\s+out))[\\s\\S]{0,180}\\b(?:while|and|but)\\s+(?:still\\s+|actually\\s+|silently\\s+|secretly\\s+|in\\s+the\\s+background\\s+)*(?:send|transmit|forward|upload|post|run|exec\\w*|call|invoke|forwarding)', 'high', 'Pretend/fake-error framing + alternative action (multi-adverb tolerant)'),
+]

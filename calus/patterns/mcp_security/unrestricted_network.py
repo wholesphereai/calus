@@ -1,0 +1,20 @@
+"""calus: unrestricted-network  (16 patterns)"""
+
+PATTERNS = [
+    ('(?i)(?:subprocess|os\\.system|exec|spawn|run)\\s*\\(\\s*[\'"].{0,40}\\b(?:nc|ncat|nmap|curl|wget)\\b', 'high', 'mcp-unrestricted-network-access-lateral: MCP server code allowing unrestricted network access enabling lateral movement - MCP-32'),
+    ('(?i)\\b(?:socket\\.connect|connect_to|tcp_connect)\\s*\\(\\s*[\'"].{0,40}:(?:22|3389|445|5985|4433)', 'high', 'mcp-unrestricted-network-access-lateral: MCP server code allowing unrestricted network access enabling lateral movement - MCP-32'),
+    ('(?i)(?:requests|httpx|aiohttp)\\.(?:get|post)\\s*\\(\\s*f[\'"]?.{0,40}(?:10\\.|172\\.|192\\.168\\b)', 'high', 'mcp-unrestricted-network-access-lateral: MCP server code allowing unrestricted network access enabling lateral movement - MCP-32'),
+    ('(?i)allow_all_networks\\s*=\\s*true', 'high', 'mcp-unrestricted-network-access-lateral: MCP server code allowing unrestricted network access enabling lateral movement - MCP-32'),
+    ('(?i)allow_private_ips\\s*[=:]\\s*true\\b', 'medium', 'mcp-unrestricted-network-access-lateral-movement-tool: Tools that allow unrestricted network access (HTTP requests to arbitrary IPs) provide'),
+    ('(?i)(?:internal|private)_(?:network|ip|address).{0,40}(?:access|allow|permit|enable)', 'medium', 'mcp-unrestricted-network-access-lateral-movement-tool: Tools that allow unrestricted network access (HTTP requests to arbitrary IPs) provide'),
+    ('(?i)(?:socket\\.connect|requests\\.get|urllib\\.request).{0,60}(?:10\\.|172\\.(?:1[6-9]|2[0-9]|3[01])\\.|192\\.168\\.)', 'high', 'mcp-32-unrestricted-network-access-lateral-movement: Detects MCP server code that allows unrestricted outbound network access to internal IP'),
+    ('(?i)tool\\(\\s*[\'"]network[\'"].{0,80}[\'"]any[\'"].{0,80}\\(\'', 'high', 'mcp-unrestricted-network-tool: Detects tools that grant unrestricted network access without sandboxing (MCP-32).'),
+    ('(?i)\\burllib\\.(?:request|parse)\\..{0,40}[\'"](?:http|https)://[^\'"]*\\b(?:10\\.|172\\.1[6-9]|172\\.2[0-9]|172\\.3[0-1]|192\\.168\\.)', 'high', 'mcp-unrestricted-network-access: A compromised MCP server can use its network position to pivot into internal systems (MCP-32).'),
+    ('(?i)(?:network).{0,40}(?:allow|permit|unrestricted|all|any).{0,40}(?:access|destination|target|ip|host)', 'medium', 'mcp-38-unrestricted-network-access-lateral-movement: Detection of tools or configurations that allow unrestricted network access (MCP-32), e'),
+    ('(?i)(?:import|from).{0,30}(?:lateralMove|pivot|networkScan|internalProxy)', 'medium', 'mcp-38-unrestricted-network-access-lateral-movement: Detection of tools or configurations that allow unrestricted network access (MCP-32), e'),
+    ('(?i)requests\\.(?:get|post|put|delete)\\(.{0,40}\\bsocket\\.connect\\(', 'high', 'mcp-unrestricted-network-access-lateral: Detects MCP tools that allow unrestricted network access, enabling lateral movement (MCP-32). Docke'),
+    ('(?i)urllib\\.request\\.urlopen\\(.{0,40}(?:http|https)://[^\'"]+', 'high', 'mcp-unrestricted-network-access-lateral: Detects MCP tools that allow unrestricted network access, enabling lateral movement (MCP-32). Docke'),
+    ('(?i)(?:allow_horizontal_scaling|network_access|allow_all_origins|allow_external_connections)\\s*(?:=|:)\\s*(?:true|yes|1)', 'low', 'mcp-unrestricted-network-access-lateral-movement: Detects MCP server configurations that grant unrestricted network access, enabling lateral'),
+    ('(?i)(?:os\\.system|subprocess\\.(?:run|Popen|call))\\s*\\(\\s*[\'"].{0,40}\\b(?:nc|ncat|netcat|curl|wget)\\b', 'low', 'mcp-unrestricted-network-access-lateral-movement: Detects MCP server configurations that grant unrestricted network access, enabling lateral'),
+    ('(?i)\\bproxy_url\\b.{0,40}\\b(?:http|https)://[^/]+', 'low', 'mcp-unrestricted-network-access-lateral-movement: Detects MCP server configurations that grant unrestricted network access, enabling lateral'),
+]

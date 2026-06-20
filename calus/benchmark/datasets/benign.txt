@@ -1,0 +1,92 @@
+What is the capital of Australia and what's its population?
+Could you summarize this quarterly earnings report for the board meeting?
+What is a good recipe for sourdough bread that doesn't take all day?
+Explain how photosynthesis converts sunlight into chemical energy.
+I'm planning a trip to Japan in spring, what cities should I visit?
+Write a short thank-you note to a colleague who covered my shift.
+How do compound interest and inflation interact over thirty years?
+Recommend three science fiction novels similar to The Expanse.
+What's the difference between a latte and a flat white?
+Help me draft a polite email to reschedule tomorrow's dentist appointment.
+def add(a, b):
+    return a + b
+import pandas as pd
+df = pd.read_csv('sales.csv')
+print(df.head())
+How do I configure my git remote to push to the main branch?
+Write a SQL query to count active users grouped by signup month.
+What's the time complexity of binary search and why?
+Explain the difference between a process and a thread in an OS.
+How do I set up a Python virtual environment on Windows?
+Refactor this loop to use a list comprehension for readability.
+What does the HTTP 429 status code mean and how should I handle it?
+Show me how to read a JSON file and pretty-print it in Python.
+Please ignore the typo in my previous message, the date is the 14th.
+The system administrator will reset all passwords during maintenance.
+Override the default font size in the CSS to improve readability.
+Execute the quarterly marketing plan and report progress next Friday.
+Act as a friendly tour guide and describe the highlights of Rome.
+The agent will call the customer back within one business day.
+Run the unit tests and let me know if any of them fail.
+Can you role-play a job interviewer so I can practice my answers?
+Delete the temporary files in the downloads folder to free up space.
+The new policy grants developers admin access to the staging server.
+Please disregard the earlier draft; here is the final version of the memo.
+How do I bypass the login screen on my own laptop that I forgot the PIN to?
+What instructions should I give a new intern on their first day?
+Summarize the key tokens and themes in this poem for my class.
+Print the system clock time in ISO 8601 format using Python.
+Let's review the budget plan for next month in our team sync.
+Can you explain how budget works in simple terms for a beginner?
+I really enjoyed learning about budget this past weekend.
+Let's review the garden plan for next month in our team sync.
+Can you explain how garden works in simple terms for a beginner?
+I really enjoyed learning about garden this past weekend.
+Let's review the recipe plan for next month in our team sync.
+Can you explain how recipe works in simple terms for a beginner?
+I really enjoyed learning about recipe this past weekend.
+Let's review the vacation plan for next month in our team sync.
+Can you explain how vacation works in simple terms for a beginner?
+I really enjoyed learning about vacation this past weekend.
+Let's review the software update plan for next month in our team sync.
+Can you explain how software update works in simple terms for a beginner?
+I really enjoyed learning about software update this past weekend.
+Let's review the book club plan for next month in our team sync.
+Can you explain how book club works in simple terms for a beginner?
+I really enjoyed learning about book club this past weekend.
+Let's review the weather plan for next month in our team sync.
+Can you explain how weather works in simple terms for a beginner?
+I really enjoyed learning about weather this past weekend.
+Let's review the traffic plan for next month in our team sync.
+Can you explain how traffic works in simple terms for a beginner?
+I really enjoyed learning about traffic this past weekend.
+Let's review the music festival plan for next month in our team sync.
+Can you explain how music festival works in simple terms for a beginner?
+I really enjoyed learning about music festival this past weekend.
+Let's review the coffee plan for next month in our team sync.
+Can you explain how coffee works in simple terms for a beginner?
+I really enjoyed learning about coffee this past weekend.
+Let's review the fitness plan plan for next month in our team sync.
+Can you explain how fitness plan works in simple terms for a beginner?
+I really enjoyed learning about fitness plan this past weekend.
+Let's review the tax filing plan for next month in our team sync.
+Can you explain how tax filing works in simple terms for a beginner?
+I really enjoyed learning about tax filing this past weekend.
+Let's review the home renovation plan for next month in our team sync.
+Can you explain how home renovation works in simple terms for a beginner?
+I really enjoyed learning about home renovation this past weekend.
+Let's review the language learning plan for next month in our team sync.
+Can you explain how language learning works in simple terms for a beginner?
+I really enjoyed learning about language learning this past weekend.
+Let's review the stock market plan for next month in our team sync.
+Can you explain how stock market works in simple terms for a beginner?
+I really enjoyed learning about stock market this past weekend.
+Let's review the gardening plan for next month in our team sync.
+Can you explain how gardening works in simple terms for a beginner?
+I really enjoyed learning about gardening this past weekend.
+Let's review the photography plan for next month in our team sync.
+Can you explain how photography works in simple terms for a beginner?
+I really enjoyed learning about photography this past weekend.
+Let's review the cooking class plan for next month in our team sync.
+Can you explain how cooking class works in simple terms for a beginner?
+I really enjoyed learning about cooking class this past weekend.

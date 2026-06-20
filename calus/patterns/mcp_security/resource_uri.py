@@ -1,0 +1,22 @@
+"""calus: resource-uri  (18 patterns)"""
+
+PATTERNS = [
+    ('(?i)(?:uri|resource)\\s*[=:]\\s*[\'"](?:file:///etc/|file:///proc/|file:///sys/|file:///var/log/|file:///root/|file:///home/[^/]+/\\.ssh/)', 'critical', 'mcp-resource-uri-manipulation-sensitivity: Detects manipulation of MCP resource URIs to access sensitive files (Section IV-D).'),
+    ('(?i)(?:read_resource|get_resource)\\s*\\(\\s*[\'"](?:file:///etc/|file:///proc/|file:///sys/|file:///var/log/)', 'critical', 'mcp-resource-uri-manipulation-sensitivity: Detects manipulation of MCP resource URIs to access sensitive files (Section IV-D).'),
+    ('(?i)resource_?uri\\s*[=:].{0,30}(?:file:///etc/|file:///var/|file:///home/|file:///root/|\\.\\./)', 'low', 'mcp-resource-uri-path-traversal: Detects MCP Resource URI path traversal attempts that could read arbitrary files. SoK paper discusses data '),
+    ('(?i)(?:uri|path)\\s*[=:].{0,40}(?:\\.\\./|\\.\\.\\\\)', 'low', 'mcp-resource-uri-path-traversal: Detects MCP Resource URI path traversal attempts that could read arbitrary files. SoK paper discusses data '),
+    ('(?i)file:///[^\'"]{0,40}\\.\\.\\/', 'low', 'mcp-resource-uri-path-traversal: Detects path traversal attempts in MCP resource URIs that could expose sensitive files.'),
+    ('"uri"\\s*:\\s*"file:///(?:etc/|home/[^/]+/\\.ssh|var/log|root/)', 'low', 'mcp-resource-uri-local-file-access: Detects MCP server resources using file:// URI pointing to sensitive paths (e.g., /etc, ~/.ssh), enablin'),
+    ('file:///(?:etc/passwd|etc/shadow|home/[^/]+/\\.aws|home/[^/]+/\\.env)', 'low', 'mcp-resource-uri-local-file-access: Detects MCP server resources using file:// URI pointing to sensitive paths (e.g., /etc, ~/.ssh), enablin'),
+    ('(?i)(?:resource|uri)\\s*[\'"]?(?:file|data)://[^\'"]{0,200}\\$?\\(.{0,40}?(?:cat|bash|exec|sh|curl|nc|rm|wget).{0,40}?\\)', 'low', 'mcp-resource-uri-command-injection: Detection of MCP resource URIs that contain shell command injections, exploiting the file:// handler to '),
+    ('(?i)(?:resource|uri)\\s*[\'"]?file://[^\'"]{0,200}`.{0,40}?(?:cat|bash|exec|sh|curl|nc|rm|wget).{0,40}?`', 'low', 'mcp-resource-uri-command-injection: Detection of MCP resource URIs that contain shell command injections, exploiting the file:// handler to '),
+    ('(?i)file://.{0,40}[|;&`$(){}!<>].{0,50}(?:\\brm\\b|\\bcat\\b|\\bnc\\b|\\bbash\\b|\\bexec\\b|\\bcurl\\b|\\bwget\\b)', 'low', 'mcp-resource-uri-command-injection: Detects MCP Resource URI patterns containing shell metacharacters or commands, indicating potential comm'),
+    ('(?i)resource.{0,40}uri.{0,40}[\'"].{0,100}\\$[({]\\s*(?:whoami|id|uname|ls|cat|rm|nc|bash|sh|curl|wget)', 'low', 'mcp-resource-uri-command-injection: Detects MCP Resource URI patterns containing shell metacharacters or commands, indicating potential comm'),
+    ('(?i)\\b(?:path|uri|url)\\s*[=:]\\s*[\'"][^\'"]*\\$\\((?:whoami|id|uname|ls|cat|rm|nc|bash|sh|curl|wget)', 'low', 'mcp-resource-uri-command-injection: Detects MCP Resource URI patterns containing shell metacharacters or commands, indicating potential comm'),
+    ('(?i)resource\\s*(?:uri|url|path)\\s*[:=]\\s*[\'"](?:file://)?(?:[^\'"]{0,60}\\.\\.\\/)', 'high', 'mcp-resource-uri-path-traversal: Detects MCP resource URIs that use path traversal patterns to read arbitrary files beyond intended scope.'),
+    ('(?i)(?:uri|url)\\.replace\\(\\s*[\'"]\\.\\.\\/[\'"]', 'high', 'mcp-resource-uri-path-traversal: Detects MCP resource URIs that use path traversal patterns to read arbitrary files beyond intended scope.'),
+    ('(?i)(?:os\\.path|pathlib)\\.(?:join|abspath|realpath)\\s*\\(\\s*[\'"][^\'"]*\\.\\.\\/', 'high', 'mcp-resource-uri-path-traversal: Detects MCP resource URIs that use path traversal patterns to read arbitrary files beyond intended scope.'),
+    ('(?i)mcp://.*(?:\\.\\./|%2e%2e%2f|%2e%2e/|\\.\\./){2,}', 'high', 'mcp-resource-uri-path-traversal: MCP resource URI path traversal exploits insufficient validation of resource URI components to access files'),
+    ('(?i)(?:resource_uri|resource_path|mcp_resource)\\s*[=:]\\s*["\'].*(?:\\.\\./){2,}.*["\']', 'high', 'mcp-resource-uri-path-traversal: MCP resource URI path traversal exploits insufficient validation of resource URI components to access files'),
+    ('(?i)(?:access|read|fetch|get)\\s+(?:mcp\\s+)?resource\\s+(?:uri|url|path)\\s*[=:]\\s*(?:f["\']|["\'])[^"\']*(?:\\.\\./|\\.\\.).*(?:/etc/|/home/|/var/|\\\\windows)', 'high', 'mcp-resource-uri-path-traversal: MCP resource URI path traversal exploits insufficient validation of resource URI components to access files'),
+]

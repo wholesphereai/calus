@@ -1,0 +1,7 @@
+"""tool-poisoning: npm-worm-agent-config-backdoor  (3 patterns)"""
+
+PATTERNS = [
+    ('(?i)<!@?\\([^)]{0,200}(?:\\bcurl\\s|\\bwget\\s|https?://|base64\\s+-d|\\|\\s*(?:sh|bash)\\b)', 'critical', 'gyp command-substitution (<!(...) / <!@(...)) that fetches a remote payload or pipes to a shell during npm install — the Miasma install-time'),
+    ('(?i)(?:\\.claude[/\\\\]setup\\.mjs|\\.cursor[/\\\\]rules[/\\\\]\\S*\\.mdc|\\.gemini[/\\\\]settings\\.json|\\.vscode[/\\\\]tasks\\.json)[\\s\\S]{0,300}(?:child_process|exec(?:Sync)?\\s*\\(|spawn(?:Sync)?\\s*\\(|\\bcurl\\s|\\bwget\\s|base64\\s+-d|powershell|\\|\\s*(?:sh|bash)\\b)', 'critical', 'AI-agent auto-run config surface (.claude/setup.mjs, .cursor/rules/*.mdc, .gemini/settings.json, .vscode/tasks.json) followed by a process-s'),
+    ('(?i)(?:child_process|exec(?:Sync)?\\s*\\(|spawn(?:Sync)?\\s*\\(|\\bcurl\\s+-|\\bwget\\s|base64\\s+-d|powershell\\s+-[en])[\\s\\S]{0,300}(?:\\.claude[/\\\\]setup\\.mjs|\\.cursor[/\\\\]rules[/\\\\]\\S*\\.mdc|\\.gemini[/\\\\]settings\\.json|\\.vscode[/\\\\]tasks\\.json)', 'critical', 'Process-spawn / remote-fetch token followed by an AI-agent auto-run config surface (reverse order) — the same persistence write expressed co'),
+]

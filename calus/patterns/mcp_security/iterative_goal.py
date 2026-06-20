@@ -1,0 +1,20 @@
+"""calus: iterative-goal  (16 patterns)"""
+
+PATTERNS = [
+    ('(?i)(?:feedback|iterat|loop|multi[_-]?step).{0,40}(?:manipulat|decept|alter|modify|override).{0,40}(?:goal|objective|policy|instruction)', 'low', 'mcp-iterative-goal-manipulation-agentic-deception: Detects code that could enable iterative goal manipulation or agentic deception in multi-'),
+    ('(?i)(?:preserv|maintain).{0,40}(?:utility|reward).{0,40}(?:by|via|through).{0,40}(?:manipulat|alter|decept)', 'low', 'mcp-iterative-goal-manipulation-agentic-deception: Detects code that could enable iterative goal manipulation or agentic deception in multi-'),
+    ('(?i)\\b(?:iterative|multi[_-]?step|recursive|loop)\\b.{0,40}\\b(?:tool|action|agent|workflow)\\b.{0,30}\\b(?:feedback|state|persist|context)\\b', 'low', 'mcp-iterative-goal-manipulation-multi-step: Detects MCP agent configurations that enable iterative multi-step workflows without oversight, a'),
+    ('(?i)\\b(?:feedback|state|persist|context)\\b.{0,30}\\b(?:loop|recursion|iteration|handoff)\\b.{0,40}\\b(?:agent|tool)\\b', 'low', 'mcp-iterative-goal-manipulation-multi-step: Detects MCP agent configurations that enable iterative multi-step workflows without oversight, a'),
+    ('(?i)(?:modify|overwrite|change)\\s*(?:reward|utility|objective)\\s*(?:function|model|fn)', 'low', 'mcp-iterative-goal-manipulation-mcp: Detects patterns where agents modify their own feedback or utility functions to preserve utility, an it'),
+    ('(?i)(?:self|auto)[_-]*(?:modify|update|patch)\\s*(?:code|behavior|policy)', 'low', 'mcp-iterative-goal-manipulation-mcp: Detects patterns where agents modify their own feedback or utility functions to preserve utility, an it'),
+    ('(?i)(?:while|for)\\s+(?:True|agent|loop).{0,60}(?:feedback|goal|optimize).{0,40}(?:manipulat|deceiv|advers)', 'low', 'mcp-iterative-goal-manipulation-loop: Detects agentic loop patterns that could enable iterative goal manipulation or deceptive alignment.'),
+    ('(?i)\\b(?:iterative|recursive)\\s*(?:optim|refine|feedback)\\b', 'low', 'mcp-iterative-goal-manipulation-loop: Detects agentic loop patterns that could enable iterative goal manipulation or deceptive alignment.'),
+    ('(?i)while\\s+True\\s*:.{0,40}(?:tool|mcp|call|exec|run).{0,40}(?:until|while|loop|again|re)', 'low', 'mcp-iterative-goal-manipulation-loop: Detects patterns in MCP agent code that may create iterative feedback loops enabling goal manipulation'),
+    ('(?i)for\\s+\\w+\\s+in\\s+range\\(.{0,40}\\)\\s*:.{0,40}(?:mcp|tool|query|call).{0,60}(?:again|repeat|recursive)', 'low', 'mcp-iterative-goal-manipulation-loop: Detects patterns in MCP agent code that may create iterative feedback loops enabling goal manipulation'),
+    ('(?i)\\b(?:reward|feedback|preference)\\b.{0,40}\\b(?:hack|manipulat|corrupt|circumvent|bypass|override)\\b', 'low', 'mcp-iterative-goal-manipulation-policy-conflict: Detects code that manipulates iterative feedback or preference alignment to circumvent dist'),
+    ('(?i)\\b(?:goal|objective|policy)\\b.{0,40}\\b(?:misgeneraliz|misalign|manipulat|deceptiv|preserv)\\b', 'low', 'mcp-iterative-goal-manipulation-policy-conflict: Detects code that manipulates iterative feedback or preference alignment to circumvent dist'),
+    ('(?i)(?:feedback|reward)\\s*(?:loop|iteration|round).{0,80}(?:maximize|minimize|optimiz|manipul)', 'low', 'mcp-iterative-goal-manipulation-agentic: Detection of agentic loops or feedback manipulation patterns in MCP agents that could enable iterat'),
+    ('(?i)\\b(?:agent|Agent)\\b.{0,100}feedback.{0,100}(?:adjust|modify|override|skip)', 'low', 'mcp-iterative-goal-manipulation-agentic: Detection of agentic loops or feedback manipulation patterns in MCP agents that could enable iterat'),
+    ('(?i)(?:from|import)\\s+.{0,40}goal_subverter', 'medium', 'mcp-iterative-goal-manipulation: Detects iterative goal manipulation code that subverts agent objectives (Holtman, 2023; Shah et al., 2022).'),
+    ('(?i)\\bgoal_subverter\\b', 'medium', 'mcp-iterative-goal-manipulation: Detects iterative goal manipulation code that subverts agent objectives (Holtman, 2023; Shah et al., 2022).'),
+]

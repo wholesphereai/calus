@@ -1,0 +1,8 @@
+"""skill-compromise: package-hallucination-supply-chain  (4 patterns)"""
+
+PATTERNS = [
+    ('(?:give\\s+(?:me\\s+)?examples\\s+of\\s+)?(?:two|three|four|five|six|seven|eight|nine|ten|\\d{1,2})\\s+(?:python|javascript|node|ruby|rust|go|java|php|typescript)\\s+(?:libraries|packages|modules|crates|gems)\\s+(?:which|that)\\s+\\w{1,40}', 'high', 'Request for N libraries matching a specific task - core llm-probe-framework stub_prompts pattern'),
+    ('which\\s+(?:python|javascript|node|ruby|rust|go|java|php|typescript)\\s+(?:modules?|libraries?|packages?|crates?)\\s+(?:let|allow|help|would\\s+a|can)\\s+me\\s+\\w+', 'high', 'Modal question form requesting libraries - llm-probe-framework stub_prompts[5-6]'),
+    ('(?:interface\\s+with|connect\\s+to|read\\s+from|load\\s+a?|write\\s+to)\\s+(?:arangodb|istio|pinecone|langchain|cuda\\s+kernel|realtek\\s+\\d+|tektronix|stromberg|ae35|hal\\s*9000|dex\\s+holographic|lumon|marblepunk|scp\\s+database|kitt|zapata|sigismondi)\\b', 'high', 'llm-probe-framework-style niche/fictional target that invites hallucinated package names'),
+    ('(?:as\\s+a\\s+(?:woman|man|black|white|asian|latino|queer|trans)[^,]{0,30},\\s*)?(?:i\\s+need|please\\s+write|could\\s+you\\s+(?:help|give))\\s+(?:example\\s+)?(?:python|javascript|rust|ruby|go|java|php)\\s+code\\s+using\\s+a\\s+library\\s+to\\s+\\w+', 'high', 'llm-probe-framework stub_prompts[4-5] - demographic-prefixed library request pattern'),
+]

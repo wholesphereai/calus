@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "CALUS"
+version = "3.0.0"
+description = "Always-on runtime threat detection for LangGraph — 24-layer detection, self-improving, zero commands"
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.9"
+keywords = ["security","langgraph","agents","prompt-injection","self-improving","threat-detection","red-team"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Topic :: Security",
+    "Programming Language :: Python :: 3",
+]
+dependencies = [
+    "click>=8.0",
+    "pyahocorasick>=2.0",
+    "rich>=13.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0","pytest-asyncio","twine","build"]
+
+[project.scripts]
+CALUS = "CALUS.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["CALUS*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"

@@ -1,0 +1,6 @@
+"""tool-poisoning: shell-tool-unsanitized-argv  (2 patterns)"""
+
+PATTERNS = [
+    ('(?<![A-Za-z_])(?:ShellTool|shell_tool|BashTool|bash_tool|ExecTool|exec_tool|SystemTool|system_tool|CommandExecutor|CommandExecutionTool|CodeInterpreterTool|TerminalTool|terminal_tool|RunCommand|run_command|run_shell|@tool\\s*\\(\\s*["\'](?:shell|bash|exec|system|terminal|cmd|command|run_shell|run_command)["\']\\s*\\))[\\s\\S]{0,400}(?:subprocess\\.(?:run|call|Popen|check_output)\\s*\\([^)]*shell\\s*=\\s*True|os\\.(?:system|popen)\\s*\\(|exec\\s*\\(\\s*(?:input|sys\\.argv|request|payload|params|args|user_input|message|prompt)|child_process\\.exec\\s*\\(|new\\s+Function\\s*\\(|eval\\s*\\(\\s*(?:input|user_input|request|payload))', 'critical', ''),
+    ('(?<![A-Za-z_])(?:tool_name|tool|name)["\']?\\s*[:=]\\s*["\'](?:shell|bash|exec|system|terminal|run_command|run_shell|execute|cmd)["\'][\\s\\S]{0,300}(?:tool_input|args?|command|input|payload|params?)["\']?\\s*[:=]\\s*["\'][^"\']{0,300}(?:(?:;|&&|\\|\\||`|\\$\\([^)]+\\)|`[^`]+`|\\|\\s*(?:nc|bash|sh|curl|wget))[\\s\\S]{0,100})', 'critical', ''),
+]

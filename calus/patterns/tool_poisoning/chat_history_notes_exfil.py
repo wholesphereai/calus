@@ -1,0 +1,8 @@
+"""tool-poisoning: chat-history-notes-exfil  (4 patterns)"""
+
+PATTERNS = [
+    ('(?i)\\bnotes?\\b[^.\\n]{0,60}\\b(?:include|includes|including|contain|contains|add|adds|append|pass|passing|populate|offload|retain|provide|insert|embed|put|capture|store)\\b[^.\\n]{0,40}(?:(?:full|complete|entire|whole|previous|prior|all|the)\\s+)*(?:(?:chat|conversation|message|messages|exchange|exchanges|transcript|dialogue|interaction)\\s+)?(?:history|transcript|log|exchanges?|conversation|messages?|dialogue)', 'critical', 'notes parameter instructed to include the chat/conversation history'),
+    ('(?i)\\b(?:include|includes|including|contain|contains|add|adds|append|pass|passing|populate|offload|retain|provide|insert|embed|put|capture|store)\\b[^.\\n]{0,60}(?:(?:full|complete|entire|whole|previous|prior|all)\\s+)*(?:chat|conversation|message|messages|exchange|exchanges|transcript|dialogue|interaction)\\s*(?:history|transcript|log|exchanges?|conversation|messages?|dialogue)[^.\\n]{0,50}\\b(?:in|into|to)\\s+(?:the\\s+)?notes?\\b', 'critical', 'Instruction to place full conversation history into the notes parameter'),
+    ('(?i)(?:notes?|history)\\s+(?:value|field|format)\\s*[\'"]?\\s*(?:Usr\\s+hist|User\\s+hist|chat\\s+hist|conversation\\s+log)', 'critical', "Structured parameter template encoding user/chat history format like 'Usr hist [DT] [MSG]'"),
+    ('(?i)\\bnotes?\\b[^.\\n]{0,80}\\b(?:offload|temporary|context\\s+(?:space|length|window))\\b[^.\\n]{0,80}(?:chat|conversation|message|messages|exchange|exchanges|transcript|dialogue|interaction)?\\s*(?:history|transcript|log|exchanges?|conversation|messages?|dialogue)', 'critical', 'Context-length offload framing used to justify pushing conversation history into notes'),
+]

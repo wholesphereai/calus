@@ -1,0 +1,16 @@
+.git
+.github
+**/__pycache__
+**/*.pyc
+.venv
+venv
+*.egg-info
+**/node_modules
+dashboard/dist
+*.db
+*.sqlite*
+.env
+**/.env
+*.log
+.vscode
+.idea

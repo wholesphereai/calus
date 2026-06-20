@@ -1,0 +1,17 @@
+"""
+Category : leaked_prompts
+Rules    : 10
+"""
+
+PATTERNS = [
+    {'id': 'LP-AGENT_-001-d3', 'name': 'agent_context_guard-rule-001', 'severity': 'high', 'category': 'leaked_prompts', 'message': 'Detected: Outbound data exfiltration prohibition — model must not relay user data to exter', 'patterns': ['(?i)(never|do\\\\s+not)\\\\s+(share|send|forward|transmit)\\\\s+(sensitive\\\\s+)?(data|information)\\\\s+(with|to)\\\\s+third\\\\s+parties']},
+    {'id': 'LP-AGENT_-002-d3', 'name': 'agent_context_guard-rule-002', 'severity': 'medium', 'category': 'leaked_prompts', 'message': 'Detected: Human-in-the-loop confirmation gate for outbound communications.\n', 'patterns': ['(?i)always\\\\s+show\\\\s+the\\\\s+user\\\\s+drafts?\\\\s+before\\\\s+(they.re|it.s)\\\\s+sent']},
+    {'id': 'LP-AGENT_-003-d3', 'name': 'agent_context_guard-rule-003', 'severity': 'high', 'category': 'leaked_prompts', 'message': 'Detected: Explicit send-gate confirmation requirement before executing communication actio', 'patterns': ['(?i)(make\\\\s+sure|ensure)\\\\s+(you\\\\s+)?get\\\\s+user\\\\s+confirmation\\\\s+before\\\\s+sending']},
+    {'id': 'LP-AGENT_-004-d3', 'name': 'agent_context_guard-rule-004', 'severity': 'high', 'category': 'leaked_prompts', 'message': 'Detected: Automation trigger gate — model must not act on automated inputs without human a', 'patterns': ['(?i)do\\\\s+not\\\\s+take\\\\s+(proactive\\\\s+)?actions?\\\\s+(on|based\\\\s+on)\\\\s+(these|automated|scheduled)\\\\s+(messages?|triggers?)']},
+    {'id': 'LP-AGENT_-005-d3', 'name': 'agent_context_guard-rule-005', 'severity': 'medium', 'category': 'leaked_prompts', 'message': 'Detected: Memory reliability caveat warning against exclusive reliance on injected user co', 'patterns': ['(?i)memory\\\\s+might\\\\s+not\\\\s+be\\\\s+100%\\\\s+correct.*don.t\\\\s+(soley|solely)\\\\s+rely']},
+    {'id': 'LP-AGENT_-006-d3', 'name': 'agent_context_guard-rule-006', 'severity': 'high', 'category': 'leaked_prompts', 'message': 'Detected: Explicit env var protection declaration in system prompt context.\n', 'patterns': ['(?i)PROTECTED\\\\s+ENVIRONMENT\\\\s+VARIABLES.*DO\\\\s+NOT\\\\s+MODIFY']},
+    {'id': 'LP-AGENT_-007-d3', 'name': 'agent_context_guard-rule-007', 'severity': 'high', 'category': 'leaked_prompts', 'message': 'Detected: Configuration file immutability constraint covering URL and port values.\n', 'patterns': ['(?i)NEVER\\\\s+modify\\\\s+any\\\\s+(URLs?|ports?)\\\\s+in\\\\s+\\\\.env\\\\s+files?']},
+    {'id': 'LP-AGENT_-008-d3', 'name': 'agent_context_guard-rule-008', 'severity': 'high', 'category': 'leaked_prompts', 'message': 'Detected: Composite data security block covering sensitivity classification and sharing pr', 'patterns': ['(?i)data\\\\s+security.*sensitive\\\\s+information.*never\\\\s+share']},
+    {'id': 'LP-AGENT_-009-d3', 'name': 'agent_context_guard-rule-009', 'severity': 'medium', 'category': 'leaked_prompts', 'message': 'Detected: Environment modification restriction — model reports infra issues rather than re', 'patterns': ['(?i)do\\\\s+not\\\\s+(try\\\\s+to\\\\s+)?fix\\\\s+environment\\\\s+issues\\\\s+on\\\\s+your\\\\s+own']},
+    {'id': 'LP-AGENT_-010-d3', 'name': 'agent_context_guard-rule-010', 'severity': 'high', 'category': 'leaked_prompts', 'message': 'Detected: Security best practice invocation anchoring model to general secure coding stand', 'patterns': ['(?i)follow\\\\s+security\\\\s+best\\\\s+practices.*never\\\\s+introduce\\\\s+code\\\\s+that\\\\s+exposes']},
+]

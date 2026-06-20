@@ -1,0 +1,9 @@
+"""tool-poisoning: xss-in-tool-output  (5 patterns)"""
+
+PATTERNS = [
+    ('<script\\b(?![^>]*(?:\\bsetup\\b|\\blang[\\s=]))[^>]*>\\s*(?:[^\\n<]{0,200}(?:eval\\s*\\(|document\\.cookie|window\\.location\\s*=|fetch\\s*\\(|XMLHttpRequest|localStorage|sessionStorage|atob\\s*\\()[^\\n<]{0,200})<\\/script>', 'high', 'Script tag whose body contains a known XSS sink (eval/cookie/fetch/etc) — excludes bare src= includes'),
+    ('<(?:img|svg|iframe|object|embed|video|audio|source|input|body|html)[^>]{0,200}\\s+on(?:load|error|click|mouseover|focus|blur|input|change|submit)=["\\x27][^"]{0,200}(?:eval\\s*\\(|alert\\s*\\(|fetch\\s*\\(|XMLHttpRequest|document\\.cookie|document\\.write\\s*\\(|window\\.location\\s*=|location\\.href\\s*=|localStorage|sessionStorage|atob\\s*\\(|new\\s+Function\\s*\\(|String\\.fromCharCode)[^"]{0,200}["\\x27]', 'high', 'HTML element with JavaScript event handler attribute whose body contains a known XSS sink (eval/fetch/cookie/storage/etc) — excludes benign '),
+    ('(?:href|src|action|formaction|srcdoc|data)\\s*=\\s*["\\x27]?\\s*javascript:[^\\s"]{1,500}', 'high', 'javascript: URI scheme in attribute value — triggers on click/load'),
+    ('(?:output|return|emit|print|include|embed|render|inject)\\s+(?:the\\s+)?(?:following\\s+)?(?:html|script|payload)\\s*[:\\n]\\s*<(?:script|img|svg|iframe)[^>]{0,200}(?:alert|eval|fetch|XMLHttpRequest|document\\.cookie|localStorage)', 'high', 'Instruction to emit HTML/script payload containing common XSS sinks'),
+    ('<(?:script\\b(?![^>]*(?:\\bsetup\\b|\\blang[\\s=]))|iframe|svg)\\b[^>]*>[^<]{0,200}(?:eval\\s*\\(|alert\\s*\\(|document\\.cookie|window\\.location\\s*=|fetch\\s*\\(|XMLHttpRequest)', 'high', 'Script/iframe/SVG block containing known XSS sink functions'),
+]

@@ -1,0 +1,9 @@
+"""tool-poisoning: schema-enumeration  (5 patterns)"""
+
+PATTERNS = [
+    ('(?i)(?:list|show|give|tell\\s+me|enumerate)\\s+(?:me\\s+)?(?:all\\s+)?(?:the\\s+)?(?:internal|hidden|admin(?:-only)?|privileged?|every)?\\s*(?:functions?\\s+or\\s+tools?|tools?\\s+(?:you\\s+can\\s+call|or\\s+functions?)|internal\\s+(?:functions?|tools?|api\\s+endpoints?))[^.]{0,80}(?:you\\s+can\\s+call|admin-only|including\\s+(?:any\\s+)?admin|with\\s+their\\s+parameters|access\\s+to)', 'high', "Request to enumerate the agent's own internal/admin tools or functions"),
+    ('(?i)what\\s+internal\\s+api\\s+endpoints[^.]{0,80}(?:access\\s+to|list\\s+them\\s+all|parameters)', 'high', 'Reconnaissance query for internal API endpoints and their parameters'),
+    ('(?i)<\\s*SYSTEM[^>]{0,60}(?:VERBOSE\\s+MODE|DEBUG\\s+MODE|LOG\\s+ALL\\s+TOOL)[^>]{0,140}(?:INPUT_SCHEMA|TOOL\\s+USE|CAPABILITY|SCHEMA)[^>]{0,40}>', 'high', 'Injected fake SYSTEM VERBOSE/DEBUG mode directive demanding tool schemas'),
+    ('(?i)(?:json\\s+array|array\\s+of\\s+objects)[\\s\\S]{0,100}(?:every|each|all)\\s+(?:\\w+\\s+){0,2}(?:operation|tool|function|endpoint)s?[\\s\\S]{0,180}\\binputs?\\b[\\s\\S]{0,60}(?:parameter|type|schema)', 'high', 'JSON-array-of-every-operation schema demand with inputs-to-types mapping'),
+    ("(?i)(?:don'?t\\s+(?:need\\s+to\\s+)?leave\\s+(?:anything|nothing|any\\s+(?:feature|tool|capability))\\s*(?:out)?)[^.]{0,160}(?:for\\s+security|trusted\\s+(?:analyst|qa)|performing\\s+qa|i'?m\\s+(?:the\\s+)?(?:ceo|admin|auditor))|(?:trusted\\s+analyst|performing\\s+qa|security\\s+audit)[^.]{0,160}(?:leave\\s+(?:anything|nothing)\\s+out|comprehensive\\s+(?:outline|list)\\s+of\\s+everything)", 'high', "Authority/QA framing with an exhaustive don't-leave-anything-out disclosure demand"),
+]

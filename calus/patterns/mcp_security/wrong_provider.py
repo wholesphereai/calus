@@ -1,0 +1,23 @@
+"""calus: wrong-provider  (19 patterns)"""
+
+PATTERNS = [
+    ('(?i)(?:tool_resolver|resolver|tool_selector)\\s*[:=]\\s*[\'"]?(?:first_match|last_match|random|round_robin)', 'low', 'mcp-wrong-provider-tool-execution-explicit-resolver-abuse: Detection of explicit resolver policies that can be exploited for wrong-provider '),
+    ('(?i)class\\s+ResolvePolicy\\b', 'low', 'mcp-wrong-provider-tool-execution-explicit-resolver-abuse: Detection of explicit resolver policies that can be exploited for wrong-provider '),
+    ('(?i)resolve_tool\\s*\\(\\s*[\'"]\\w+[\'"]', 'low', 'mcp-wrong-provider-tool-execution-explicit-resolver-abuse: Detection of explicit resolver policies that can be exploited for wrong-provider '),
+    ('(?i)\\b(?:tool|server)\\s*\\.\\s*(?:list|discover|resolve)\\s*\\(\\s*\\)', 'high', 'mcp-wrong-provider-tool-execution-multi-server: Detects code constructs that allow wrong-provider tool execution in MCP multi-server composi'),
+    ('(?i)\\b(?:tool|server)\\s*\\.\\s*select\\s*\\(\\s*\\[\'".{0,40}"\\]', 'high', 'mcp-wrong-provider-tool-execution-multi-server: Detects code constructs that allow wrong-provider tool execution in MCP multi-server composi'),
+    ('(?i)\\b(?:from|import)\\s+mcp\\s*\\.\\s*(?:resolver|selector|orchestrator)', 'high', 'mcp-wrong-provider-tool-execution-multi-server: Detects code constructs that allow wrong-provider tool execution in MCP multi-server composi'),
+    ('(?i)(?:from|import)\\s+.{0,40}\\btool[s]?\\b.{0,40}\\b(?:inject|replace|substitut|malicious|attacker|wrong.partner|wrong.server?)\\b', 'low', 'mcp-wrong-provider-tool-injection: Wrong-provider tool execution under multi-server composition in MCP allows an attacker to substitute a ma'),
+    ('(?i)\\.(?:tool|resource)\\s*\\(\\s*[\'"][^\'"]*\\b(?:inject|replace|substitut|malicious|attacker|wrong)\\b[^\'"]*[\'"]\\s*\\)', 'low', 'mcp-wrong-provider-tool-injection: Wrong-provider tool execution under multi-server composition in MCP allows an attacker to substitute a ma'),
+    ('(?i)(?:local|remote|global)_resolver.{0,40}(?:pick|choose|select).{0,40}tool.{0,40}(?:first|any|random|all)', 'low', 'mcp-wrong-provider-tool-injection: Wrong-provider tool execution under multi-server composition in MCP allows an attacker to substitute a ma'),
+    ('(?i)\\bmcpServers\\b[\\s\\S]{0,200}\\btools\\s*:\\s*\\[', 'medium', 'mcp-wrong-provider-tool-execution: Detects MCP server configurations allowing wrong-provider tool execution under multi-server composition. '),
+    ('(?i)\\bmcp_clients?\\s*\\([^)]*\\bservers\\s*:\\s*\\[', 'medium', 'mcp-wrong-provider-tool-execution: Detects MCP server configurations allowing wrong-provider tool execution under multi-server composition. '),
+    ('(?i)\\.(?:list_tools|get_tools|add_tool)\\s*\\(\\s*["\']?[\\w-]+["\']?\\s*\\)', 'low', 'mcp-wrong-provider-tool-execution: Detects multi-server composition where tool names collide and an adversary registers a malicious server t'),
+    ('(?i)(?:from|import)\\s+mcp_resolver\\b', 'low', 'mcp-wrong-provider-tool-execution: Detects multi-server MCP resolver logic that enables wrong-provider tool execution due to lack of mandato'),
+    ('(?i)\\bresolver\\.(?:select|resolve|lookup)\\s*\\(\\s*(?:tool|capability|action)', 'low', 'mcp-wrong-provider-tool-execution: Detects multi-server MCP resolver logic that enables wrong-provider tool execution due to lack of mandato'),
+    ('(?i)\\b(?:multi[-_]?server|multi[-_]?provider)\\b.{0,40}\\b(?:select|resolve|route)\\b.{0,40}\\btool\\b', 'low', 'mcp-wrong-provider-tool-execution: Detects multi-server MCP resolver logic that enables wrong-provider tool execution due to lack of mandato'),
+    ('(?i)(?:tool_resolver|resolver_policy|tool_selection).{0,60}(?:first_available|any_available|fallback_to_any|allow_any_server)', 'high', 'mcp-wrong-provider-tool-execution-resolver-policy: Detects MCP resolver policies that allow tool execution from a server that was not the or'),
+    ('(?i)(?:mcp|client)\\.(?:set_resolver|configure_resolver)\\s*\\(\\s*[\'"](?:first|any|fallback)', 'high', 'mcp-wrong-provider-tool-execution-resolver-policy: Detects MCP resolver policies that allow tool execution from a server that was not the or'),
+    ('(?i)MCP_SERVERS\\s*=\\s*\\[', 'low', 'mcp-wrong-provider-tool-execution-multi-server: Detection of multi-server configurations in MCP that could enable wrong-provider tool execut'),
+    ('(?i)\\bservers\\b.{0,40}\\btools\\b', 'low', 'mcp-wrong-provider-tool-execution-multi-server: Detection of multi-server configurations in MCP that could enable wrong-provider tool execut'),
+]

@@ -1,0 +1,28 @@
+"""calus: path_traversal  (24 patterns)"""
+
+PATTERNS = [
+    ('(?i)git_init.*path', 'critical', 'cve-2025-68143-git-init-path-traversal: The git_init tool in mcp-server-git allows creating Git repositories\nin arbitrary directories withou'),
+    ('(?i)def\\s+git_init\\s*\\(', 'critical', 'cve-2025-68143-git-init-path-traversal: The git_init tool in mcp-server-git allows creating Git repositories\nin arbitrary directories withou'),
+    ('(?i)name\\s*[=:]\\s*[\'"]git_init[\'"]', 'critical', 'cve-2025-68143-git-init-path-traversal: The git_init tool in mcp-server-git allows creating Git repositories\nin arbitrary directories withou'),
+    ('(?i)tool.*git_init', 'critical', 'cve-2025-68143-git-init-path-traversal: The git_init tool in mcp-server-git allows creating Git repositories\nin arbitrary directories withou'),
+    ('(?i)--repository.*\\$|--repository.*\\{', 'high', 'cve-2025-68145-repository-flag-bypass: Missing validation of the --repository flag allows path traversal\nattacks that bypass intended reposi'),
+    ('(?i)-C\\s+.*(?:user|input|param)', 'high', 'cve-2025-68145-repository-flag-bypass: Missing validation of the --repository flag allows path traversal\nattacks that bypass intended reposi'),
+    ('(?i)git.*-C.*(?:request|body|query)', 'high', 'cve-2025-68145-repository-flag-bypass: Missing validation of the --repository flag allows path traversal\nattacks that bypass intended reposi'),
+    ('(?i)repository.*=.*(?:args|params|input)', 'high', 'cve-2025-68145-repository-flag-bypass: Missing validation of the --repository flag allows path traversal\nattacks that bypass intended reposi'),
+    ('(?i)git\\s+-C\\s*\\$', 'high', 'cve-2025-68145-repository-flag-bypass: Missing validation of the --repository flag allows path traversal\nattacks that bypass intended reposi'),
+    ('(?i)-C\\s*\\$\\w+', 'high', 'cve-2025-68145-repository-flag-bypass: Missing validation of the --repository flag allows path traversal\nattacks that bypass intended reposi'),
+    ('(?i)git.*(?:init|clone).*(?:\\.ssh|credentials|aws|config)', 'critical', 'git-sensitive-directory-access: Git operation attempting to access or create repositories in\nsensitive system directories. This is a common '),
+    ('(?i)git.*(?:init|clone).*/(?:etc|root|home)', 'critical', 'git-sensitive-directory-access: Git operation attempting to access or create repositories in\nsensitive system directories. This is a common '),
+    ('(?i)git.*-C.*/(?:etc|var|usr)', 'critical', 'git-sensitive-directory-access: Git operation attempting to access or create repositories in\nsensitive system directories. This is a common '),
+    ('(?i)repository.*(?:~|\\.\\./\\.\\./)', 'critical', 'git-sensitive-directory-access: Git operation attempting to access or create repositories in\nsensitive system directories. This is a common '),
+    ('(readFile|readFileSync)\\s*\\(\\s*(file_?path|path|filename|input\\.\\w*path)', 'critical', 'path-traversal-file-read-with-unvalidated-path-par: '),
+    ('(writeFile|writeFileSync)\\s*\\(\\s*(file_?path|path|filename|input\\.\\w*path)', 'critical', 'path-traversal-file-write-with-unvalidated-path-pa: '),
+    ('open\\s*\\(\\s*(file_?path|path|filename|input\\.\\w*path)', 'critical', 'path-traversal-file-open-with-unvalidated-path-par: '),
+    ('Path\\s*\\(\\s*(file_?path|path|filename|input\\.get)', 'high', 'path-traversal-path-object-with-unvalidated-input: '),
+    ('\\.read_text\\s*\\(\\)|\\.read_bytes\\s*\\(\\)', 'medium', 'direct-file-read-without-path-validation: '),
+    ('(?<!realpath)(?<!resolve)(?<!abspath)\\s*(readFile|open|Path)\\s*\\([^)]*\\+', 'high', 'file-operation-with-string-concatenation-no-path-v: '),
+    ('os\\.path\\.(isfile|isdir|exists)\\s*\\([^)]*\\)(?:(?!realpath).){0,200}', 'medium', 'path-check-without-realpath-symlink-bypass: '),
+    ('f["\\\'][^"\\\']*\\{(file_?path|path|filename|input)', 'critical', 'path-traversal-f-string-with-unvalidated-path-inpu: '),
+    ('`[^`]*\\$\\{(file_?path|path|filename|input)', 'critical', 'path-traversal-template-literal-with-unvalidated-p: '),
+    ('(send_file|send_voice|download_media)\\s*\\([^)]*(?!allowed_dir|base_path|restrict)', 'high', 'file-operation-without-directory-restriction: '),
+]

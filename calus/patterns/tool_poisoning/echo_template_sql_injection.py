@@ -1,0 +1,9 @@
+"""tool-poisoning: echo-template-sql-injection  (5 patterns)"""
+
+PATTERNS = [
+    ('(?:i\\s+am\\s+(?:an?\\s+)?(?:administrator|admin|sysadmin|root|superuser)\\s+testing|when\\s+I\\s+prefix\\s+(?:a\\s+statement|(?:it\\s+)?with)\\s+["\\x27]?ECHO[\\s:]["\\x27]?)\\s*,?\\s*(?:you\\s+should\\s+)?(?:respond|reply|echo|output|repeat|return)\\s+(?:with\\s+)?exactly\\s+what\\s+follows', 'critical', 'llm-probe-framework ECHO_TEMPLATE admin preamble: "administrator testing echo — when prefixed with ECHO: respond exactly"'),
+    ('(?:^|\\n)\\s*ECHO\\s*:\\s*(?:\\{\\{[^}]{1,200}\\}\\}|[`$]\\([^)]{1,200}\\)|\\$\\{[^}]{1,200}\\}|<\\?(?:php|=)[^?]{1,200}\\?>|import\\s+os|__import__|subprocess|eval\\s*\\(|exec\\s*\\()', 'critical', 'ECHO: prefix followed by template expression, command substitution, or code execution payload'),
+    ('(?:run|execute|perform|process)\\s+(?:the\\s+)?following\\s+SQL\\s+(?:query|command|statement)\\s+exactly\\s*:\\s*(?:DROP|DELETE|INSERT|UPDATE|ALTER|TRUNCATE|CREATE|EXEC|EXECUTE|xp_cmdshell|INTO\\s+OUTFILE)\\b', 'critical', 'SQL command injection via LLM — "run the following SQL query exactly: DROP/DELETE/..."'),
+    ('\\{\\{[\\s\\r\\n]*(?:config\\b|self\\b|request\\b|g\\b|app\\b|import\\s+os|__import__|lipsum\\.__globals__|["\']{1,2}\\.__class__\\.__mro__|\\d+\\s*[*]\\s*\\d+)[^}]{0,100}\\}\\}', 'critical', 'Jinja2 / template expression containing known SSTI payloads — keywords anchored immediately after {{ (only whitespace between) to avoid matc'),
+    ('reply\\s+(?:with\\s+)?["\\x27]?SUCCESS["\\x27]?\\s+if\\s+(?:the\\s+)?(?:query|command)\\s+succeeds?\\s+or\\s+["\\x27]?FAILURE["\\x27]?\\s+if\\s+(?:it\\s+)?fails?', 'critical', 'llm-probe-framework SQL_EXACT_TEMPLATE command-result-reporting instruction in model output — confirms SQL injection is being executed'),
+]

@@ -1,0 +1,17 @@
+"""tool-poisoning: unauthorized-access  (13 patterns)"""
+
+PATTERNS = [
+    ('(\\.\\.[\\/\\\\]){2,}|\\.\\.[\\/\\\\][^\\s]*[\\/\\\\](etc|proc|root|sys|var|home|tmp|boot|dev|usr|opt|passwd|shadow|hosts)[\\/\\\\]?|~[\\/\\\\]\\.\\.[\\/\\\\]', 'high', 'Path traversal sequences targeting sensitive directories'),
+    ('(;|&&|\\|\\||\\$\\(|`|\\|\\s*\\w)\\s*.{0,50}(curl|wget|nc|ncat|bash|sh|zsh|python|ruby|perl|node|php|powershell|cmd|eval|exec|system|rm\\s+-|cat\\s+/etc|whoami|id\\b|uname|hostname|ifconfig|ipconfig|net\\s+user|net\\s+localgroup)', 'high', 'Shell metacharacter injection followed by dangerous commands'),
+    ('(?i)^(admin_|root_|sudo_|system_|internal_|debug_|maintenance_|privileged_|superuser_|__)', 'high', 'Tool names with privileged prefixes indicating unauthorized access'),
+    ('(?i)(list_tools|enumerate_tools|get_available|discover_tools|tool_schema|__list__|__tools__|__methods__|__dir__|get_all_functions|list_capabilities|show_tools|available_actions)', 'high', 'Tool enumeration attempts to discover available attack surface'),
+    ('(?i)(\'\\s*(OR|AND|UNION)\\s+[\'"]?\\d|"\\s*(OR|AND|UNION)\\s+[\'"]?\\d|\\b(UNION\\s+(ALL\\s+)?SELECT|INSERT\\s+INTO|UPDATE\\s+.*\\s+SET|DELETE\\s+FROM|DROP\\s+(TABLE|DATABASE)|ALTER\\s+TABLE|EXEC(UTE)?\\s+|xp_cmdshell)\\b|;\\s*(DROP|DELETE|INSERT|UPDATE|ALTER|EXEC)\\b)', 'high', 'SQL injection patterns in tool parameters'),
+    ('(?i)(\\$\\{?\\w*(KEY|TOKEN|SECRET|PASSWORD|PASS|PWD|CREDENTIAL|AUTH|API_KEY|ACCESS_KEY|PRIVATE)\\w*\\}?|process\\.env\\.|os\\.environ|System\\.getenv|ENV\\[|getenv\\s*\\()', 'high', 'Attempts to extract environment variables containing secrets'),
+    ('(?i)([\\/\\\\](etc[\\/\\\\](passwd|shadow|sudoers|ssh[\\/\\\\]|ssl[\\/\\\\])|proc[\\/\\\\](self[\\/\\\\]|\\d+[\\/\\\\])(environ|cmdline|maps|fd)|root[\\/\\\\]\\.(bash_history|ssh)|\\.env|\\.git[\\/\\\\]config|\\.aws[\\/\\\\]credentials|\\.ssh[\\/\\\\](id_rsa|authorized_keys)|wp-config\\.php|\\.htpasswd|\\.netrc|\\.pgpass))', 'high', 'Access to known sensitive files (credentials, config, keys)'),
+    ('(\\{\\{.*?(config|self|request|__class__|__builtins__|__import__|lipsum|cycler|joiner|namespace).*?\\}\\}|\\$\\{.*?(Runtime|ProcessBuilder|getClass|forName|exec).*?\\}|<%.*?(Runtime|exec|system|eval).*?%>)', 'high', 'Server-side template injection (Jinja2, Java EL, JSP)'),
+    ('(?i)(O:\\d+:\\s*"|a:\\d+:\\s*\\{|rO0ABX|aced0005|\\{\\s*"__type"\\s*:|\\{\\s*"\\$type"\\s*:|yaml\\.unsafe_load|pickle\\.loads|unserialize\\s*\\(|Marshal\\.load|ObjectInputStream)', 'high', 'Serialized object injection (PHP, Java, Python pickle, YAML, .NET)'),
+    ('(?i)(\\*\\)\\(|\\)\\(|\\|\\s*\\(|&\\s*\\(|\\(\\|\\(|\\(&\\().*?(objectClass|uid|cn|sn|mail|userPassword|memberOf)\\s*[=~<>]', 'high', 'LDAP filter injection patterns'),
+    ('(?i)(@|%40)(localhost|127\\.0\\.0\\.1|0\\.0\\.0\\.0|internal|intranet|corp|private)|\\\\@(localhost|127)|url\\s*=\\s*[\'"]?(file|gopher|dict|ftp|ldap|tftp)://', 'high', 'URL manipulation to access internal resources via @ notation or exotic protocols'),
+    ('(?i)(\\*\\s*;|\\*\\s*&&|\\*\\s*\\|\\||\\bfind\\s+/\\s+-name|\\bfind\\s+/\\s+-exec|\\bxargs\\s+|\\bglob\\s*\\(.{0,20}\\*\\*)', 'high', 'Wildcard and glob patterns combined with shell execution'),
+    ('(?i)(admin\\s*=\\s*(true|1|yes)|role\\s*=\\s*(admin|root|superuser|system)|is_admin\\s*=\\s*(true|1)|privilege\\s*=\\s*(elevated|admin|root|full)|permission\\s*=\\s*(all|\\*|admin|root)|access_level\\s*=\\s*(admin|root|full|unlimited))', 'high', 'Parameter pollution attempting to set admin/elevated privilege flags'),
+]

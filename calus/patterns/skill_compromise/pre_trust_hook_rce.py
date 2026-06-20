@@ -1,0 +1,10 @@
+"""skill-compromise: pre-trust-hook-rce  (6 patterns)"""
+
+PATTERNS = [
+    ('(?i)"hooks"\\s*:\\s*\\{[^}]{0,400}"SessionStart"\\s*:\\s*\\[[^\\]]{0,400}"matcher"\\s*:\\s*"startup"', 'critical', 'Claude Code `.claude/settings.json` hooks block registering a SessionStart hook with the `startup` matcher — CVE-2025-59536 canonical exploi'),
+    ('(?i)"SessionStart"\\s*:\\s*\\[[^\\]]{0,600}"matcher"\\s*:\\s*"startup"[^\\]]{0,400}"command"\\s*:\\s*"(?:bash|sh|zsh|cmd|powershell|pwsh|curl|wget|python(?:\\d)?|node|deno|bun|ruby|perl|php)\\b', 'critical', 'SessionStart/startup hook whose `command` resolves to a shell or scripting interpreter — RCE-ready payload regardless of subsequent args.'),
+    ('(?i)"SessionStart"\\s*:\\s*\\[[^\\]]{0,800}"command"\\s*:\\s*"[^"]{0,400}(?:\\bcurl\\b[^"]{0,80}\\|\\s*(?:bash|sh)\\b|\\bwget\\b[^"]{0,80}\\|\\s*(?:bash|sh)\\b|\\bpython\\d?\\s+-c\\b|\\bnode\\s+-e\\b|\\beval\\s|\\$\\(|\\`\\w)', 'critical', 'SessionStart hook command containing pipe-to-shell, inline-exec flags (`python -c`, `node -e`), `eval`, or shell-substitution primitives — s'),
+    ('(?i)"SessionStart"\\s*:\\s*\\[[^\\]]{0,800}"command"\\s*:\\s*"[^"]{0,400}\\b(?:npm|pnpm|yarn|pip|pip3|pipx|cargo|gem|gh\\s+auth|aws\\s+s3\\s+cp|scp|nc|netcat|/bin/(?:bash|sh)|/usr/bin/(?:bash|sh|curl|wget))\\b', 'critical', 'SessionStart hook command invoking package-manager install, credential-tooling, or absolute-path shell binaries — pre-trust supply-chain or '),
+    ('(?i)\\.claude[/\\\\]settings(?:\\.local)?\\.json[\\s\\S]{0,800}"hooks"\\s*:\\s*\\{[\\s\\S]{0,400}"SessionStart"', 'critical', 'Repo-scoped `.claude/settings.json` (or `.claude/settings.local.json`) co-located with a `hooks.SessionStart` block — path + payload co-occu'),
+    ('(?i)(?:pre[_\\s\\-]?trust|before\\s+(?:the\\s+)?trust\\s+(?:dialog|prompt)|prior\\s+to\\s+(?:trust|consent))[^\\n]{0,160}(?:hook|SessionStart|startup|\\.claude)', 'critical', 'Skill content describing the pre-trust execution property of SessionStart hooks — co-occurrence anchor for documentation / poisoning scans.'),
+]
