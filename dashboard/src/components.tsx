@@ -1,5 +1,54 @@
-import { useState } from "react";
-import type { Stats, Threat, Bucket, LogRow, AgentRow, KeyRow } from "./types";
+import { useState, type ReactNode } from "react";
+import type { Stats, Threat, Bucket, LogRow, CallRow, AgentRow, KeyRow } from "./types";
+
+/* ===================== mini markdown (bold / lists / paragraphs) ===================== */
+function inline(text: string): ReactNode[] {
+  return text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g).map((p, i) => {
+    if (p.startsWith("**") && p.endsWith("**")) return <strong key={i}>{p.slice(2, -2)}</strong>;
+    if (p.startsWith("`") && p.endsWith("`")) return <code key={i}>{p.slice(1, -1)}</code>;
+    return <span key={i}>{p}</span>;
+  });
+}
+export function Markdown({ text }: { text: string }) {
+  const out: ReactNode[] = [];
+  let list: string[] = [];
+  const flush = (k: number) => {
+    if (list.length) { out.push(<ul key={"ul" + k}>{list.map((l, j) => <li key={j}>{inline(l)}</li>)}</ul>); list = []; }
+  };
+  text.split("\n").forEach((ln, i) => {
+    const m = ln.match(/^\s*(?:[-*]|\d+\.)\s+(.*)/);
+    if (m) list.push(m[1]);
+    else { flush(i); if (ln.trim()) out.push(<p key={i}>{inline(ln)}</p>); }
+  });
+  flush(9999);
+  return <div className="md">{out}</div>;
+}
+
+/* group raw input/output rows into one row per call (per trace) */
+export function groupCalls(logs: LogRow[]): CallRow[] {
+  const map = new Map<string, CallRow>();
+  const order: string[] = [];
+  for (const r of logs) {
+    const tid = r.trace_id || r.id;
+    let c = map.get(tid);
+    if (!c) {
+      c = { trace_id: tid, ts: r.ts, agent: r.agent, model: r.model, provider: r.provider,
+            flagged: false, confidence: 0, owasp: null, owasp_name: null, prompt: null,
+            response: null, tools: [], tool_calls: [], reasons: [], tiers: [], findings: [], latency_ms: null };
+      map.set(tid, c); order.push(tid);
+    }
+    c.flagged = c.flagged || r.flagged;
+    if ((r.confidence || 0) > (c.confidence || 0)) c.confidence = r.confidence;
+    if (r.owasp && !c.owasp) { c.owasp = r.owasp; c.owasp_name = r.owasp_name; }
+    if (r.direction === "input") { c.prompt = r.text_redacted; c.ts = r.ts; if (r.tiers.length) c.tiers = r.tiers; }
+    if (r.direction === "output") { c.response = r.text_redacted; c.latency_ms = r.latency_ms; }
+    if (r.tools.length) c.tools = Array.from(new Set([...c.tools, ...r.tools]));
+    if (r.tool_calls.length) c.tool_calls = [...c.tool_calls, ...r.tool_calls];
+    c.reasons = Array.from(new Set([...c.reasons, ...r.reasons]));
+    c.findings = Array.from(new Set([...c.findings, ...r.findings]));
+  }
+  return order.map((t) => map.get(t)!);
+}
 
 /* ===================== helpers ===================== */
 function fmtTime(ts: number): string {
@@ -126,28 +175,27 @@ export function Threats({ threats }: { threats: Threat[] }) {
   );
 }
 
-/* ===================== live calls ===================== */
-export function LogsTable({ rows, onPick }: { rows: LogRow[]; onPick: (r: LogRow) => void }) {
-  if (rows.length === 0) return <div className="empty">No calls yet. Send a request through the proxy.</div>;
+/* ===================== calls (one row per request) ===================== */
+export function CallsTable({ calls, onPick }: { calls: CallRow[]; onPick: (c: CallRow) => void }) {
+  if (calls.length === 0) return <div className="empty">No calls yet. Send a request through the proxy.</div>;
   return (
     <table>
       <thead>
-        <tr><th>Time</th><th>Agent</th><th>Dir</th><th>Model</th><th>Verdict</th><th>Conf</th><th>OWASP</th><th>Tools</th></tr>
+        <tr><th>Time</th><th>Agent</th><th>Prompt</th><th>Model</th><th>Verdict</th><th>Conf</th><th>Tools</th></tr>
       </thead>
       <tbody>
-        {rows.map((r) => (
-          <tr key={r.id} onClick={() => onPick(r)}>
-            <td className="mono" style={{ color: "var(--muted)", fontSize: 12 }}>{fmtTime(r.ts)}</td>
-            <td className="mono" style={{ fontSize: 12 }}>{r.agent || "—"}</td>
-            <td><span className="dir">{r.direction}</span></td>
-            <td><div className="model">{r.model || "—"}</div><div className="prov">{r.provider}</div></td>
-            <td><Tag flagged={r.flagged} /></td>
-            <td className="conf">{r.confidence != null ? r.confidence.toFixed(2) : "—"}</td>
-            <td>{r.owasp ? <span className="owasp-pill">{r.owasp}</span> : <span style={{ color: "var(--muted-2)" }}>—</span>}</td>
+        {calls.map((c) => (
+          <tr key={c.trace_id} onClick={() => onPick(c)}>
+            <td className="mono" style={{ color: "var(--muted)", fontSize: 12 }}>{fmtTime(c.ts)}</td>
+            <td className="mono" style={{ fontSize: 12 }}>{c.agent || "—"}</td>
+            <td className="prompt-cell">{c.prompt || <span style={{ color: "var(--muted-2)" }}>—</span>}</td>
+            <td><div className="model">{(c.model || "—").split("/").pop()}</div><div className="prov">{c.provider}</div></td>
+            <td><Tag flagged={c.flagged} /></td>
+            <td className="conf">{c.confidence != null ? c.confidence.toFixed(2) : "—"}</td>
             <td>
               <div className="toolrow">
-                {r.tool_calls.length ? r.tool_calls.map((t, i) => <span className="toolchip" key={i}>{t.name}</span>)
-                  : r.tools.length ? r.tools.map((t) => <span className="toolchip" key={t}>{t}</span>)
+                {c.tool_calls.length ? c.tool_calls.map((t, i) => <span className="toolchip" key={i}>{t.name}</span>)
+                  : c.tools.length ? c.tools.map((t) => <span className="toolchip" key={t}>{t}</span>)
                   : <span style={{ color: "var(--muted-2)" }}>—</span>}
               </div>
             </td>
@@ -189,7 +237,9 @@ function TraceTimeline({ rows }: { rows: LogRow[] }) {
       {rows.map((r) => (
         <div className={"tnode" + (r.flagged ? " flag" : "")} key={r.id}>
           <div className="lbl">{r.direction === "input" ? "▸ user / prompt" : "◂ model output"} · {fmtTime(r.ts)} {r.flagged && "· FLAGGED"}</div>
-          {r.text_redacted && <div className="body trace-text">{r.text_redacted}</div>}
+          {r.text_redacted && (r.direction === "output"
+            ? <div className="body"><Markdown text={r.text_redacted} /></div>
+            : <div className="body trace-text">{r.text_redacted}</div>)}
           {r.tool_calls.map((t, i) => (
             <div className="tool-line" key={i}>
               <span className="nm">{t.name}()</span>
@@ -205,32 +255,31 @@ function TraceTimeline({ rows }: { rows: LogRow[] }) {
   );
 }
 
-export function LogDetail({ row, trace, onClose }: { row: LogRow; trace: LogRow[]; onClose: () => void }) {
+export function LogDetail({ call, trace, onClose }: { call: CallRow; trace: LogRow[]; onClose: () => void }) {
   return (
     <>
       <div className="drawer-bg" onClick={onClose} />
       <div className="drawer">
         <button className="close" onClick={onClose}>×</button>
         <h3>Call detail</h3>
-        <div style={{ marginBottom: 14 }}><Tag flagged={row.flagged} /></div>
-        <div className="row"><span className="k">Agent</span><span className="mono">{row.agent || "—"}</span></div>
-        <div className="row"><span className="k">Model</span><span className="mono">{row.model || "—"} · {row.provider}</span></div>
-        <div className="row"><span className="k">Confidence</span><span className="mono">{row.confidence != null ? row.confidence.toFixed(3) : "—"}</span></div>
-        <div className="row"><span className="k">OWASP</span><span>{row.owasp ? row.owasp + " · " + (row.owasp_name || "") : "—"}</span></div>
-        <div className="row"><span className="k">Tiers run</span><span className="mono" style={{ fontSize: 12 }}>{row.tiers.join(" → ") || "—"}</span></div>
-        <div className="row"><span className="k">Latency</span><span className="mono">{row.latency_ms != null ? row.latency_ms.toFixed(0) + " ms" : "—"}</span></div>
+        <div style={{ marginBottom: 14 }}><Tag flagged={call.flagged} /></div>
+        <div className="row"><span className="k">Agent</span><span className="mono">{call.agent || "—"}</span></div>
+        <div className="row"><span className="k">Model</span><span className="mono">{call.model || "—"} · {call.provider}</span></div>
+        <div className="row"><span className="k">Confidence</span><span className="mono">{call.confidence != null ? call.confidence.toFixed(3) : "—"}</span></div>
+        {call.owasp && <div className="row"><span className="k">OWASP</span><span>{call.owasp} · {call.owasp_name || ""}</span></div>}
+        <div className="row"><span className="k">Latency</span><span className="mono">{call.latency_ms != null ? call.latency_ms.toFixed(0) + " ms" : "—"}</span></div>
 
-        {row.findings.length > 0 && (
+        {call.findings.length > 0 && (
           <div className="blk"><div className="t">Secrets / PII found (redacted)</div>
-            <div>{row.findings.map((f) => <span className="finding" key={f}>{f}</span>)}</div></div>
+            <div>{call.findings.map((f) => <span className="finding" key={f}>{f}</span>)}</div></div>
         )}
-        {row.reasons.length > 0 && (
+        {call.reasons.length > 0 && (
           <div className="blk"><div className="t">Why it flagged</div>
-            {row.reasons.map((r, i) => <div className="reason" key={i}>{r}</div>)}</div>
+            {call.reasons.map((r, i) => <div className="reason" key={i}>{r}</div>)}</div>
         )}
         <div className="blk">
-          <div className="t">Full trace — request → tool calls → output</div>
-          {trace.length ? <TraceTimeline rows={trace} /> : <div className="empty">single record</div>}
+          <div className="t">Conversation — request → tool calls → output</div>
+          {trace.length ? <TraceTimeline rows={trace} /> : <div className="empty">no trace</div>}
         </div>
       </div>
     </>

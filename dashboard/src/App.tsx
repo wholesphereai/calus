@@ -1,9 +1,9 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { api } from "./api";
-import type { Stats, Threat, Bucket, LogRow, AgentRow, KeyRow } from "./types";
+import type { Stats, Threat, Bucket, LogRow, CallRow, AgentRow, KeyRow } from "./types";
 import {
-  StatCards, TimeChart, Threats, LogsTable, LogDetail, AgentsTable,
-  KeysPanel, ConnectPanel, TokenGate, Icon,
+  StatCards, TimeChart, Threats, CallsTable, LogDetail, AgentsTable,
+  KeysPanel, ConnectPanel, TokenGate, Icon, groupCalls,
 } from "./components";
 
 const TOKEN_KEY = "calus_admin_token";
@@ -35,9 +35,11 @@ export default function App() {
   const [keys, setKeys] = useState<KeyRow[]>([]);
   const [onlyFlagged, setOnlyFlagged] = useState(false);
   const [agentFilter, setAgentFilter] = useState<string>("");
-  const [picked, setPicked] = useState<LogRow | null>(null);
+  const [picked, setPicked] = useState<CallRow | null>(null);
   const [trace, setTrace] = useState<LogRow[]>([]);
   const [live, setLive] = useState(true);
+
+  const calls = useMemo(() => groupCalls(logs), [logs]);
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
@@ -82,10 +84,10 @@ export default function App() {
   }, [token]);
   useEffect(() => { if (authed && view === "keys") loadKeys(); }, [authed, view, loadKeys]);
 
-  const pick = async (r: LogRow) => {
-    setPicked(r); setTrace([]);
-    if (r.trace_id) {
-      try { setTrace(await api.trace(token, r.trace_id)); } catch { /* single record */ }
+  const pick = async (c: CallRow) => {
+    setPicked(c); setTrace([]);
+    if (c.trace_id) {
+      try { setTrace(await api.trace(token, c.trace_id)); } catch { /* no trace */ }
     }
   };
 
@@ -163,8 +165,8 @@ export default function App() {
               </div>
             </div>
             <div className="card">
-              <div className="panel-head"><h3>Recent calls</h3><span className="hint">latest 80</span></div>
-              <LogsTable rows={logs.slice(0, 12)} onPick={pick} />
+              <div className="panel-head"><h3>Recent calls</h3><span className="hint">one row per request</span></div>
+              <CallsTable calls={calls.slice(0, 12)} onPick={pick} />
             </div>
           </>
         )}
@@ -184,14 +186,14 @@ export default function App() {
             </div>
             <div className="card" style={{ marginTop: 16 }}>
               <div className="panel-head"><h3>Flagged calls</h3></div>
-              <LogsTable rows={logs.filter((l) => l.flagged)} onPick={pick} />
+              <CallsTable calls={calls.filter((c) => c.flagged)} onPick={pick} />
             </div>
           </>
         )}
 
         {view === "live" && (
           <div className="card">
-            <LogsTable rows={logs} onPick={pick} />
+            <CallsTable calls={calls} onPick={pick} />
           </div>
         )}
 
@@ -208,7 +210,7 @@ export default function App() {
         {view === "connect" && <ConnectPanel base={api.base} token={token} />}
       </main>
 
-      {picked && <LogDetail row={picked} trace={trace} onClose={() => setPicked(null)} />}
+      {picked && <LogDetail call={picked} trace={trace} onClose={() => setPicked(null)} />}
     </div>
   );
 }

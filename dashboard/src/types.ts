@@ -48,6 +48,27 @@ export interface LogRow {
   findings: string[];
 }
 
+// one logical call = the input + output of a single request, merged into one row
+export interface CallRow {
+  trace_id: string;
+  ts: number;
+  agent: string | null;
+  model: string | null;
+  provider: string | null;
+  flagged: boolean;
+  confidence: number | null;
+  owasp: string | null;
+  owasp_name: string | null;
+  prompt: string | null;
+  response: string | null;
+  tools: string[];
+  tool_calls: ToolCall[];
+  reasons: string[];
+  tiers: string[];
+  findings: string[];
+  latency_ms: number | null;
+}
+
 export interface AgentRow {
   agent: string;
   calls: number;

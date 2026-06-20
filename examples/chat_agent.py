@@ -89,6 +89,8 @@ def run_tool(name: str, raw_args: str) -> str:
         args = json.loads(raw_args or "{}")
     except Exception:
         args = {}
+    if not isinstance(args, dict):       # Groq sometimes returns arguments as "null"
+        args = {}
     fn = TOOL_FNS.get(name)
     return json.dumps(fn(**args)) if fn else json.dumps({"error": "unknown tool"})
 
