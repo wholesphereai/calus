@@ -15,6 +15,28 @@ _by **Wholesphere**_
 
 ---
 
+## 🛡️ Benchmark — catches injections out of the box
+
+Calus ships with **27,871 detection patterns** across **41 rule packs**, mapped to
+the **OWASP LLM Top 10 (2025)**. Scored against the
+[AgentDojo](https://github.com/ethz-spylab/agentdojo) prompt-injection benchmark
+(ETH Zurich) — a **held-out** set, with **zero tuning**:
+
+| Operating point          |  Recall  | Precision |  F1  |
+|--------------------------|:--------:|:---------:|:----:|
+| Engine default verdict   |   73%    |    97%    | 84%  |
+| Confidence ≥ 0.20        | **95%**  |    92%    | 94%  |
+
+```bash
+python -m calus.benchmark.external.agentdojo.build      # generate the test set
+python -m calus.benchmark.harness --dataset agentdojo   # score the real engine
+```
+
+Add `--live` (after `pip install agentdojo`) to score the current upstream suite.
+Details → [`calus/benchmark/external/agentdojo`](calus/benchmark/external/agentdojo).
+
+---
+
 ## What you get
 
 - **Drop-in proxy** — point any OpenAI-compatible app at Calus by setting one
@@ -52,17 +74,26 @@ your app ──(your key)──▶  CALUS PROXY  ──(same key)──▶  Open
 
 ---
 
+> **Setup is fast.** Installing dependencies takes ~1–2 min the first time; after
+> that the proxy boots and warms its 27k-pattern engine in **~5 seconds**, then
+> scans in ~15 ms. No model downloads, no GPU.
+
 ## Quick start — Docker (recommended)
 
 ```bash
 git clone https://github.com/wholesphereai/calus.git
 cd calus
-cp proxy/.env.example proxy/.env     # set CALUS_ADMIN_TOKEN + your provider keys
+cp proxy/.env.example proxy/.env     # add your provider keys (admin token optional)
 docker compose up --build
 ```
 
-- Dashboard → http://localhost:5173 (paste the `CALUS_ADMIN_TOKEN` from `proxy/.env`)
+- Dashboard → http://localhost:5173
 - Proxy     → http://localhost:8000
+
+**Admin token:** you don't have to set one. If `CALUS_ADMIN_TOKEN` is left blank,
+the proxy **auto-generates** a token and **prints it in the startup logs** — copy
+that into the dashboard. Set your own in `proxy/.env` only if you want it stable
+across restarts.
 
 ## Quick start — local (no Docker)
 
@@ -78,8 +109,8 @@ python -m pip install -e calus
 # 2) proxy  (terminal 1)
 cd proxy
 python -m pip install -r requirements.txt
-cp .env.example .env          # edit: admin token + provider keys
-python -m uvicorn calus_proxy.main:app --port 8000
+cp .env.example .env          # add provider keys; admin token auto-generates if blank
+python -m uvicorn calus_proxy.main:app --port 8000   # prints the admin token on first run
 
 # 3) dashboard  (terminal 2)
 cd dashboard
@@ -120,11 +151,34 @@ copy-paste snippets for the OpenAI SDK, Claude Code, LangChain, and curl.
 
 ---
 
+## Add provider keys — three ways
+
+You can let callers send their own key per request (BYOK, nothing stored), or save
+keys in Calus's **encrypted vault** so you don't re-paste them. Saved keys are
+encrypted at rest, shown masked, and used to forward upstream when a request
+doesn't carry its own.
+
+1. **Dashboard** → the **API keys** page: pick a provider, paste the key, Add.
+   Reveal / delete any time.
+2. **Command line** (same vault):
+   ```bash
+   cd proxy
+   python -m calus_proxy.keys add --provider groq --key gsk_... --label prod
+   python -m calus_proxy.keys list
+   python -m calus_proxy.keys delete <id>
+   ```
+3. **Environment** → put `OPENAI_API_KEY`, `GROQ_API_KEY`, … in `proxy/.env`
+   (read by LiteLLM, never stored in the log).
+
+Resolution order when forwarding: caller's bearer key → saved vault key → env key.
+
+---
+
 ## Configuration (`proxy/.env`)
 
 | Variable               | Default              | Meaning                                            |
 |------------------------|----------------------|----------------------------------------------------|
-| `CALUS_ADMIN_TOKEN`    | _(generated)_        | Token the dashboard/API must present               |
+| `CALUS_ADMIN_TOKEN`    | _(auto-generated & printed)_ | Token the dashboard/API must present. Leave blank to auto-generate one at startup |
 | `CALUS_CORS_ORIGINS`   | `http://localhost:5173` | Allowed dashboard origins                       |
 | `CALUS_DB_PATH`        | `calus_proxy.db`     | SQLite log store path                              |
 | `CALUS_REDACT_STORE`   | `1`                  | Redact secrets/PII before storing                  |
@@ -135,21 +189,6 @@ copy-paste snippets for the OpenAI SDK, Claude Code, LangChain, and curl.
 | `OPENAI_API_KEY`, `GROQ_API_KEY`, … | —       | Upstream keys (read by LiteLLM, never stored)      |
 
 ---
-
-## Benchmark — AgentDojo
-
-Measure detection against [AgentDojo](https://github.com/ethz-spylab/agentdojo)
-(ETH Zurich) prompt-injection attacks:
-
-```bash
-python -m calus.benchmark.external.agentdojo.build    # generate the test set
-python -m calus.benchmark.harness --dataset agentdojo # score the engine
-```
-
-Reference (bundled set, 108 injections + 20 benign): **recall ≈ 73% / precision
-≈ 97%** at the default verdict, up to **95% recall** at `confidence ≥ 0.20`. Add
-`--live` (after `pip install agentdojo`) to score the current upstream suite. See
-[`calus/benchmark/external/agentdojo`](calus/benchmark/external/agentdojo).
 
 ## Security
 

@@ -64,8 +64,9 @@ def decrypt(token: str) -> str:
 
 
 def mask(secret: str) -> str:
-    """Short, safe preview for display, e.g. 'sk-…b1F0' (never the full key)."""
+    """Short, safe preview for display, e.g. 'sk-...b1F0' (never the full key).
+    ASCII-only so it renders the same in the dashboard and any terminal."""
     s = secret.strip()
     if len(s) <= 8:
-        return "•" * len(s)
-    return f"{s[:3]}…{s[-4:]}"
+        return "*" * len(s)
+    return f"{s[:3]}...{s[-4:]}"

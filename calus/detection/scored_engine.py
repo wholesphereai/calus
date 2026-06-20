@@ -47,6 +47,9 @@ DEFAULT_BENIGN = [
 # adversarial probe to surface catastrophic backtracking during profiling
 REDOS_PROBE = ("a" * 40 + "!" * 40 + " " + "x," * 40 + "\\" * 20)
 
+# sentinel for a rule whose pattern fails to compile — never matches anything
+_NEVER = re.compile(r"(?!)")
+
 
 @dataclass
 class Rule:
@@ -82,16 +85,27 @@ class ScoredEngine:
 
     # ---------- loading ----------
     def add_rule(self, pattern, severity="medium", rule_id="", category=""):
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")          # nested-set FutureWarnings are quarantined separately
-            try:
-                rx = re.compile(pattern)
-            except re.error:
-                return False                          # uncompilable -> skipped (and counted by caller)
+        # Regexes are compiled LAZILY (see _compiled) on first use, not here —
+        # eagerly compiling ~28k patterns dominated startup (~20s). Each scan only
+        # touches a small candidate subset, so compilation amortizes across scans.
         spec = self._specificity(pattern)
         w = SEVERITY_WEIGHT.get(str(severity).lower(), 1.0) * spec
-        self.rules.append(Rule(pattern, str(severity).lower(), rule_id, category, rx, w))
+        self.rules.append(Rule(pattern, str(severity).lower(), rule_id, category, None, w))
         return True
+
+    def _compiled(self, r):
+        """Compile a rule's regex on first use and cache it. An uncompilable
+        pattern is cached as a never-match sentinel so it isn't retried."""
+        rx = r.regex
+        if rx is None:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")      # nested-set FutureWarnings handled in calibration
+                try:
+                    rx = re.compile(r.pattern)
+                except re.error:
+                    rx = _NEVER
+            r.regex = rx
+        return rx
 
     @staticmethod
     def _specificity(pattern: str) -> float:
@@ -113,7 +127,7 @@ class ScoredEngine:
         for r in self.rules:
             t0 = time.perf_counter()
             try:
-                r.regex.search(REDOS_PROBE)
+                self._compiled(r).search(REDOS_PROBE)
             except Exception:
                 pass
             if time.perf_counter() - t0 > self.redos_budget:
@@ -123,10 +137,10 @@ class ScoredEngine:
             if r.quarantined:
                 continue
             try:
-                if r.regex.search(""):
+                if self._compiled(r).search(""):
                     r.quarantined = True; r.quarantine_reason = "matches_empty"; continue
                 for b in self.benign:
-                    if r.regex.search(b):
+                    if self._compiled(r).search(b):
                         r.quarantined = True; r.quarantine_reason = "fires_on_benign"; break
             except Exception:
                 r.quarantined = True; r.quarantine_reason = "error"
@@ -224,7 +238,7 @@ class ScoredEngine:
                 break                                  # hard time budget -> never hang the caller
             r = self.rules[i]
             try:
-                if r.regex.search(text):
+                if self._compiled(r).search(text):
                     score += r.weight
                     matched.append((r.rule_id or r.pattern[:40], r.severity, r.weight, r.category))
             except Exception:
