@@ -276,6 +276,9 @@ function TraceTimeline({ rows }: { rows: LogRow[] }) {
 }
 
 export function LogDetail({ call, trace, onClose }: { call: CallRow; trace: LogRow[]; onClose: () => void }) {
+  const matchedReason = call.reasons.find((r) => r.startsWith("matched text:"));
+  const matched = matchedReason ? matchedReason.replace(/^matched text:\s*/, "").replace(/^"|"$/g, "") : "";
+  const otherReasons = call.reasons.filter((r) => !r.startsWith("matched text:"));
   return (
     <>
       <div className="drawer-bg" onClick={onClose} />
@@ -296,7 +299,13 @@ export function LogDetail({ call, trace, onClose }: { call: CallRow; trace: LogR
         {call.flagged && (
           <div className="blk"><div className="t">Why it was flagged</div>
             <div className="flag-explain">{flagExplain(call)}</div>
-            {call.reasons.length > 0 && <div className="reason-tech mono">{call.reasons.join(" · ")}</div>}
+            {matched && (
+              <div className="matched-where">
+                <span className="k">Matched text</span>
+                <div className="hl">{matched}</div>
+              </div>
+            )}
+            {otherReasons.length > 0 && <div className="reason-tech mono">{otherReasons.join(" · ")}</div>}
           </div>
         )}
         <div className="blk">

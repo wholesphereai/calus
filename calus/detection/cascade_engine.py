@@ -115,6 +115,10 @@ class CascadeEngine:
         if t1.matched:
             top_cat = self._category_of(t1.matched)
             reasons.append(f"regex score {t1.score}")
+            # surface the exact text that triggered the top match (the "where")
+            snip = next((m[4] for m in t1.matched if len(m) > 4 and m[4]), "")
+            if snip:
+                reasons.append(f'matched text: "{snip}"')
 
         # Conditional decoders — only on real obfuscation signals
         has_b64 = re.search(r"[A-Za-z0-9+/]{20,}={0,2}", text) is not None

@@ -159,6 +159,9 @@ def _scan_and_store(text: str, direction: str, model: str, latency_ms=None,
         owasp = getattr(r, "owasp", "") or ""
         owasp_name = getattr(r, "owasp_name", "") or ""
         reasons = list(getattr(r, "reasons", []) or [])
+        # reasons can include the matched snippet of user text — redact it too
+        if settings.redact_stored_text:
+            reasons = [calus.redact(x).text for x in reasons]
         tiers = list(getattr(r, "tiers_run", []) or [])
         confidence = round(float(r.confidence), 3)
     else:

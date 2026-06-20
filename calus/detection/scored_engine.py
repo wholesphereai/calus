@@ -68,7 +68,7 @@ class Detection:
     flagged: bool
     score: float
     threshold: float
-    matched: list = field(default_factory=list)   # [(rule_id, severity, weight, category)]
+    matched: list = field(default_factory=list)   # [(rule_id, severity, weight, category, snippet)]
 
 
 class ScoredEngine:
@@ -238,9 +238,11 @@ class ScoredEngine:
                 break                                  # hard time budget -> never hang the caller
             r = self.rules[i]
             try:
-                if self._compiled(r).search(text):
+                m = self._compiled(r).search(text)
+                if m:
                     score += r.weight
-                    matched.append((r.rule_id or r.pattern[:40], r.severity, r.weight, r.category))
+                    snippet = (m.group(0) or "")[:80]
+                    matched.append((r.rule_id or r.pattern[:40], r.severity, r.weight, r.category, snippet))
             except Exception:
                 continue
         matched.sort(key=lambda x: -x[2])
