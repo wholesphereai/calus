@@ -63,4 +63,5 @@ export interface KeyRow {
   provider: string;
   label: string;
   masked: string;
+  source?: "vault" | "env";
 }

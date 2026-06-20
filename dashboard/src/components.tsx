@@ -114,7 +114,7 @@ export function Threats({ threats }: { threats: Threat[] }) {
     <div>
       {threats.map((t) => (
         <div className="threat-row" key={t.owasp}>
-          <div className="code">{t.owasp}</div>
+          <div className="owasp-code">{t.owasp}</div>
           <div className="meta">
             <div className="nm">{t.name || "Unmapped"}</div>
             <div className="bar"><span style={{ width: (t.count / max) * 100 + "%" }} /></div>
@@ -282,18 +282,30 @@ export function KeysPanel({ keys, onAdd, onReveal, onDelete }: {
           <table>
             <thead><tr><th>Provider</th><th>Label</th><th>Key</th><th></th></tr></thead>
             <tbody>
-              {keys.map((k) => (
-                <tr key={k.id} style={{ cursor: "default" }}>
-                  <td><span className="owasp-pill">{k.provider}</span></td>
-                  <td>{k.label || <span style={{ color: "var(--muted-2)" }}>—</span>}</td>
-                  <td className="mono" style={{ fontSize: 12.5 }}>{revealed[k.id] || k.masked}</td>
-                  <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-                    <button className="btn ghost sm" onClick={() => reveal(k.id)}>{revealed[k.id] ? "Hide" : "Reveal"}</button>
-                    {" "}
-                    <button className="btn ghost sm" onClick={() => onDelete(k.id)}>Delete</button>
-                  </td>
-                </tr>
-              ))}
+              {keys.map((k) => {
+                const isEnv = k.source === "env";
+                return (
+                  <tr key={k.id} style={{ cursor: "default" }}>
+                    <td><span className="owasp-pill">{k.provider}</span></td>
+                    <td>
+                      {k.label || <span style={{ color: "var(--muted-2)" }}>—</span>}
+                      {isEnv && <span className="finding" style={{ marginLeft: 8 }}>.env</span>}
+                    </td>
+                    <td className="mono" style={{ fontSize: 12.5 }}>{revealed[k.id] || k.masked}</td>
+                    <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
+                      {isEnv ? (
+                        <span style={{ color: "var(--muted-2)", fontSize: 12 }}>read-only</span>
+                      ) : (
+                        <>
+                          <button className="btn ghost sm" onClick={() => reveal(k.id)}>{revealed[k.id] ? "Hide" : "Reveal"}</button>
+                          {" "}
+                          <button className="btn ghost sm" onClick={() => onDelete(k.id)}>Delete</button>
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}

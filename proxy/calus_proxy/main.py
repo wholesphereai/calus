@@ -52,17 +52,33 @@ async def _warm():
 
 
 # ----------------------------- helpers --------------------------------------
+def _content_text(content) -> str:
+    """Flatten one message's content (string, or OpenAI multi-part list) to text."""
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        return "\n".join(seg.get("text", "") for seg in content
+                         if isinstance(seg, dict) and seg.get("type") == "text")
+    return ""
+
+
 def _text_of(messages) -> str:
-    parts = []
-    for m in messages or []:
-        c = m.get("content")
-        if isinstance(c, str):
-            parts.append(c)
-        elif isinstance(c, list):
-            for seg in c:
-                if isinstance(seg, dict) and seg.get("type") == "text":
-                    parts.append(seg.get("text", ""))
+    parts = [_content_text(m.get("content")) for m in messages or []]
     return "\n".join(p for p in parts if p)
+
+
+def _newest_input_text(messages) -> str:
+    """The newest input on THIS request — what's actually new, not the whole
+    conversation a chat app replays every time. That's the last user turn for a
+    normal message, or the tool result on a tool round-trip (where indirect
+    injection hides). So each logged call reflects its own prompt and old history
+    isn't re-flagged turn after turn."""
+    for m in reversed(messages or []):
+        if m.get("role") in ("user", "tool"):
+            t = _content_text(m.get("content"))
+            if t.strip():
+                return t
+    return _text_of(messages)            # fallback: no distinct user/tool turn
 
 
 def _provider_of(model: str) -> str:
@@ -198,8 +214,9 @@ async def chat_completions(request: Request, authorization: Optional[str] = Head
     agent = _agent_of(body, request)
     tools = _tools_of(body)
 
-    # scan the INPUT (never blocks — just records)
-    _scan_and_store(_text_of(messages), "input", model, trace_id=trace_id,
+    # scan the INPUT (never blocks — just records). We use the latest user turn,
+    # not the whole replayed history, so each call shows its own prompt.
+    _scan_and_store(_newest_input_text(messages), "input", model, trace_id=trace_id,
                     agent=agent, tools=tools)
 
     # forward upstream via LiteLLM. The provider key is resolved in priority:
@@ -326,9 +343,26 @@ async def api_trace(trace_id: str):
 # Provider keys saved here are encrypted at rest (see crypto.py) and only ever
 # decrypted in memory to forward a request. The list view returns masked keys;
 # the full key is only returned by the explicit /reveal route.
+_ENV_KEY_VARS = {
+    "OPENAI_API_KEY": "openai", "GROQ_API_KEY": "groq",
+    "ANTHROPIC_API_KEY": "anthropic", "GEMINI_API_KEY": "gemini",
+    "MISTRAL_API_KEY": "mistral", "COHERE_API_KEY": "cohere",
+}
+
+
 @app.get("/api/keys", dependencies=[Depends(require_admin)])
 async def api_keys_list():
-    return store.list_keys()
+    # vault keys (manageable) + provider keys found in the environment (read-only),
+    # so a key configured in proxy/.env is still visible in the dashboard.
+    import os
+    from .crypto import mask
+    keys = [{**k, "source": "vault"} for k in store.list_keys()]
+    for var, prov in _ENV_KEY_VARS.items():
+        v = (os.environ.get(var) or "").strip()
+        if v and "REPLACE" not in v.upper():          # skip example placeholders
+            keys.append({"id": "env:" + prov, "ts": 0, "provider": prov,
+                         "label": f"from {var}", "masked": mask(v), "source": "env"})
+    return keys
 
 
 @app.post("/api/keys", dependencies=[Depends(require_admin)])

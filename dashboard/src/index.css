@@ -124,7 +124,7 @@ button { font-family: inherit; cursor: pointer; }
 /* ---------- threats / owasp ---------- */
 .threat-row { display: grid; grid-template-columns: 56px 1fr 38px; gap: 12px; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--line); }
 .threat-row:last-child { border-bottom: 0; }
-.threat-row .code { font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--fg); }
+.threat-row .owasp-code { font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--fg); background: none; padding: 0; border: 0; }
 .threat-row .nm { font-size: 13px; }
 .threat-row .bar { height: 6px; background: var(--panel-2); border-radius: 4px; margin-top: 6px; overflow: hidden; border: 1px solid var(--line); }
 .threat-row .bar span { display: block; height: 100%; background: var(--ink); }
