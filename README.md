@@ -93,12 +93,9 @@ calus/
 │       ├── main.py           # OpenAI-compatible routes + dashboard API
 │       ├── config.py  store.py  crypto.py  keys.py
 │
-├── dashboard/                # React + TS console
-│   ├── package.json  index.html  vite.config.ts  Dockerfile  nginx.conf
-│   └── src/  ( App · components · api · types · index.css )
-│
-└── examples/
-    └── chat_agent.py         # GTM agent demo through the proxy
+└── dashboard/                # React + TS console
+    ├── package.json  index.html  vite.config.ts  Dockerfile  nginx.conf
+    └── src/  ( App · components · api · types · index.css )
 ```
 
 ---

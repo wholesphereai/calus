@@ -226,3 +226,6 @@ dashboard/node_modules/
 # misc
 *.log
 .DS_Store
+
+# local-only examples (kept out of the repo)
+examples/
