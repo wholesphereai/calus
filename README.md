@@ -72,6 +72,35 @@ your app ──(your key)──▶  CALUS PROXY  ──(same key)──▶  Open
 | Proxy       | `proxy/calus_proxy` | FastAPI OpenAI-compatible gateway + dashboard API     |
 | Dashboard   | `dashboard/`        | React + TypeScript (Vite) console                     |
 
+```
+calus/
+├── README.md  LICENSE  SECURITY.md  CONTRIBUTING.md
+├── Dockerfile  docker-compose.yml  .dockerignore
+├── .github/workflows/        # ci · security · release
+│
+├── calus/                    # detection engine (Python package)
+│   ├── pyproject.toml  api.py  cli.py  owasp.py
+│   ├── detection/            # cascade engine, scored regex, similarity, redaction
+│   ├── patterns/             # 27k+ OWASP-mapped rule packs
+│   ├── learning/  context/  integrations/  tools/
+│   ├── benchmark/            # accuracy harness + AgentDojo set
+│   ├── tests/
+│   └── docs/                 # architecture, threat coverage, accuracy
+│
+├── proxy/                    # the gateway
+│   ├── requirements.txt  .env.example
+│   └── calus_proxy/
+│       ├── main.py           # OpenAI-compatible routes + dashboard API
+│       ├── config.py  store.py  crypto.py  keys.py
+│
+├── dashboard/                # React + TS console
+│   ├── package.json  index.html  vite.config.ts  Dockerfile  nginx.conf
+│   └── src/  ( App · components · api · types · index.css )
+│
+└── examples/
+    └── chat_agent.py         # GTM agent demo through the proxy
+```
+
 ---
 
 > **Setup is fast.** Installing dependencies takes ~1–2 min the first time; after

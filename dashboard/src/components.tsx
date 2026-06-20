@@ -145,9 +145,11 @@ export function LogsTable({ rows, onPick }: { rows: LogRow[]; onPick: (r: LogRow
             <td className="conf">{r.confidence != null ? r.confidence.toFixed(2) : "—"}</td>
             <td>{r.owasp ? <span className="owasp-pill">{r.owasp}</span> : <span style={{ color: "var(--muted-2)" }}>—</span>}</td>
             <td>
-              {r.tool_calls.length ? r.tool_calls.map((t, i) => <span className="toolchip" key={i}>{t.name}</span>)
-                : r.tools.length ? r.tools.map((t) => <span className="toolchip" key={t}>{t}</span>)
-                : <span style={{ color: "var(--muted-2)" }}>—</span>}
+              <div className="toolrow">
+                {r.tool_calls.length ? r.tool_calls.map((t, i) => <span className="toolchip" key={i}>{t.name}</span>)
+                  : r.tools.length ? r.tools.map((t) => <span className="toolchip" key={t}>{t}</span>)
+                  : <span style={{ color: "var(--muted-2)" }}>—</span>}
+              </div>
             </td>
           </tr>
         ))}
@@ -170,7 +172,7 @@ export function AgentsTable({ agents, onPick }: { agents: AgentRow[]; onPick: (a
             <td><div className="agent-cell"><span className="av">{(a.agent || "?").slice(0, 1)}</span><span className="mono" style={{ fontSize: 12.5 }}>{a.agent}</span></div></td>
             <td className="mono">{a.calls}</td>
             <td className="mono">{a.flagged > 0 ? <span className="tag attack">{a.flagged}</span> : <span style={{ color: "var(--muted-2)" }}>0</span>}</td>
-            <td>{a.tools.length ? a.tools.slice(0, 5).map((t) => <span className="toolchip" key={t}>{t}</span>) : <span style={{ color: "var(--muted-2)" }}>none</span>}</td>
+            <td><div className="toolrow">{a.tools.length ? a.tools.slice(0, 5).map((t) => <span className="toolchip" key={t}>{t}</span>) : <span style={{ color: "var(--muted-2)" }}>none</span>}</div></td>
             <td className="mono" style={{ fontSize: 12 }}>{a.models.map((m) => m.split("/").pop()).join(", ")}</td>
             <td style={{ color: "var(--muted)", fontSize: 12 }}>{fmtAgo(a.last_ts)}</td>
           </tr>
@@ -187,7 +189,7 @@ function TraceTimeline({ rows }: { rows: LogRow[] }) {
       {rows.map((r) => (
         <div className={"tnode" + (r.flagged ? " flag" : "")} key={r.id}>
           <div className="lbl">{r.direction === "input" ? "▸ user / prompt" : "◂ model output"} · {fmtTime(r.ts)} {r.flagged && "· FLAGGED"}</div>
-          {r.text_redacted && <div className="body" style={{ color: "var(--fg-2)" }}>{r.text_redacted}</div>}
+          {r.text_redacted && <div className="body trace-text">{r.text_redacted}</div>}
           {r.tool_calls.map((t, i) => (
             <div className="tool-line" key={i}>
               <span className="nm">{t.name}()</span>
@@ -195,7 +197,7 @@ function TraceTimeline({ rows }: { rows: LogRow[] }) {
             </div>
           ))}
           {r.tools.length > 0 && r.direction === "input" && (
-            <div className="body" style={{ marginTop: 6 }}>{r.tools.map((t) => <span className="toolchip" key={t}>{t}</span>)}</div>
+            <div className="toolrow" style={{ marginTop: 6 }}>{r.tools.map((t) => <span className="toolchip" key={t}>{t}</span>)}</div>
           )}
         </div>
       ))}
