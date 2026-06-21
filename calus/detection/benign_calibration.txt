@@ -1,0 +1,629 @@
+# Benign calibration corpus: normal user messages sampled from Databricks
+# Dolly-15k (CC-BY-SA-3.0). Held out from the FPR eval slice. Patterns that fire
+# on any of these are quarantined as over-broad. Rebuild: python -m calus.tools.refine_calibration
+What is the largest estuary in the United States?
+Why does the capital of Uzbekistan contain the biggest Greek community?
+Which phrases are French and which words are English: mon frère, c'est la vie, good morning, what's up, break the ice, bite the bullet, and je suis désolé.
+When was The Palpable Leprosy of Pollution released?
+From the passage provided, extract the most recent stable version of C#
+Which is the second most populated state in India?
+what is machine learning meaning?
+Which band sang No Sleep Till Brooklyn?
+Does Alaska have six months of darkness and six months of light?
+What is GitHub?
+What is pseudoscience?
+What are some things that I could gift a curious toddler?
+Is "1984" a book or a movie?
+Classify each of the following as bright or dark: sun, lamp, cave, light, night, tunnel
+How to write a college essay?
+What is Genetics?
+What is a Ferocactus
+How do I start running?
+What are some of the causes for the decline of the northern rockhopper?
+Since when did the SR22 include a glass cockpit
+Classify the Disney movie characters into the movies that they appeared in.
+Anna, Mufasa, Kristoff, Nemo, Scar, Simba, Dory
+Choose the word which is different from the rest:  Car, Scooter, Helicopter, Aeroplane, Cycle
+Classify each of the following as either a quantitative major or qualitative major: English, mathematics, physics, statistics, history, law
+Who is Gabriel Garcia Marquez?
+I have wine tasting plans for the weekend , give me some tips so that I look like an expert
+Where is Dieveniskes located
+Extract the different types of enemies Aloy has to fight with and separate them with commas.
+When is Thai New Year?
+Where is Estonia?
+List the Pixar movies that were nominated for Academy Awards but did not win.
+What are some fun things to do around Seattle on a warm Summer day?
+What is the difference between pork roll and taylor ham
+Classify the following as TV Shows or movies: Ted Lasso, Schitt's Creek, The Office, Seinfeld, The Elephant Whisperers, Harry Potter and the Sorcerer's Stone, Delhi Crime, The Social Network.
+What are the advantages of a progressive consumption tax?
+How old is the Greek language?
+What are the best months to visit Alaska?
+How to understand or classify Indian film industry?
+What is the origin of the Easter Egg in video games?
+Of the items, tomato, broccoli, plane, sausage, pineapple, grass, honey, and milk would a human not like to consume?
+What makes for a good photograph?
+What is the difference between Parthian and Arsacid Empire?
+Why isn't multi-threading making my Python code faster? How can I fix it.
+What are some advantages of making a painting with acrylic instead of oil paint?
+What's the relation between the Kushan Empire and the Sassanid Empire in Iran?
+From the passage provided, extract the distance between Mercury and Sun in AU when it is closest to the sun in its orbit.
+In which country is Jean Marie Ralph Féthière a politician?
+What are three meals that a small child is likely to eat for lunch?
+Tell me which one does not fit with the group:  Football, Volleyball, Cricket, Chess, Hockey
+What is the Big 10 conference?
+Given this paragraph about video game consoles, when was the Nintendo DS released?
+Who is the company Swiss Re
+The final of Asia cup was held in UAE, was won by Sri Lanka from which country
+Identify which instrument is string or percussion: Zill, Epinette des Vosges
+Was Thanos right ?
+How do I make a traditional Bolognese sauce?
+What is the process by which utilities rates are set in the US
+What is a Google Pixel?
+What are the words of House Beesbury?
+What colors are in the traditional style of American tattoos?
+Should a man get married when he is young, or wait until he is older?
+What is Ontology?
+How can I become a pilot?
+Please give me a bulleted list of the different types of horses cited in the text as well as their maximum height in centimeters (separated by a comma)
+Create a comma separated list of all countries mentioned in this paragraph on the history of test cricket
+Classify these countries into these continents (Asia, Africa, North America, South America, Europe, Australia/Oceania): Morocco, Vietnam, New Zealand, Chad, Afghanistan, Jordan, Lebanon, Monaco, Malta, Dominica, Paraguay
+Write some points about Ministry of Public Health (Thailand) using given text as a reference
+What is a dataset?
+Why is it good to fly direct?
+Name a good wood for a beginning wood carving project?
+Which letters denote Jesus Nazareth King of the Jews
+Classify the following animals as mammal or not: whale, kangaroo, mouse, snake, fish, human, koala
+Why is the Bay Area football team called the 49ers?
+Tell me what are aspects of polytopes from given text
+What are the most easy to keep plants?
+Which are most valuable corporate brands in the world
+Given this paragraph about Grumpy Cat, tell me the cat's real name.
+When was golf invented?
+Are space objects affected by planets? If so, why?
+From the passage provided, extract which cinema industries are located in Mumbai
+Provide for me, in a bulleted list, seven sports that have been removed from the Olympics
+What is the 2008 Scottish Labour deputy leadership election?
+What is game theory?
+What is Objective-C?
+Artemis I was formerly known as
+What is deafblindness
+Whats the difference between a CPU and RAM?
+Where is texas?
+Which of the following are convex functions: x^2, x square, 0, sin(x), e^x, sqrt(x), x^-0.5
+What are some important devices you would see in a kitchen? And what are they used for?
+While deciding to buy a bicycle, you need to consider few parameters such as age, gender, price, quality, the purpose of buying, type of bicycle/features etc. For ex: if you are a boy of age 24, then you would consider to buy a bicycle with height of 18" inch, with gear & shocker, etc.
+And if you are a girl of age 6 yrs, then you would consider a kid friendly bicycle with good safety features that the kid can ride.
+Who is the greatest college football quarterback of all time?
+What is the purpose of using Terraform modules ?
+Identify which animal is domesticated or wild: Canary, Green pheasants
+What is the difference between a road bike and a mountain bike?
+Identify which instrument is string or percussion: Jawbone, Grand Stick
+What does Midnight Sun mean?
+Given this paragraph about Museo Municipal Taurino Francisco Montes, where is it located?
+I'm researching suburbs in the city of Brisbane. Please tell me which suburbs are north of the Brisbane River, and which are on the south. Annerley, Albion, West End, Kangaroo Point, Greenslopes, Windsor, Hamilton, Nundah, Cannon Hill, Kelvin Grove, Toowong, Milton
+How to remove limescale from showers and taps?
+What is The Hobbit?
+How did actor James Dean die?
+Who was the American president for the majority of WWII?
+Behind Delta tables is the data stored in Parquet file formats?
+Approx. how many nurses were enrolled in World War 2?
+Given a reference text about Isabel Emily Jay, tell me where she studied and how old she was when she retired.
+From the given text, can you please extract all possible technical details of the aeroplane in the JSON format {key:value} where key is the attribute and value is the data for the attribute.
+Given the following paragraph on siliceous ooze, how are oozes defined?
+Who is the main character of Naruto?
+What percentage of the world's population did the British Empire hold sway over?
+How can I improve my sleep?
+Difference between EST and EDT?
+Can you write a brief summary for the book "Braving the Wilderness" by Brene Brown?
+What planning should you do to visit Walt Disney World?
+I bought two bottles of 2L coca-cola when they were on special, but when I checked my receipt, I was charged the full price! Please contact me on 0410787999 or iratecustomer@hotmail.com to discuss a refund!
+What kind of espresso machine is best for home use?
+What are the biggest cloud providers
+Why are most plans green?
+What human foods are toxic to dogs?
+Identify which instrument is string or woodwind: Goje, Dizi
+Give me some details about the MV Cape Race please
+Identify which instrument is string or woodwind: Stritch, Zhu
+which is the famous vegetation food in south India?
+Extract the members of the band Radiohead in a comma separated list.
+how does the java virtual machine work?
+As an expert skier, what are the top resorts in the US to go skiing?
+Tell me whether the following people are athletes: LeBron James, Eileen Gu, Bjergsen, Rory McIlroy, Naomi Osaka.
+Extract all the years from the following text.
+How do you train for a marathon?
+8 Simple Ways to Adopt a Healthy and sustainable Eating Pattern
+In the field of economics, what is considered a monopoly?
+Please classify the following as either cities or states: Chicago, Massachusetts, Boston, Alabama, Alaska, and Phoenix.
+What makes sourdough special?
+What rank did Elvis Presley hold in the US Army?
+How do learn how to ride a bicycle?
+Why do people love the FIFA world cup?
+What is the best way to get more protein in my diet?
+Which is a species of fish? Soldierfish or Soldier Boy
+Why do you like ballet so much?
+Name the place where Queen Elizabeth II is buried
+What are some basic spirits you should have at your bar
+Is it possible to raise your child trilingual?
+Please give a brief history of AI.
+Classify each of the following as supercar or hypercar:  Lamborghini Huracán, Ferrari 488GTB, Aston Martin Vantage, or Bugatti Veryron.
+How to bake the perfect flourless cheesecake?
+Why is Brazilian jiu jitsu an excellent martial art?
+List a few queer books made popular by TikTok
+What is Photosynthesis?
+How is data engineering different from data science?
+do successful companies become public?
+What are teeth?
+Can you generate a 2 lines abstract of this text?
+Give me the history and background of the Phoenix Suns basketball franchise
+Summarize Jacque Fresco's early life based on this passage.
+What are 3 to 5 creative ways to prevent deer from walking through your yard?
+What is Project Nimbus?
+Should I pet the belly of a cat who is laying on its back?
+What is the difference between a bass guitar and a normal guitar?`
+What state makes the best BBQ?
+I have 13 identical balls that weigh the same, and out of them, one is an odd one weighing less or more. How can I find the odd one out with a simple balance? What is the least number of times I require a simple balance to find the odd one out?
+What is the tallest tree in the world
+Categorize the following ingredients as meat, cheese, or spread: mayonnaise, ham, swiss, muenster, turkey, mustard
+Given this paragraph, who won the Montenegro presidential elections and how much of the vote did they receive in each runoff round?
+What was the football team that played at the University of Oregon in 1949?
+Write an email to Visa alerting them that I am no longer interested in the position I’m interviewing for since I have accepted another offer. I have a lot of respect for the company and their employee experience is high!
+What is Huallacancha?
+Give me a summary of how the citric acid cycle works
+Give me a bulleted list of the seven most recently elected presidents from Argentina.
+Given a reference text about Puerto Rico, tell me if it is a State, are its resident US citizens, and if they pay US taxes.
+Who was the first American to win a Nobel Peace?
+What is the size of the Eiffel Tower?
+Which company constructed the Japanese submarine Yu 12?
+Based on this paragraph, who was Donald Trump's physician during 2018 to 2021?
+In the series A Song of Ice and Fire, who is the founder of House Clegane?
+I need to write a deck summarising the benefits of delta in the lakehouse, can you give me some good slide suggestions?
+Why is March 14th Pi day?
+What is React?
+What is "A Song of Ice and Fire"?
+What does costco do?
+How does the Stock Market work?
+Give me a bullet point list of reasons to wear sunscreen
+Which chapel on Rutger's campus was built 7 years after the New Jersey College for Women?
+Please tell me who Bishop Patrick MacMullan was and when he died.
+Identify which instrument is string or percussion: Bak, Fiddle
+Extract the names of the movies Dixie Violet Egerickx starred in and the year those movies were released. List them using bullets in the format {Movie} - {Year}
+Who was Henry Ford?
+Write a shopping list for me and group the ingredients by type. I want to make stir-fried teriyaki tofu for dinner and I want enough ingredients to make a sauce, because I don't want to buy a bottle of sauce. This meal will serve four people.
+Extract why Tim Lincecum was called "The Freak"
+Extract the current cash rate and basis point increase from the following using the format: {x} % increased by {x} basis points
+
+At its meeting today, the Board decided to increase the cash rate target by 25 basis points to 3.60 per cent. It also increased the interest rate on Exchange Settlement balances by 25 basis points to 3.50 per cent.
+Global inflation remains very high. In headline terms it is moderating, although services price inflation remains elevated in many economies. It will be some time before inflation is back to target rates. The outlook for the global economy remains subdued, with below average growth expected this year and next.
+The monthly CPI indicator suggests that inflation has peaked in Australia. Goods price inflation is expected to moderate over the months ahead due to both global developments and softer demand in Australia. Services price inflation remains high, with strong demand for some services over the summer. Rents are increasing at the fastest rate in some years, with vacancy rates low in many parts of the country. The central forecast is for inflation to decline this year and next, to be around 3 per cent in mid-2025. Medium-term inflation expectations remain well anchored, and it is important that this remains the case.
+Growth in the Australian economy has slowed, with GDP increasing by 0.5 per cent in the December quarter and 2.7 per cent over the year. Growth over the next couple of years is expected to be below trend. Household consumption growth has slowed due to the tighter financial conditions and the outlook for housing construction has softened. In contrast, the outlook for business investment remains positive, with many businesses operating at a very high level of capacity utilisation.
+What city has Kogoshima as its airport
+Who is the greatest tennis player of all time?
+What is the difference between Kinesis and Kafka?
+What is the plot of Jojo's Bizarre Adventures?
+Give me a bulleted list of the current members of Pearl Jam.
+How can I sleep well at night?
+Is Apple better than Samsung?
+What is the best season to ski?
+Identify which instrument is string or percussion: Sakara, Cavaquinho
+why do you like India
+Name some of the best tourist spots in USA?
+Who are the three team managers that hold the record for the most appearances in the FIFA Club World Cup final?
+Who is Anne Francis?
+What is another name for downhill skiing?
+Why Bollywood is so famous
+Extract the names of the islands located on the Eastern Group of the Azores plateau from the text. Separate them with a comma.
+What is best Playstation or Xbox
+Based on the following paragraph on the current use of obsidian, what's the difference between obsidian scalpels and steel scalpels?
+How many professional basketball teams are based in California?
+Given this paragraph, how many seasons are there of Ted Lasso?
+How many times Lewis Hamilton won the F1 Championship ?
+How many counties are there in the San Francisco/San Jose/Oakland Bay Area?
+What was the Golden State Warriors win-loss record in the 1964-65 season ?
+Can you share a response of politely informing the customer that we dont support a feature
+Classify each of the following as mainstream media or social media: Twitter, Reddit, CNN, MSNBC, Instagram, Fox News
+Given the reference text, where would I be able to find The Oath of Leo III?
+Classify these animals by either a mammal or reptile; 
+Lizard, Alligator, Elephant, Crocodile, Lion, Dolphin, Snake, Platypus, Chimpanzee
+Turtle
+Give me the top guitar players of all time
+How do sailplanes (gliders) stay aloft?
+How is Toshiyuki written?
+From the passage, note down the components of Mortgage.
+Write a short story about a man who discovers a partially built treehouse.
+Given this paragraph about composer Arvo Pärt, tell me where and when he studied composition and with which teacher.
+What is the official language in Brazil?
+Who is the protagonist in Italo Calvino's Invisible Cities?
+What is an egg laying mammal?
+What's so special about the Nissan GT-R?
+Classify each of the following country as either a left hand traffic or a right hand traffic based on which side of the road traffic moves: USA, Spain, UK, India, Singapore, Switzerland, Australia, Egypt, France, Italy
+Who was William P. Bolton
+In Asia Cricket Cup 2022 ,Player of the match was
+How soon should you make coffee after grinding the beans?
+Identify which instrument is string or percussion: Mirwas, Esraj
+How do you make Crawfish bread?
+Tell me about water fluoridation
+What are the benefits of collaborating on a tech blog with your customers?
+What are the top 3 items that I need when traveling by plane.
+How many cards are there is a standard deck of cards ?
+Tell me the genre of each of the following books, choosing between science fiction, fantasy, or neither. 
+
+The Name of the Wind by Patrick Rothfuss, The Player of Games by Iain M. Banks, Crying in H Mart by Michelle Zauner, Crime and Punishment by Fyodr Dostoevsky, and Hyperion by Dan Simmons.
+Categorize the following countries based on the language their majority speaks: Iraq, Iran, Turkey, UAE, Qatar, Afghanistan, Syria
+What is the best place to go downhill mountain biking
+Given this paragraph about Pandora, what was the initial group name of Pandora musical group?
+Why did the chicken cross the playground?
+What is "cycling" in ice hockey?
+Make a bullet list of three different types of meat I could get in a taco
+Give me a bunch of ways I can keep my house cool in the summer
+Which one is good for health coffee or tea
+Tell me whether these are insects: ants, cicadas, flies, mosquitos, spiders, scorpions.
+From the following description of the Hatfield-McCoy feud, identify the person condidered the leader of the Hatfields.
+What are some of the best fantasy novels of all time?
+Provide a bulleted list of reasons why Tesla stock could go up in the future.
+Who is Prince (musician)?
+Why education is so important apart from career opportunity
+What are the generations of the Ford Bronco?
+What is magic the gathering?
+What is the difference between Hunter, Jumper, and Equitation horseback riding?
+Identify the bird from the list: Pendulum, Bewick's swan, Iceberg
+Imagine you are the last person on Earth. Write a diary entry describing your thoughts and feelings.
+Who is Miley Cyrus?
+What is one of your favorite hobbies?
+Based on the following passage what is the more dominant force in the universe?
+What is the oldest known civilization?
+Summarize what the network Bravo is about
+Write about a sport which is always interesting and can be enjoyed alone or with people.
+Who was the first astronaut?
+What are the three styles of Shakespeare?
+which of these words do not belong in the same category? peel, organic, fruit, yellow, mushy, crunchy.
+Identify which animal is domesticated or wild: Koi, Common Carp
+What are the top 5 television sitcoms of all time?
+Based on this passage, how many siblings did Hearst have?
+Given the paragraph below, what is the population of Switzerland?
+How is the Mars 2020 mission different from other missions?
+Extract and list the names of characters a player can control in The Last of Us mentioned in the paragraph. Also describe relationships between those characters.
+Tell me whether each of these are green or yellow: lemon, lime, cheese, spinach, lettuce, spaghetti
+From the passage provided, extract the name of the arm of Milky way Galaxy on which our solar system is located
+What tools do people use to communicate in 2023?
+What is an EV?
+Please tell me if the following cities are in Germany, Austria or Switzerland: Munich, Vienna, Zurich, Dortmund, Lucerne, Bern, Stuttgart, Klagenfurt, Salzburg, Bremen, Geneva, Innsbruck
+Who did Outcault paint electric light displays for?
+What are the colors of the sky during a sunset?
+In a bingo game, which number is represented by the phrase “two little ducks”?
+Where is Florida?
+Classify each of the following animals as being domesticated or wild: dog, bear, dolphin, cat, cow, hippo, rhino
+How many World Series have the Detroit Tigers won?
+Help me come up with 3 ideas for a new business and how I can start it
+What is a surf board used for?
+Given a reference text about S26, tell me where it begins and ends.
+What is High-functioning autism?
+Which team was relegated from the league at the conclusion of the 1991 Season?
+Given this paragraph are Beavers the largest living rodents?
+Identify which instrument is string or percussion: Tumba, Villu Paatu
+Why did Cato think that Carthage must be destroyed?
+7 factors led to nokia failure
+Which of these countries are in Europe, Asia or both?
+
+Sweden
+Russia
+Georgia
+Kazakhstan
+Turkey
+India
+Austria
+Kyrgyzstan
+Iran
+Italy
+Austria
+From the example given in this paragraph, what is an eigenvector?
+From the text below, tell me where Mount Balinhard got its name.
+Classify the following shapes as either two dimensional or three dimensional: cube, circle, sphere, triangle, cone, rhombus, square, and pyramid.
+What happens during the section called "Giggle Box"?
+When was The White Mandigos band formed?
+From the passage provided, extract the year when iPhones first came with satellite communications.
+Identify which instrument is string or percussion: Daf, Bandura
+According to the text, given the initial cost of building the auditorium and the equivalent cost in 2021, what is the value of 1892 dollars in 2021?
+Name the planets in the solar system, in the order of distance from the sun
+How can I compose electronic music in 3 simple ways ?
+When was Santa Monica founded?
+Name some recurring villains on the TV show "The X-Files."
+Classify each of the following on the basis of text (alphabetically) or numbers (numerically) - Bangalore, 265, Apple, 10, Bag, 49.
+Who has scored the most runs in ODI cricket?
+How do you prepare lentil soup?
+Which is a species of fish? Red snapper or Red Sox
+Why is "The quick brown fox jumps over the lazy dog" used so often to show fonts?
+Name some famous hindi film actresses
+What would make my tzatziki sauce truly exceptional?
+What are the top semiconductor companies?
+Which building is the most higher?
+Tell me whether or not these foods are on EWG's dirty dozen list
+Which is a species of fish? Nurseryfish or Nursery
+How do you fry shrimp?
+What is the special aspect of Einstein's special theory of relativity?
+Extract one of the franchise introduced in IPL 2022 from the text and who won the title during the previous session.
+What is the fastest production car in the world?
+Which Australia Rules Football team has won the most grand finals?
+What is Impala?
+Which of the following animals live in the snow: Dog, Bonobos, Cat, Polar bear, Whale shark, Arctic fox, Orangutans, Snow leopard, Lion, Ocean sunfish, Koala, Cheetah, Beluga sturgeon, Orca, Gorillas, Camel, Hamsters, Penguins, Blue whale, Chimpanzee
+What stroller should I buy for my newborn baby?
+Identify the bird from the list: Racoon, Golden eagle, Anteater
+What is a proof that there are two irrational numbers where raising one to the power of the other produces a rational number?
+Given a reference text about Lotus Mark IX, who designed the car?
+Which characters belong to DC or Marvel Universe? Ghost Rider, Atomic Skull
+Which city is the best to relocate in Texas
+What makes a song popular?
+Classify these dishes into the cuisines that they belong to.
+Panipuri, Risotto, Butter Chicken, Lasagna, Naan, Ravioli, Jalebi
+From the passage provided, extract which month is the coolest in Chennai
+What were the last ten states to enter the union of the United States?
+Why do people blink?
+Make me a list of the oldest board games that I might not know about, and where they were invented.
+Which author created Fu Manchu
+What types of bikes are there?
+What are the different names of Passover and what are the meanings?
+Why do people like to workout?
+Write a recruiter message to someone in tech on LinkedIn
+How can I get people to like me?
+What is the plot of Mob Psycho 100?
+Give me a list of three historical piano composers.
+Who is Romain Iannetta
+Mahatma Gandhi gave a slogan on Aug 8, 1942 .What was the slogan?
+Give me a list of the major food allergens I should be aware of when cooking.
+What are the strongest mobs in the online game called Minecraft?
+What are the seven wonders of the world?
+What is the 149th Boat Race?
+Group the following into manmade and non-manmade (naturally occurring) items: computer, salt, fence, tree stump, hillock, lightbulb, terracotta planter, snow, wolves, tablecloth, periodicals, museum
+Is there a high school in Fairdale
+Given this paragraph about modern triathlon, what year did the two founders form mission bay triathlon.
+From the passage provided, extract the year Apache Software Foundation was incorporated on.
+What is Stanley B. Goldenberg's profession?
+What is a compound statement?
+What international trophy did the Club Africain football team won in 1971 ?
+Name some famous Sci-Fi movies
+Extract all the place names from the paragraph. Different places should be separated by comma.
+What is a noun?
+Which of the following are either characters that appear in books by George R.R. Martin or Robert Jordan: Tyrion Lannister, Brienne of Tarth, Sandor Clegane, Rhaegar Targaryen, Robert Baratheon, Aviendha, Siuan Sanche, Perrin Aybara, Padan Fain, Rand al'Thor
+What phone carrier company did Sprint merge with?
+If you could change one thing about this world, what would it be and why?
+What are some movies that star Will Ferrell?
+What are five fun ideas for a first date?
+What are possible alliances for the future of AI?
+What is the difference between whole genome sequencing (WGS) and whole exome sequencing (WES)?
+Where did peanut butter and jelly sandwiches originate?
+Which is the best place to Kayak in Austin?
+What is software craftsmanship
+Who coined the phrase "Bike-shedding" and when?
+If McDonald’s were to go out of business and disappear, would the world be a better or worse place?
+Make me a bullet list of things to bring camping
+Name all the movies in the Harry Potter series
+What is microeconomics?
+Did the Grateful Dead play at the original Woodstock concert?
+Tell me whether these Pokémon are water or fire type: Squirtle, Charizard, Ninetales, Arcanine, Poliwhirl, Psyduck
+Give me a list of the best ways of looking younger than your age.
+What city in Ireland is the band U2 from?
+Who is Charles Brigstocke?
+How many episodes of the first season of Game of Thrones did Alan Taylor direct?
+Can I run MacOS on a Windows PC?
+What is an expert system, and when did they first emerge?
+What was the purpose of Major League Baseball's rule changes this year?
+Please extract Sinclair's awards from this paragraph and list them in bullets in order from oldest to most recent.
+From the passage provided, what does Adam M. Grant do?
+What is the difference between a banana and a plantain?
+Which of the following are in the X-men: Wolverine, Cyclops, Gandalf, He-man and Gambit
+What type of babies did Regalado say Jiankui was making?
+Extract the date and place of birth for Henning Bertil Stjernfelt from the passage provided.
+Current industry trends and how to capitalize on them?
+Do humans have stripes?
+Give me the list of all French president during the fifth Republic
+Order these cars as either 'fast', 'slow' or 'dangerously fast'. A Doge Viper, Toyota 4Runner, Lamborghini Aventador, Chrysler Pacifica, Go-Kart, Lime Scooter, Porsche 911, Corvette
+How do I wire an electrical outlet?
+List some of the extinct houses in the series "A Song of Ice and Fire."
+What is a Pythagorean triple?
+Given this reference text about a video game, when was Donkey Kong released?
+Create a list using bullets of the Beatles band members and tell me if they are alive or dead using the format {Name} / {Alive or Dead}
+give me a bulleted list of ways to get to the other side of a lake.
+Where does the sun rise and set?
+Provide a bulleted summary of the different types of taxes in the USA.
+List all former departments that were formerly Cabinet-level in the United States.
+Can you sort these events from newest to oldest: James Cameron's movie Titanic was released, Leo Messi won world cup for Argentina, Barak Obama became president.
+Can you tell me about the Chicago Bears?
+How large is South Africa's economy?
+What are the different kind of hits in baseball?
+What is the best location for an all-season vacation home with proximity to Philadelphia?
+What class of locomotive was the No. 13?
+What is the Shy Plant?
+Are rugby and American football similar?
+In which book would you find the manservant Pas Partout
+Tell me whether these operation systems are open-source of proprietary; Ubuntu, iOS , Debian, Fedora, CentOS, macOS, Open Suse, Windows
+Explain Anthropocene to 13-year-old kid
+What is a good soccer club in Lake Washington area in the USA?
+How to calculate growth rate?
+When running a marathon and attempting to run a personal best time, categorize the following as either ‘useful’ or ‘not useful’, ‘dangerous’ or ‘neither. Fast digesting carbohydrates, a fire extinguisher, a weight vest, scissors, running shoes
+From the passage identify the type of medications used to treat infections. Display the results in comma separated format.
+Write an apology letter to my wife for eating the last of the Oreo cookies and drinking the last of the milk.
+Change this to future tense
+Who created pilates?
+Why does the Earth revolve around the Sun?
+Tell me whether each of these is red or brown: tomato, strawberry, raspberry, chocolate, coffee, almond
+Who are the top 5 non-fiction writers of all time?
+Give me a list of the best food to try in Singapore
+Identify which animal is domesticated or wild: Donkey, Leopard ca
+What is the main tax-related difference between a brokerage account and an IRA ?
+Who are the most influential female computer scientists of all time?
+Who is Enrique Jorrín?
+Is Boston a good city to visit in the summer?
+Identify which instrument is string or percussion: Geophone, Penorcon
+How can I learn to snowboard?
+How many provinces are in Canada?
+Identify which instrument is string or percussion: Dhol, Torban
+Given a reference text about a red letter day, provide an explanation of what it means.
+How to have an evergreen garden?
+If you were given 1 million dollars in your fidelity account provide a list of which stocks you would buy
+What is the minimum amount of points a player needs to score to win a badminton match?
+Where does the name Gibraltar come from?
+Give me the list of books related with the series 'The Lord of the Rings', in order of publication
+In Paul Simon's famous song, how many different ways are there to leave your lover?
+Who is the rbr formula 1 team principal?
+In what year was Peter born?  Use roman numerals.
+What are a couple of good ideas to celebrate a spring birthday for an adult?
+What are Singapore main geographical points according to this text? Bullet point please.
+Why is the sky blue?
+Which is a species of fish? Cisco or Palo Alto
+What is counterintelligence?
+Jokic or Embiid for the MVP?
+Name 10 of Kris Jenner's Grandchildren
+When is the World Teacher's Day celebrated?
+What medicine is inside of an EpiPen?
+How do you thicken bolognese sauce?
+What is the name of the woman D'Artagnan falls in love with ?
+Which American president appears on a one-dollar bill?
+What are some of the natural materials used in construction?
+Identify which instrument is string or percussion: Madal, Craviola
+How many runs did Sachin score in the 2011 world cup?
+Which of the following vehicles are cars and which are trucks: Toyota Tacoma, Toyota Prius, Ford F-150, Honda Civic, Nissan Frontier,  Hyundai Accent, Chevrolet Corvette, Mazda Miata
+In music theory, what is the circle of fifths?
+What does GPT stand for in ChatGPT?
+what is the indian subcontinent
+From the passage provided, extract the entities which bestowed an award on Jensen Huang.
+how to do a self-diagnose of burning out?
+What is a derivative in finance?
+With reference to given text, Please provide a list of dangers associated with Smoking
+Can animals like dog and cat get Kidney Stones ?
+Does Caulerpa ellistoniae grow on land?
+According to Greek mythology, who was the first woman on earth?
+What should I consider before taking a job with a lot of travel?
+What kind of grand prix is the 1932 Australian Grand Prix
+What are 6 natural resources of Africa?
+What is the meaning of life?
+What is beta oxidation?
+Using examples taken from the text give me a list of the first generation of "skyscrapers" located in the city of Chicago.
+Who is the most successful driver in Formula 1 history?
+Given the reference text below, what is Safer Internet Day?
+Who is Hugo Chavez?
+How do I optimize my Kafka consumption in Spark for low latency?
+From the passage provided, extract when Susanna started as a principal.
+What is dopamine?
+Who wrote Jane Eyre?
+What are some good ice cream toppings that are gross when mixed together?
+Give me a good french wine with cheese
+Which NBA player has the most championships in NBA history?
+Are these hockey or baseball teams: Red Wings, Padres, Blues, Capitals
+Extract the ways to spell "Muscovy duck" using the sample as a reference, and place them in a list.
+Roger likes bananas more than strawberries. He likes bananas more than apples, and he likes strawberries more than melons. He likes apples more than strawberries. Which fruit does Roger like least of those three?
+List as many types of craft beer as you can
+Please propose an argument to convince my mother that she increases the amount of money that I get every month during my studies. I think the current amount is too low.
+In what industries is GIS indispensable?
+How is interest paid on a series I bond?
+Conceive a plot for a John Wick movie which includes redemption and closure
+What is the best city in Ohio?
+List the countries that are a part of UK.
+Extract all of the dates mentioned in this paragraph and list them using bullets in the format {Date} - {Description}
+Name five capital cities in Europe.
+Who is Romulo Betancourt?
+Categorize the companies based on their ownership status as private or public.
+Twitter, SpaceX, Tesla
+Are the following colours considered primary colours or not: red, orange, yellow, green, blue, indigo, violet
+What are the main places of visit in Port Blair.
+What are 5 really good golf ball brands for amateur players
+What was Skippy ( on TV )
+Classify the names based on whether they start with ’N’ or ‘M’
+Nancy, Mandi, Michelle, Mark, Naomi, Nick
+Who won the 1974 Nobel Memorial Prize in Economic Sciences?
+What is the .NET Framework?
+How can I get from San Francisco airport to downtown San Francisco?
+What is the FA Cup?
+Why do people like working from home?
+What the best way to give a dog a bath?
+In which years did the Women's Australian cricket team win the world cup
+Given a reference text about 341 George Street, Sydney, tell me when what companies had headquarters there.
+Who is the best selling music artist?
+Who is the NBA's all team leading scorer?
+What is the First Amendment of the US constitution?
+According to the paragraph below, what is Generative AI?
+Which dog would make the best pet?
+Identify which instrument is string or woodwind: Violetta, Kaval
+Pulitzer Prize 2022 was given for the coverage of the
+List down few details about CURE algorithm from given text
+Which episode of season two of Game of Thrones did Alik Sakharov direct?
+Is breakfast cereal a healthy food choice in the morning?
+Given this paragraph about Jack Kerouac, tell me where he was raised, what was his most famous book, when was that book published, and which movement was he a part of?
+Using examples taken from the paragraph, provide the major risks to humans with climate change in a short bulleted list
+I follow you all the time and copy your every move, but you can’t touch me or catch me. What am I?
+Why do we feel worse at night when we have a cold or the flu?
+What are the Olympic light weight events.
+Given this paragraph on French Revolution, what were the main causes
+What is the population of Breezy Point city in Minnesota?
+Given this information about Vietnam, which country does it share its northern border with?
+List all the aspiring members of NATO.
+How Long can a Goalkeeper Hold the Ball with his Hands?
+Are you going for a walk today?
+Please give me a quick overview of Franklin Roosevelt's career.
+How do formula one cars generate downforce?
+Identify which instrument is string or percussion: Ikembe, Cimbalom
+why did Syd Barrett left the Pink Floyd?
+Write a story about a man who finds a magic lamp that has a genie inside. The genie should grant him wishes and the story should conclude with a tragic ending.
+What is the negative side effect of the "fire power" on Fargus?
+Identify which instrument is string or percussion: Dollu, Tidinet
+List some TV shows that Canadian actor William B. Davis has been in.
+What does AWS stand for?
+Why we have different seasons on earth?
+Identify which instrument is string or percussion: Huiringua, Pipa
+List down some information about Ahilya Bai from given passage
+Given this paragraph about salmon, give me an overview of their lifecycle.
+Can whales and dolphins breathe underwater?
+Which episode does Jon Snow lead a battle where he is outnumbered by Ramsey Bolton?
+How many syllables are in the word reverberate?
+Tell me about the Sukhoi-Gulfstream
+Does parallel universe really exist?
+Given this paragraph about Jiu-Jitsu, who taught Carlos Gracie.
+Give me a list of the best takeaway foods when youre hungry.
+Why are gaming conferences fun for everyone?
+What are the 5 most effective ways to convert a prospect to a customer?
+Where does the name Busan (city in Korea) come from?
+Write a compelling short story
+What are the most common meals?
+Extract from this article the most common Android security threats and simple descriptions of each threat, in a bullet pointed list.
+Why 2 is greater than 3?
+Who spoke at NYU's 2022 commencement?
+Who are the known members of the student group named Dumbledor's Army, from the Harry Potter book series.
+Tell me whether these people are chess Grandmasters or professional boxers: Nikolai Krogius, Evgeny Gleizerov, Dmitry Bivol, Nikolai Valuev, and Alexander Alekhine.
+What is the difference between laser cutting and 3D printing?
+From the information below, extract the date the Battle of Entebbe took place.
+Name five NBA teams in the Western Conference.
+How many keys are in a standard piano?
+Identify which instrument is string or percussion: Turkish crescent, Banjo
+Who coined the term isotherm and when?
+What is a sandworm?
+Give me 3 totally distinct ways to eat a banana
+Based on the information provided, what was the controversy surrounding the 2021 Abu Dhabi Grand Prix?
+Which technology is best to learn for 2023 and the future?
+Create a dialogue between two characters discussing the impact of social media on their lives. Your dialogue should explore both the positive and negative effects of social media on society.
+Give me a list of the last 10 mens college hockey champions.
+What are modifiers in English?
+Im going to the beach, which of these things should I avoid bringing?  Sunglasses, towel, beachball, kite, refrigerator, cooler, and portable chairs.
+Who is Jon Bon Jovi
+What is a Treasury Bond?
+What is the most produced airplane in history.
+Tell me whether these are names of automobile or motorcycle companies: Ford, Triumph, Indian, Harley Davidson, Rolls Royce, Mercedes, Toyota.
+Give me a list of the most agreed upon supplements that are effective for maintaining general health
+Give me a bulleted list of 3 informal fallacies and the meaning each
+Whats are the 5 best places to visit in late spring months like May?
+What are the primary causes of inflation?
+Which rock band from the 2000s is the most influential?
+Your organized flight has been canceled. Write a letter to the airline company. You should 1) complain about the situation, 2) request what you need from them to make a travel insurance claim, 3) suggest what they should do in future situations.
+How can I avoid sunburn?
+How can you prepare for a longer airplane flight with children?
+Do we live in a simulation? Argue both sides
+International Booker Prize 2021 was given to
+What is the plot of the movie above suspicion
+What is the difference between solar power and hydrogen fuel cell?  What are the advantages of hydrogen?
+Given this paragraph, what is an important function of the London Assembly?
+Choose the word which is different from the rest: chicken, snake, swan, crocodile, frog
+Tell me which of these are served hot or cold: soup, ice cream, potato salad, mashed potatoes, cake, cheese platter
+When was the Memphis album released
+What is the main cause of snow?
+Who won March Madness?
+Which episode does Jon Snow concede to Daenerys Targaryen's authority?
+Who won the San Diego Film Critics Society Award for Best Cinematography in 2012?
+What causes revenue to decline?
+Is the USS Rachel Seaman made of metal?
