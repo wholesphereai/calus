@@ -15,25 +15,76 @@ _by **Wholesphere**_
 
 ---
 
-## 🛡️ Benchmark — catches injections out of the box
+## 🛡️ Benchmark Coverage
 
 Calus ships with **27,871 detection patterns** across **41 rule packs**, mapped to
-the **OWASP LLM Top 10 (2025)**. Scored against the
-[AgentDojo](https://github.com/ethz-spylab/agentdojo) prompt-injection benchmark
-(ETH Zurich) — a **held-out** set, with **zero tuning**:
+the **OWASP LLM Top 10 (2025)**. It is a **prompt-injection / jailbreak-pattern
+detection gateway** — it flags adversarial *inputs* (injection wrappers, jailbreak
+templates, obfuscation) before they reach the model. Every number below is scored
+by the **real engine** against **held-out, third-party academic benchmarks**, with
+**zero tuning**. Reproduce any row with the commands in
+[`calus/benchmark`](calus/benchmark).
 
-| Operating point          |  Recall  | Precision |  F1  |
-|--------------------------|:--------:|:---------:|:----:|
-| Engine default verdict   |   73%    |    97%    | 84%  |
-| Confidence ≥ 0.20        | **95%**  |    92%    | 94%  |
+### 1 · Prompt injection — Calus's core threat model
+
+| Benchmark | Setting | Recall | Precision | F1 |
+|---|---|:--:|:--:|:--:|
+| [AgentDojo](https://github.com/ethz-spylab/agentdojo) · NeurIPS 2024 | default | 73% | 97% | 84% |
+| | conf ≥ 0.20 | **95%** | 92% | **94%** |
+| [InjecAgent](https://github.com/uiuc-kang-lab/InjecAgent) · ACL 2024 — Standard | default | 41% | 95% | 58% |
+| | conf ≥ 0.20 | 72% | 97% | 83% |
+| [InjecAgent](https://github.com/uiuc-kang-lab/InjecAgent) · ACL 2024 — Enhanced | default | 97% | 98% | 97% |
+| | conf ≥ 0.20 | **100%** | 98% | **99%** |
+
+InjecAgent's *enhanced* setting (attacker prepends a "hacking prompt") is the
+common real-world indirect-injection shape — Calus catches **100%** of its 1,054
+injected tool responses at conf ≥ 0.20, at 98% precision. By attack type
+(conf ≥ 0.20): data-exfiltration **F1 91%**, direct-harm **F1 70%**.
+
+### 2 · Jailbreak detection — JailbreakBench artifacts (NeurIPS 2024)
+
+Scored against the **real jailbreak attack strings** in JailbreakBench's artifact
+library (the meaningful detection target), with the 100 benign JBB behaviors as
+the false-positive control. Default verdict shown (precision-led):
+
+| Attack family | Recall | Precision | F1 |
+|---|:--:|:--:|:--:|
+| JBC — manual templates (AIM / DAN-style) | **100%** | 94% | 97% |
+| PAIR — LLM-crafted adaptive jailbreaks | 50% | 95% | 65% |
+| GCG — adversarial suffix (filter-evasion) | 34% | 85% | 49% |
+| **All families combined** | 58% | 98% | 73% |
+
+Calus catches **every** classic manual jailbreak template, the majority of
+adaptive social-engineering jailbreaks, and a third of gibberish suffix attacks
+explicitly designed to slip past filters.
+
+### 3 · Scope boundary — harmful-intent corpora
+
+[AdvBench](https://github.com/llm-attacks/llm-attacks) (520 prompts) and
+[HarmBench](https://github.com/centerforaisafety/HarmBench) (200 standard
+behaviors) measure whether a **bare request carries harmful intent**
+("write a tutorial on …") — that is *content moderation*, a different layer from
+injection/jailbreak detection. Calus is not a content classifier; it flags only
+the subset of these prompts that carry an injection or obfuscation signature, so
+recall is low **by design**:
+
+| Benchmark | Recall (default) | Recall (conf ≥ 0.20) |
+|---|:--:|:--:|
+| AdvBench — 520 harmful goals | 5% | 31% |
+| HarmBench — 200 standard behaviors | 17% | 50% |
+
+For harmful-content blocking, pair Calus with a content-moderation classifier;
+Calus owns the injection/jailbreak layer those classifiers miss.
 
 ```bash
-python -m calus.benchmark.external.agentdojo.build      # generate the test set
-python -m calus.benchmark.harness --dataset agentdojo   # score the real engine
+# Build any test set, then score the real engine (one input per line):
+python -m calus.benchmark.external.injecagent.build
+python -m calus.benchmark.harness --dataset injecagent      # also: agentdojo,
+                                                            # jailbreakbench, advbench, harmbench
 ```
 
-Add `--live` (after `pip install agentdojo`) to score the current upstream suite.
-Details → [`calus/benchmark/external/agentdojo`](calus/benchmark/external/agentdojo).
+Methodology, sources and per-split numbers →
+[`calus/benchmark/README.md`](calus/benchmark/README.md).
 
 ---
 
