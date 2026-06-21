@@ -348,7 +348,7 @@ PATTERNS = [
     ('(?i)Path\\s*\\(.*(?:llm|ai|model)', 'high', 'Using LLM output in file paths without validation enables path traversal.\n'),
     ('\\.\\./\\.\\.', 'high', 'Directory traversal sequences that could access sensitive files.\n'),
     ('(?i)/etc/(?:passwd|shadow)', 'high', 'Directory traversal sequences that could access sensitive files.\n'),
-    ('(?i)C:\\\\Windows\\\\System32', 'high', 'Directory traversal sequences that could access sensitive files.\n'),
+    ('(?i)C:\\Windows\\System32', 'high', 'Directory traversal sequences that could access sensitive files.\n'),
     ('(?i)%2e%2e%2f', 'high', 'Directory traversal sequences that could access sensitive files.\n'),
     ('(?i)requests\\.(?:get|post|put)\\s*\\(.*(?:llm|ai|model).*(?:output|response)', 'high', 'Using LLM output as URLs without validation enables SSRF attacks.\n'),
     ('(?i)urllib\\.request\\.urlopen\\s*\\(.*(?:llm|ai|model)', 'high', 'Using LLM output as URLs without validation enables SSRF attacks.\n'),

