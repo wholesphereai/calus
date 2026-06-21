@@ -1,10 +1,9 @@
 """
 calus.detection.cascade_engine — confidence-routed, self-improving detector.
 
-Design follows the consensus of production tools (Rebuff, Vigil, LLM Guard) and
-the OWASP LLM Prompt-Injection cheat sheet: a cheap->expensive cascade where each
-tier only runs if the previous one was not decisive. Keeps every layer available
-but does NOT run them all on every input.
+Design follows the OWASP LLM Prompt-Injection cheat sheet: a cheap->expensive
+cascade where each tier only runs if the previous one was not decisive. Keeps
+every layer available but does NOT run them all on every input.
 
     Tier 1  Deterministic  (regex + cheap anomaly signals + optional decoders)
     Tier 2  Lexical / vector similarity to known attacks
@@ -126,9 +125,11 @@ class CascadeEngine:
         # Conditional decoders — only on real obfuscation signals
         has_b64 = re.search(r"[A-Za-z0-9+/]{20,}={0,2}", text) is not None
         spaced  = re.search(r"(?:\b\w\b[ \t]){5,}", text) is not None
+        decoded_texts = []          # keep decoded variants for tier-2 below
         if (_INVISIBLE.search(text) or _nonascii_ratio(text) > 0.30 or has_b64 or spaced):
             tiers.append("decoders")
             for name, decoded in _try_decoders(text):
+                decoded_texts.append((name, decoded))
                 d1 = self._t1.detect(decoded)
                 if d1.score > score:
                     score = d1.score; decoded_from = name
@@ -142,8 +143,17 @@ class CascadeEngine:
 
         # Otherwise ALWAYS consult Tier 2 (cheap lexical/vector similarity).
         # This is what catches paraphrases and learned signatures that regex misses.
+        # Run it on the original AND any decoded variants, so obfuscated attacks
+        # that decode to a known phrase (base64 / spaced / reversed) are caught
+        # even when the decoded text doesn't hit a tier-1 regex.
         tiers.append("t2_similarity")
         sim = self._t2.detect(text)
+        for name, decoded in decoded_texts:
+            ds = self._t2.detect(decoded)
+            if ds["similarity"] > sim["similarity"]:
+                sim = ds
+                if not decoded_from:
+                    decoded_from = name
         if sim["flagged"] or sim["similarity"] >= T2_FLAG:
             reasons.append(f"similar to known attack ({sim['similarity']})")
             return self._verdict(True, max(score / (T1_DECISIVE * 2), sim["similarity"]),
