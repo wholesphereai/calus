@@ -42,9 +42,9 @@ class TestScannerDetection:
 
 class TestTransformDetection:
     def test_atbash(self):
-        # "ignore" in atbash = "rmtliv"
+        # "ignore" in atbash = "rtmliv" (a<->z, b<->y, ...)
         from calus.detection.transforms.atbash import detect
-        r = detect("rmtliv all instructions")
+        r = detect("rtmliv all instructions")
         assert r["detected"]
 
     def test_binary(self):

@@ -21,7 +21,6 @@ from dataclasses import dataclass, field
 
 # routing thresholds (tune on your benchmark)
 T1_DECISIVE = 3.0     # tier-1 score at/above this => flag now, skip deeper tiers
-T1_CLEAN    = 0.6     # tier-1 score at/below this AND no anomaly => clean, stop
 T2_FLAG     = 0.55    # tier-2 similarity to flag
 
 @dataclass
@@ -168,7 +167,11 @@ class CascadeEngine:
                 return self._verdict(True, em["similarity"], top_cat, tiers, reasons,
                                      decoded_from, agent_context)
 
-        # gray-zone, nothing decisive -> not flagged (tune thresholds to taste)
+        # Gray zone: nothing tripped a decisive threshold above. The `conf >= 0.5`
+        # branch is NOT dead — here score < T1_DECISIVE (so score/6.0 < 0.5) and
+        # similarity < T2_FLAG (0.55), but similarity can still land in [0.5, 0.55),
+        # which makes conf >= 0.5 and flags borderline-similar inputs. Leaving the
+        # threshold as-is (do not change routing behavior).
         conf = max(score / (T1_DECISIVE * 2), sim["similarity"])
         return self._verdict(conf >= 0.5, conf, top_cat, tiers, reasons, decoded_from, agent_context)
 
@@ -197,16 +200,24 @@ class CascadeEngine:
             out.append("possible memory poisoning (untrusted -> memory write)")
         return out
 
-    @staticmethod
-    def _category_of(matched):
+    def _category_of(self, matched):
         # `matched` is weight-sorted [(rule_id, severity, weight, category), ...].
-        # Take the highest-weight matched rule that actually carries a category
-        # (many rules have an empty category); that drives the OWASP mapping.
+        # Prefer the highest-weight matched rule whose category actually MAPS to an
+        # OWASP code (many rules have empty or unmapped categories). Fall back to the
+        # first non-empty category so we still surface something for the verdict.
+        first_nonempty = ""
+        owasp = self._owasp
         for m in matched or []:
             cat = m[3] if len(m) > 3 else ""
-            if cat:
-                return cat
-        return ""
+            if not cat:
+                continue
+            if not first_nonempty:
+                first_nonempty = cat
+            if owasp is not None:
+                code, _ = owasp(cat)
+                if code:
+                    return cat
+        return first_nonempty
 
     # ---------- self-improving loop ----------
     def learn(self, text: str, is_attack: bool, matched_rule_ids=None):

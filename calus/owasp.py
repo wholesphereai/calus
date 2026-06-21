@@ -35,6 +35,55 @@ CATEGORY_TO_OWASP = {
     "agentic_patterns": "LLM06", "acp_vulnerabilities": "LLM06", "ucp_security": "LLM06",
     "prompt_extraction": "LLM07",
     "reasoning_attack": "LLM09", "red_teaming": "LLM09",
+    # --- aliases for common categories that were previously Unmapped ---
+    # Prompt injection family (LLM01)
+    "jailbreak": "LLM01", "indirect_prompt_injection": "LLM01",
+    "indirect_injection": "LLM01", "roleplay_jailbreak": "LLM01",
+    "obfuscated_injection": "LLM01", "prompt_obfuscation": "LLM01",
+    "obfuscation": "LLM01", "encoding_attack": "LLM01", "encoding_evasion": "LLM01",
+    "hidden_instructions": "LLM01", "hidden_text": "LLM01",
+    "adversarial_suffix": "LLM01", "multi_turn_attack": "LLM01",
+    "security_bypass": "LLM01", "authentication_bypass": "LLM01",
+    "automated_red_teaming": "LLM09",
+    # Sensitive info / data disclosure (LLM02)
+    "data_exfiltration": "LLM02", "exfiltration": "LLM02",
+    "data_extraction": "LLM02", "data_leak_channel": "LLM02",
+    "information_disclosure": "LLM02", "sensitive_data": "LLM02",
+    "credential_exposure": "LLM02", "pii_credentials": "LLM02",
+    "privacy_attack": "LLM02", "privacy_inference": "LLM02",
+    "membership_inference": "LLM02",
+    # Supply chain (LLM03)
+    "repo_poisoning": "LLM03", "backdoor_attack": "LLM03",
+    # Data / model poisoning (LLM04)
+    "memory_manipulation": "LLM04", "knowledge_poisoning": "LLM04",
+    "corpus_poisoning": "LLM04", "rag_poisoning": "LLM04",
+    "training_security": "LLM04", "adversarial_ml": "LLM04",
+    # Improper output handling (LLM05)
+    "code_generation": "LLM05", "vulnerable_codegen": "LLM05",
+    "command_injection": "LLM05", "sql_injection": "LLM05",
+    "powershell_injection": "LLM05", "code_execution_ext": "LLM05",
+    "exfiltration_code": "LLM05",
+    # Excessive agency (LLM06)
+    "excessive_agency": "LLM06", "excessive_autonomy": "LLM06",
+    "tool_use_attack": "LLM06", "tool_use_security": "LLM06",
+    "tool_misuse": "LLM06", "tool_abuse": "LLM06", "tool_manipulation": "LLM06",
+    "tool_shadowing": "LLM06", "mcp_attack": "LLM06",
+    "mcp_tool_poisoning": "LLM06", "confused_deputy": "LLM06",
+    "confused_deputy_advanced": "LLM06", "agent_identity": "LLM06",
+    "agent_delegation": "LLM06", "autonomous_exploitation": "LLM06",
+    "oauth_injection": "LLM06", "sandbox_escape": "LLM06",
+    "access_control": "LLM06", "authentication": "LLM06",
+    "multi_agent_attack": "LLM06",
+    # System prompt leakage (LLM07)
+    "prompt_leakage": "LLM07", "system_prompt_leak": "LLM07",
+    "leaked_prompt": "LLM07",
+    # Vector / embedding (LLM08)
+    "embedding_pipeline": "LLM08", "rag_attack": "LLM08",
+    "retrieval_manipulation": "LLM08", "agentic_rag": "LLM08",
+    # Misinformation (LLM09)
+    "social_engineering": "LLM09", "semantic_manipulation": "LLM09",
+    # Unbounded consumption (LLM10)
+    "denial_of_service": "LLM10", "resource_security": "LLM10",
 }
 def owasp_for(category):
     # normalize: lowercase and unify hyphen/underscore so 'prompt-injection' and

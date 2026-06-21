@@ -140,6 +140,38 @@ def scan(
         learned = scan_with_learned(text)
     except Exception: pass
 
+    # Layer 6: Production cascade engine. The legacy stack lacks the cascade's
+    # calibrated regex/similarity tiers, so consult the real engine and merge its
+    # verdict as a layer. This lets the legacy entry point benefit from production
+    # detection (e.g. '*** NEW IMPORTANT INSTRUCTIONS ***') without losing any of
+    # the layers above.
+    try:
+        import calus
+        v = calus.get_detector().scan(text)
+        # Only adopt the cascade verdict when it is backed by the deterministic
+        # tier-1 regex engine (decisive before tier-2 ever runs). Tier-2 lexical
+        # similarity is recall-oriented and can over-flag benign phrasing, so we
+        # do NOT let a similarity-only guess set detected=True in the legacy stack
+        # — that would import the cascade's borderline false positives. This still
+        # gives the legacy entry point the real regex patterns it was missing
+        # (e.g. '*** NEW IMPORTANT INSTRUCTIONS ***').
+        deterministic = v.flagged and "t2_similarity" not in getattr(v, "tiers_run", [])
+        if deterministic:
+            sev = "critical" if v.confidence >= 0.8 else "high"
+            layers["cascade"] = {
+                "detected": True, "severity": sev, "layer": "cascade",
+                "confidence": round(float(v.confidence), 3),
+                "owasp": v.owasp, "owasp_name": v.owasp_name,
+                "reason": "; ".join(v.reasons) if v.reasons else "cascade engine flagged",
+            }
+        else:
+            layers["cascade"] = {
+                "detected": False, "severity": "none", "layer": "cascade",
+                "confidence": round(float(v.confidence), 3),
+            }
+    except Exception as e:
+        layers["cascade"] = {"detected": False, "severity": "none", "layer": "cascade", "error": str(e)}
+
     detected = any(r.get("detected",False) for r in layers.values()) or learned.get("detected",False)
     severity = _hi([r.get("severity","none") for r in layers.values()] + [learned.get("severity","none")])
 

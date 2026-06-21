@@ -61,13 +61,24 @@ def bootstrap(force: bool = False) -> int:
 
 
 def pattern_stats() -> dict:
-    """Return statistics about loaded patterns."""
+    """Return statistics about loaded patterns, broken down by source.
+
+    The registry is populated by register() calls made when sub-packages of
+    calus.patterns are imported. Sources currently in use are "calus" (bundled),
+    "community", and "user"; external packs (spikee/pyrit/promptfoo) were removed,
+    so the registry can be empty. Keys are derived from the live registry so they
+    stay meaningful regardless of which packs are present.
+    """
     import calus.patterns
     from calus.patterns.base import all_patterns, by_source
     patterns = all_patterns()
+    by_src = {}
+    for p in patterns:
+        by_src[p.source] = by_src.get(p.source, 0) + 1
     return {
         "total":     len(patterns),
         "bundled":   len(by_source("calus")),
-        "community": len(by_source("calus")),
+        "community": len(by_source("community")),
         "user":      len(by_source("user")),
+        "by_source": by_src,
     }
