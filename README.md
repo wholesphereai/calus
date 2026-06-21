@@ -9,8 +9,6 @@ Calus sits between your AI tools and the model providers — giving you instant
 coverage on every call. Detection-only: it observes and flags, it never blocks or
 alters your traffic.
 
-_by **Wholesphere**_
-
 </div>
 
 ---
@@ -28,8 +26,9 @@ by the **real engine** against **held-out, third-party academic benchmarks**, wi
 > **False-positive rate on normal traffic: 1.1%.** On 2,000 ordinary user messages
 > (Databricks Dolly-15k, held out from calibration), Calus's **default verdict**
 > flags only **1.1%** — the number that matters for production. The tables below
-> report both the default verdict (the production operating point) and the
-> higher-recall `conf ≥ 0.20` point.
+> report both the default verdict (the production operating point) and
+> `conf ≥ 0.20` — the higher-recall operating point, where the engine flags any
+> input whose detection-confidence score reaches 0.20.
 
 ### 1 · Prompt injection — Calus's core threat model
 
@@ -42,10 +41,15 @@ by the **real engine** against **held-out, third-party academic benchmarks**, wi
 | [InjecAgent](https://github.com/uiuc-kang-lab/InjecAgent) · ACL 2024 — Enhanced | default | 96% | 99% | 98% |
 | | conf ≥ 0.20 | **100%** | 99% | **99%** |
 
-InjecAgent's *enhanced* setting (attacker prepends a "hacking prompt") is the
-common real-world indirect-injection shape — Calus catches **100%** of its 1,054
-injected tool responses at conf ≥ 0.20, at **99% precision**. By attack type
-(conf ≥ 0.20): data-exfiltration **F1 93%**, direct-harm **F1 66%**.
+The Standard split contains subtle injections with no recognizable wrapper; the
+Enhanced setting prepends explicit hacking-prompt syntax that the pattern tier
+catches reliably — which is also how real-world indirect injection typically
+arrives. So Enhanced (Calus catches **100%** of its 1,054 injected tool responses
+at conf ≥ 0.20, **99% precision**) is the more representative number. By attack
+type (conf ≥ 0.20): data-exfiltration **F1 93%**, direct-harm **F1 66%** — the
+gap is because direct-harm payloads tend to be shorter, less-structured commands
+that carry fewer recognizable injection signatures than the more elaborate
+exfiltration chains.
 
 ### 2 · Jailbreak detection — JailbreakBench artifacts (NeurIPS 2024)
 
@@ -77,7 +81,7 @@ recall is low **by design**:
 | Benchmark | Recall (default) | Recall (conf ≥ 0.20) |
 |---|:--:|:--:|
 | AdvBench — 520 harmful goals | 3% | 28% |
-| HarmBench — flags of 200 standard input prompts before they reach the model | 11% | 47% |
+| HarmBench — 200 standard behaviors | 11% | 47% |
 
 For harmful-content blocking, pair Calus with a content-moderation classifier;
 Calus owns the injection/jailbreak layer those classifiers miss.
@@ -288,3 +292,7 @@ See [SECURITY.md](SECURITY.md) to report a vulnerability.
 [GNU AGPL-3.0](LICENSE). Running a modified version as a network service requires
 publishing your source. For a commercial license without the AGPL obligations,
 contact **Wholesphere**.
+
+---
+
+<div align="center"><sub>Calus is built and maintained by <b>Wholesphere</b>.</sub></div>
