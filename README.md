@@ -25,21 +25,27 @@ by the **real engine** against **held-out, third-party academic benchmarks**, wi
 **zero tuning**. Reproduce any row with the commands in
 [`calus/benchmark`](calus/benchmark).
 
+> **False-positive rate on normal traffic: 1.1%.** On 2,000 ordinary user messages
+> (Databricks Dolly-15k, held out from calibration), Calus's **default verdict**
+> flags only **1.1%** — the number that matters for production. The tables below
+> report both the default verdict (the production operating point) and the
+> higher-recall `conf ≥ 0.20` point.
+
 ### 1 · Prompt injection — Calus's core threat model
 
 | Benchmark | Setting | Recall | Precision | F1 |
 |---|---|:--:|:--:|:--:|
-| [AgentDojo](https://github.com/ethz-spylab/agentdojo) · NeurIPS 2024 | default | 73% | 97% | 84% |
-| | conf ≥ 0.20 | **95%** | 92% | **94%** |
-| [InjecAgent](https://github.com/uiuc-kang-lab/InjecAgent) · ACL 2024 — Standard | default | 41% | 95% | 58% |
-| | conf ≥ 0.20 | 72% | 97% | 83% |
-| [InjecAgent](https://github.com/uiuc-kang-lab/InjecAgent) · ACL 2024 — Enhanced | default | 97% | 98% | 97% |
-| | conf ≥ 0.20 | **100%** | 98% | **99%** |
+| [AgentDojo](https://github.com/ethz-spylab/agentdojo) · NeurIPS 2024 | default | 69% | **100%** | 82% |
+| | conf ≥ 0.20 | **95%** | 93% | **94%** |
+| [InjecAgent](https://github.com/uiuc-kang-lab/InjecAgent) · ACL 2024 — Standard | default | 35% | 99% | 52% |
+| | conf ≥ 0.20 | 69% | 99% | 82% |
+| [InjecAgent](https://github.com/uiuc-kang-lab/InjecAgent) · ACL 2024 — Enhanced | default | 96% | 99% | 98% |
+| | conf ≥ 0.20 | **100%** | 99% | **99%** |
 
 InjecAgent's *enhanced* setting (attacker prepends a "hacking prompt") is the
 common real-world indirect-injection shape — Calus catches **100%** of its 1,054
-injected tool responses at conf ≥ 0.20, at 98% precision. By attack type
-(conf ≥ 0.20): data-exfiltration **F1 91%**, direct-harm **F1 70%**.
+injected tool responses at conf ≥ 0.20, at **99% precision**. By attack type
+(conf ≥ 0.20): data-exfiltration **F1 93%**, direct-harm **F1 66%**.
 
 ### 2 · Jailbreak detection — JailbreakBench artifacts (NeurIPS 2024)
 
@@ -49,14 +55,14 @@ the false-positive control. Default verdict shown (precision-led):
 
 | Attack family | Recall | Precision | F1 |
 |---|:--:|:--:|:--:|
-| JBC — manual templates (AIM / DAN-style) | **100%** | 94% | 97% |
-| PAIR — LLM-crafted adaptive jailbreaks | 50% | 95% | 65% |
-| GCG — adversarial suffix (filter-evasion) | 34% | 85% | 49% |
-| **All families combined** | 58% | 98% | 73% |
+| JBC — manual templates (AIM / DAN-style) | **100%** | 98% | 99% |
+| PAIR — LLM-crafted adaptive jailbreaks | 29% | 97% | 45% |
+| GCG — adversarial suffix (filter-evasion) | 29% | 94% | 44% |
+| **All families combined** | 45% | 99% | 62% |
 
-Calus catches **every** classic manual jailbreak template, the majority of
-adaptive social-engineering jailbreaks, and a third of gibberish suffix attacks
-explicitly designed to slip past filters.
+Calus catches **every** classic manual jailbreak template at 98% precision. Adaptive
+(PAIR) and gibberish-suffix (GCG) attacks — explicitly designed to evade pattern
+filters — are caught partially and at high precision.
 
 ### 3 · Scope boundary — harmful-intent corpora
 
@@ -70,8 +76,8 @@ recall is low **by design**:
 
 | Benchmark | Recall (default) | Recall (conf ≥ 0.20) |
 |---|:--:|:--:|
-| AdvBench — 520 harmful goals | 5% | 31% |
-| HarmBench — 200 standard behaviors | 17% | 50% |
+| AdvBench — 520 harmful goals | 3% | 28% |
+| HarmBench — flags of 200 standard input prompts before they reach the model | 11% | 47% |
 
 For harmful-content blocking, pair Calus with a content-moderation classifier;
 Calus owns the injection/jailbreak layer those classifiers miss.

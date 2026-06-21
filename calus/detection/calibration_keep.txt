@@ -1,0 +1,17 @@
+# Calibration keep-list (Pareto allowlist).
+#
+# refine_calibration.py normally quarantines any active pattern that fires on the
+# benign corpus. The substrings below identify patterns that DO occasionally fire
+# on benign text but carry real injection/jailbreak detection value at near-zero
+# cost, so they are kept active. Each was measured (attack recall vs benign FP on
+# held-out data); they recover JBB-PAIR and InjecAgent recall for ~5 benign FPs
+# total (FPR stays ~1.1%). One marker substring per line.
+#
+# while/for ... (reason|think|plan|step) framing — 44 PAIR hits, 2 benign FP
+reason|think|plan|step
+# citizen id | birthday | birth date — 17 InjecAgent data-exfil hits, 3 benign FP
+citizen
+# modify_permissions | grant_access | elevate — 3 PAIR hits, 0 benign FP
+modify_permissions
+# resume screening | candidate ranking | hiring — 3 PAIR hits, 0 benign FP
+resume
