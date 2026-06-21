@@ -15,6 +15,15 @@ jobs:
           python-version: "3.12"
       - name: Install engine
         run: pip install -e ./calus
+      - name: Dependency vulnerability audit (pip-audit)
+        run: |
+          python -m pip install --upgrade pip pip-audit
+          # audit the proxy's pinned deps; don't fail the self-scan job on advisories
+          pip-audit -r proxy/requirements.txt || true
+      - name: Static security analysis (bandit)
+        run: |
+          python -m pip install bandit
+          bandit -r proxy/calus_proxy -ll || true
       - name: Run self-scan
         run: |
           python - << 'EOF'
