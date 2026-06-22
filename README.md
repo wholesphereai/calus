@@ -1,90 +1,91 @@
 <div align="center">
 
+<img src="assets/logo.png" alt="Calus" width="104" />
+
 # Calus
 
 **A drop-in AI-security gateway. No code changes. No SDK.**
 
-Calus sits between your AI tools and the model providers — giving you instant
-**threat detection**, **agent & tool-call observability**, and **OWASP LLM Top 10**
-coverage on every call. Detection-only: it observes and flags, it never blocks or
-alters your traffic.
+Calus sits between your AI tools and the model providers. It gives you threat
+detection, agent and tool-call observability, and OWASP LLM Top 10 coverage on
+every call. Detection-only: it observes and flags, it never blocks or alters
+your traffic.
 
 </div>
 
 ---
 
-## 🛡️ Benchmark Coverage
+## Benchmark coverage
 
 Calus ships with **27,871 detection patterns** across **41 rule packs**, mapped to
-the **OWASP LLM Top 10 (2025)**. It is a **prompt-injection / jailbreak-pattern
-detection gateway** — it flags adversarial *inputs* (injection wrappers, jailbreak
+the **OWASP LLM Top 10 (2025)**. It is a prompt-injection and jailbreak-pattern
+detection gateway: it flags adversarial *inputs* (injection wrappers, jailbreak
 templates, obfuscation) before they reach the model. Every number below is scored
-by the **real engine** against **held-out, third-party academic benchmarks**, with
-**zero tuning**. Reproduce any row with the commands in
-[`calus/benchmark`](calus/benchmark).
+by the real engine against held-out, third-party academic benchmarks, with no
+tuning. Reproduce any row with the commands in [`calus/benchmark`](calus/benchmark).
 
-> **False-positive rate on normal traffic: 1.1%.** On 2,000 ordinary user messages
-> (Databricks Dolly-15k, held out from calibration), Calus's **default verdict**
-> flags only **0.90%** — the number that matters for production. The tables below
-> report both the default verdict (the production operating point) and
-> `conf ≥ 0.20` — the higher-recall operating point, where the engine flags any
+> **False-positive rate on normal traffic: 0.90%.** On 2,000 ordinary user
+> messages (Databricks Dolly-15k, held out from calibration), Calus's default
+> verdict flags only 0.90%. That is the number that matters for production. The
+> tables below report both the default verdict (the production operating point)
+> and `conf >= 0.20`, the higher-recall operating point where the engine flags any
 > input whose detection-confidence score reaches 0.20.
 
-### 1 · Prompt injection — Calus's core threat model
+### 1. Prompt injection (core threat model)
 
 | Benchmark | Setting | Recall | Precision | F1 |
 |---|---|:--:|:--:|:--:|
 | [AgentDojo](https://github.com/ethz-spylab/agentdojo) · NeurIPS 2024 | default | 82% | **100%** | 90% |
-| | conf ≥ 0.20 | **95%** | 93% | **94%** |
-| [InjecAgent](https://github.com/uiuc-kang-lab/InjecAgent) · ACL 2024 — Standard | default | 35% | 99% | 52% |
-| | conf ≥ 0.20 | 69% | 99% | 82% |
-| [InjecAgent](https://github.com/uiuc-kang-lab/InjecAgent) · ACL 2024 — Enhanced | default | **100%** | 99% | **100%** |
-| | conf ≥ 0.20 | **100%** | 99% | **99%** |
+| | conf >= 0.20 | **95%** | 93% | **94%** |
+| [InjecAgent](https://github.com/uiuc-kang-lab/InjecAgent) · ACL 2024, Standard | default | 35% | 99% | 52% |
+| | conf >= 0.20 | 69% | 99% | 82% |
+| [InjecAgent](https://github.com/uiuc-kang-lab/InjecAgent) · ACL 2024, Enhanced | default | **100%** | 99% | **100%** |
+| | conf >= 0.20 | **100%** | 99% | **99%** |
 
-The Standard split contains subtle injections with no recognizable wrapper; the
+The Standard split contains subtle injections with no recognizable wrapper. The
 Enhanced setting prepends explicit hacking-prompt syntax that the pattern tier
-catches reliably — which is also how real-world indirect injection typically
-arrives. So Enhanced (Calus catches **100%** of its 1,054 injected tool responses
-at the default verdict, **99.5% precision**) is the more representative number. By attack
-type (conf ≥ 0.20): data-exfiltration **F1 93%**, direct-harm **F1 66%** — the
-gap is because direct-harm payloads tend to be shorter, less-structured commands
-that carry fewer recognizable injection signatures than the more elaborate
+catches reliably, which is also how real-world indirect injection typically
+arrives. So Enhanced (Calus catches 100% of its 1,054 injected tool responses at
+the default verdict, 99.5% precision) is the more representative number. By attack
+type at `conf >= 0.20`: data-exfiltration F1 93%, direct-harm F1 66%. The gap is
+because direct-harm payloads tend to be shorter, less-structured commands that
+carry fewer recognizable injection signatures than the more elaborate
 exfiltration chains.
 
-### 2 · Jailbreak detection — JailbreakBench artifacts (NeurIPS 2024)
+### 2. Jailbreak detection (JailbreakBench artifacts, NeurIPS 2024)
 
-Scored against the **real jailbreak attack strings** in JailbreakBench's artifact
-library (the meaningful detection target), with the 100 benign JBB behaviors as
-the false-positive control. Default verdict shown (precision-led):
+Scored against the real jailbreak attack strings in JailbreakBench's artifact
+library, with the 100 benign JBB behaviors as the false-positive control. Default
+verdict shown (precision-led):
 
 | Attack family | Recall | Precision | F1 |
 |---|:--:|:--:|:--:|
-| JBC — manual templates (AIM / DAN-style) | **100%** | 98% | 99% |
-| PAIR — LLM-crafted adaptive jailbreaks | 29% | 97% | 45% |
-| GCG — adversarial suffix (filter-evasion) | 29% | 94% | 44% |
+| JBC, manual templates (AIM / DAN-style) | **100%** | 98% | 99% |
+| PAIR, LLM-crafted adaptive jailbreaks | 29% | 97% | 45% |
+| GCG, adversarial suffix (filter-evasion) | 29% | 94% | 44% |
 | **All families combined** | 45% | 99% | 62% |
 
-Calus catches **every** classic manual jailbreak template at 98% precision. Adaptive
-(PAIR) and gibberish-suffix (GCG) attacks — explicitly designed to evade pattern
-filters — are caught partially and at high precision.
+Calus catches every classic manual jailbreak template at 98% precision. Adaptive
+(PAIR) and gibberish-suffix (GCG) attacks, which are explicitly designed to evade
+pattern filters, are caught partially and at high precision.
 
-### 3 · Scope boundary — harmful-intent corpora
+### 3. Scope boundary (harmful-intent corpora)
 
 [AdvBench](https://github.com/llm-attacks/llm-attacks) (520 prompts) and
 [HarmBench](https://github.com/centerforaisafety/HarmBench) (200 standard
-behaviors) measure whether a **bare request carries harmful intent**
-("write a tutorial on …") — that is *content moderation*, a different layer from
-injection/jailbreak detection. Calus is not a content classifier; it flags only
-the subset of these prompts that carry an injection or obfuscation signature, so
-recall is low **by design**:
+behaviors) measure whether a bare request carries harmful intent
+("write a tutorial on ..."). That is content moderation, a different layer from
+injection and jailbreak detection. Calus is not a content classifier; it flags
+only the subset of these prompts that carry an injection or obfuscation signature,
+so recall is low by design:
 
-| Benchmark | Recall (default) | Recall (conf ≥ 0.20) |
+| Benchmark | Recall (default) | Recall (conf >= 0.20) |
 |---|:--:|:--:|
-| AdvBench — 520 harmful goals | 3% | 28% |
-| HarmBench — 200 standard behaviors | 11% | 47% |
+| AdvBench, 520 harmful goals | 3% | 28% |
+| HarmBench, 200 standard behaviors | 11% | 47% |
 
-For harmful-content blocking, pair Calus with a content-moderation classifier;
-Calus owns the injection/jailbreak layer those classifiers miss.
+For harmful-content blocking, pair Calus with a content-moderation classifier.
+Calus owns the injection and jailbreak layer those classifiers miss.
 
 ```bash
 # Build any test set, then score the real engine (one input per line):
@@ -93,32 +94,35 @@ python -m calus.benchmark.harness --dataset injecagent      # also: agentdojo,
                                                             # jailbreakbench, advbench, harmbench
 ```
 
-Methodology, sources and per-split numbers →
+Methodology, sources, and per-split numbers:
 [`calus/benchmark/README.md`](calus/benchmark/README.md).
 
 ---
 
 ## What you get
 
-- **Drop-in proxy** — point any OpenAI-compatible app at Calus by setting one
+- **Drop-in proxy.** Point any OpenAI-compatible app at Calus by setting one
   environment variable. No code changes, no SDK to install.
-- **Multi-provider** — OpenAI, Groq, Anthropic, Gemini, Mistral, Cohere… anything
-  [LiteLLM](https://github.com/BerriAI/litellm) supports, selected by the `model` prefix.
-- **Threat detection** — a tiered engine (regex → lexical similarity → optional
-  semantic) flags prompt injection, jailbreaks, agent abuse and more, mapped to the
-  **OWASP LLM Top 10 (2025)**.
-- **Agent & tool observability** — every agent, the tools it can call, and the tool
-  calls it actually makes (arguments redacted) are traced in the console.
-- **Secret/PII redaction** — secrets and PII are masked before anything is stored.
-- **Encrypted key vault** — optionally save provider keys; stored encrypted at rest,
-  shown masked, revealed on demand. Provider keys are **never** written to the call log.
-- **Monochrome console** — a clean black-and-white dashboard: Overview, Agents,
-  Threats, Live calls, API keys, and Connect.
+- **Multi-provider.** OpenAI, Groq, Anthropic, Gemini, Mistral, Cohere, and
+  anything [LiteLLM](https://github.com/BerriAI/litellm) supports, selected by the
+  `model` prefix.
+- **Threat detection.** A tiered engine (regex, then lexical similarity, then
+  optional semantic) flags prompt injection, jailbreaks, agent abuse, and more,
+  mapped to the OWASP LLM Top 10 (2025).
+- **Agent and tool observability.** Every agent, the tools it can call, and the
+  tool calls it actually makes (arguments redacted) are traced in the console.
+- **Secret and PII redaction.** Secrets and PII are masked before anything is
+  stored.
+- **Encrypted key vault.** Optionally save provider keys; stored encrypted at
+  rest, shown masked, revealed on demand. Provider keys are never written to the
+  call log.
+- **Console.** A clean dashboard: Overview, Agents, Threats, Live calls, API keys,
+  and Connect.
 
 ## Architecture
 
 ```
-your app ──(your key)──▶  CALUS PROXY  ──(same key)──▶  OpenAI / Groq / Anthropic / …
+your app ──(your key)──▶  CALUS PROXY  ──(same key)──▶  OpenAI / Groq / Anthropic / ...
                               │
                        scan + log verdict
                      (key used in-flight, never stored)
@@ -127,24 +131,24 @@ your app ──(your key)──▶  CALUS PROXY  ──(same key)──▶  Open
                       CALUS DASHBOARD  (you watch live)
 ```
 
-| Component   | Path                | What it is                                            |
-|-------------|---------------------|-------------------------------------------------------|
-| Engine      | `calus/`            | Pure-Python detection library (`pip install -e calus`)|
-| Proxy       | `proxy/calus_proxy` | FastAPI OpenAI-compatible gateway + dashboard API     |
-| Dashboard   | `dashboard/`        | React + TypeScript (Vite) console                     |
+| Component | Path | What it is |
+|---|---|---|
+| Engine | `calus/` | Pure-Python detection library (`pip install -e calus`) |
+| Proxy | `proxy/calus_proxy` | FastAPI OpenAI-compatible gateway and dashboard API |
+| Dashboard | `dashboard/` | React + TypeScript (Vite) console |
 
 ```
 calus/
 ├── README.md  LICENSE  SECURITY.md  CONTRIBUTING.md
 ├── Dockerfile  docker-compose.yml  .dockerignore
-├── .github/workflows/        # ci · security · release
+├── .github/workflows/        # ci, security, release
 │
 ├── calus/                    # detection engine (Python package)
 │   ├── pyproject.toml  api.py  cli.py  owasp.py
 │   ├── detection/            # cascade engine, scored regex, similarity, redaction
 │   ├── patterns/             # 27k+ OWASP-mapped rule packs
 │   ├── learning/  context/  integrations/  tools/
-│   ├── benchmark/            # accuracy harness + AgentDojo set
+│   ├── benchmark/            # accuracy harness + external benchmark sets
 │   ├── tests/
 │   └── docs/                 # architecture, threat coverage, accuracy
 │
@@ -156,16 +160,16 @@ calus/
 │
 └── dashboard/                # React + TS console
     ├── package.json  index.html  vite.config.ts  Dockerfile  nginx.conf
-    └── src/  ( App · components · api · types · index.css )
+    └── src/  ( App, components, api, types, index.css )
 ```
+
+> Installing dependencies takes about 1 to 2 minutes the first time. After that
+> the proxy boots and warms its 27k-pattern engine in about 5 seconds, then scans
+> in about 15 ms. No model downloads, no GPU.
 
 ---
 
-> **Setup is fast.** Installing dependencies takes ~1–2 min the first time; after
-> that the proxy boots and warms its 27k-pattern engine in **~5 seconds**, then
-> scans in ~15 ms. No model downloads, no GPU.
-
-## Quick start — Docker (recommended)
+## Quick start with Docker (recommended)
 
 ```bash
 git clone https://github.com/wholesphereai/calus.git
@@ -174,32 +178,32 @@ cp proxy/.env.example proxy/.env     # add your provider keys (admin token optio
 docker compose up --build
 ```
 
-- Dashboard → http://localhost:5173
-- Proxy     → http://localhost:8000
+- Dashboard: http://localhost:5173
+- Proxy: http://localhost:8000
 
-**Admin token:** you don't have to set one. If `CALUS_ADMIN_TOKEN` is left blank,
-the proxy **auto-generates** a token and **prints it in the startup logs** — copy
-that into the dashboard. Set your own in `proxy/.env` only if you want it stable
-across restarts.
+**Admin token.** You do not have to set one. If `CALUS_ADMIN_TOKEN` is left blank,
+the proxy auto-generates a token and prints it in the startup logs; copy that into
+the dashboard. Set your own in `proxy/.env` only if you want it stable across
+restarts.
 
-## Quick start — local (no Docker)
+## Quick start, local (no Docker)
 
 ```bash
 git clone https://github.com/wholesphereai/calus.git
 cd calus
 python -m venv .venv && . .venv/Scripts/activate     # Windows
-# source .venv/bin/activate                          # macOS/Linux
+# source .venv/bin/activate                          # macOS / Linux
 
 # 1) engine
 python -m pip install -e calus
 
-# 2) proxy  (terminal 1)
+# 2) proxy (terminal 1)
 cd proxy
 python -m pip install -r requirements.txt
 cp .env.example .env          # add provider keys; admin token auto-generates if blank
 python -m uvicorn calus_proxy.main:app --port 8000   # prints the admin token on first run
 
-# 3) dashboard  (terminal 2)
+# 3) dashboard (terminal 2)
 cd dashboard
 npm install
 npm run dev                   # http://localhost:5173
@@ -207,22 +211,22 @@ npm run dev                   # http://localhost:5173
 
 ---
 
-## Point your app at Calus (the "no code changes" part)
+## Point your app at Calus
 
-Set one environment variable and run your app as usual — Calus forwards each call
-with **your own provider key** (used in-flight, never stored):
+Set one environment variable and run your app as usual. Calus forwards each call
+with your own provider key (used in-flight, never stored):
 
 ```bash
 export OPENAI_BASE_URL="http://localhost:8000/v1"
 ```
 
-…or pass the base URL explicitly:
+Or pass the base URL explicitly:
 
 ```python
 from openai import OpenAI
 
 client = OpenAI(
-    base_url="http://localhost:8000/v1",   # ← route through Calus
+    base_url="http://localhost:8000/v1",   # route through Calus
     api_key="sk-your-own-key",
 )
 client.chat.completions.create(
@@ -233,20 +237,20 @@ client.chat.completions.create(
 ```
 
 Name each agent with the OpenAI `user` field (or an `X-Calus-Agent` header) so its
-traffic and tool calls show up separately. The **Connect** tab in the dashboard has
+traffic and tool calls show up separately. The Connect tab in the dashboard has
 copy-paste snippets for the OpenAI SDK, Claude Code, LangChain, and curl.
 
 ---
 
-## Add provider keys — three ways
+## Add provider keys, three ways
 
 You can let callers send their own key per request (BYOK, nothing stored), or save
-keys in Calus's **encrypted vault** so you don't re-paste them. Saved keys are
-encrypted at rest, shown masked, and used to forward upstream when a request
-doesn't carry its own.
+keys in Calus's encrypted vault so you do not re-paste them. Saved keys are
+encrypted at rest, shown masked, and used to forward upstream when a request does
+not carry its own.
 
-1. **Dashboard** → the **API keys** page: pick a provider, paste the key, Add.
-   Reveal / delete any time.
+1. **Dashboard.** Open the API keys page: pick a provider, paste the key, Add.
+   Reveal or delete any time.
 2. **Command line** (same vault):
    ```bash
    cd proxy
@@ -254,26 +258,28 @@ doesn't carry its own.
    python -m calus_proxy.keys list
    python -m calus_proxy.keys delete <id>
    ```
-3. **Environment** → put `OPENAI_API_KEY`, `GROQ_API_KEY`, … in `proxy/.env`
-   (read by LiteLLM, never stored in the log).
+3. **Environment.** Put `OPENAI_API_KEY`, `GROQ_API_KEY`, and others in
+   `proxy/.env` (read by LiteLLM, never stored in the log).
 
-Resolution order when forwarding: caller's bearer key → saved vault key → env key.
+Resolution order when forwarding: caller's bearer key, then saved vault key, then
+env key.
 
 ---
 
 ## Configuration (`proxy/.env`)
 
-| Variable               | Default              | Meaning                                            |
-|------------------------|----------------------|----------------------------------------------------|
-| `CALUS_ADMIN_TOKEN`    | _(auto-generated & printed)_ | Token the dashboard/API must present. Leave blank to auto-generate one at startup |
-| `CALUS_CORS_ORIGINS`   | `http://localhost:5173` | Allowed dashboard origins                       |
-| `CALUS_DB_PATH`        | `calus_proxy.db`     | SQLite log store path                              |
-| `CALUS_REDACT_STORE`   | `1`                  | Redact secrets/PII before storing                  |
-| `CALUS_STORE_TEXT`     | `1`                  | Store redacted prompt/response preview             |
-| `CALUS_SCAN_RESPONSES` | `1`                  | Also scan model responses                          |
-| `CALUS_FLAG_THRESHOLD` | `0.5`                | Confidence at/above which a call is flagged         |
-| `CALUS_SECRET`         | _(admin token)_      | Master secret for the encrypted key vault          |
-| `OPENAI_API_KEY`, `GROQ_API_KEY`, … | —       | Upstream keys (read by LiteLLM, never stored)      |
+| Variable | Default | Meaning |
+|---|---|---|
+| `CALUS_ADMIN_TOKEN` | auto-generated and printed | Token the dashboard and API must present. Leave blank to auto-generate one at startup. |
+| `CALUS_PROXY_TOKEN` | blank | Optional data-plane token. If set, `/v1/*` requires it. Leave blank only on a private network. |
+| `CALUS_CORS_ORIGINS` | `http://localhost:5173` | Allowed dashboard origins. |
+| `CALUS_DB_PATH` | `calus_proxy.db` | SQLite log store path. |
+| `CALUS_REDACT_STORE` | `1` | Redact secrets and PII before storing. |
+| `CALUS_STORE_TEXT` | `1` | Store redacted prompt and response preview. |
+| `CALUS_SCAN_RESPONSES` | `1` | Also scan model responses. |
+| `CALUS_FLAG_THRESHOLD` | `0.5` | Confidence at or above which a call is flagged. |
+| `CALUS_SECRET` | admin token | Master secret for the encrypted key vault. |
+| `OPENAI_API_KEY`, `GROQ_API_KEY`, ... | none | Upstream keys (read by LiteLLM, never stored). |
 
 ---
 
@@ -282,16 +288,18 @@ Resolution order when forwarding: caller's bearer key → saved vault key → en
 - **Detection-only.** Requests and responses pass through untouched.
 - **Provider keys are never written to the log store.** Saved keys live in an
   encrypted vault and are only decrypted in memory to forward a request.
-- **Secrets/PII are redacted** before any text or tool-call arguments are stored.
+- **Secrets and PII are redacted** before any text or tool-call arguments are
+  stored.
 - Run the proxy on an encrypted volume and set a high-entropy `CALUS_SECRET`.
-- **Securing the data plane.** `/v1/*` is **unauthenticated by default** so Calus
-  stays drop-in. That's fine on localhost / a private network, but if you expose
-  the port, set **`CALUS_PROXY_TOKEN`** — callers must then present it
-  (`X-Calus-Proxy-Token` header or `Authorization: Bearer …`, constant-time
+- **Securing the data plane.** `/v1/*` is unauthenticated by default so Calus
+  stays drop-in. That is fine on localhost or a private network. If you expose the
+  port, set `CALUS_PROXY_TOKEN`; callers must then present it (the
+  `X-Calus-Proxy-Token` header or `Authorization: Bearer ...`, constant-time
   checked) or the request is rejected. Leaving it blank on a public port turns the
   proxy into an open relay that spends your stored provider keys.
-- Verdict is surfaced inline via `x-calus-flagged` / `x-calus-confidence` /
-  `x-calus-owasp` response headers, so a SIEM can act on it without the dashboard.
+- The verdict is surfaced inline via the `x-calus-flagged`, `x-calus-confidence`,
+  and `x-calus-owasp` response headers, so a SIEM can act on it without the
+  dashboard.
 
 See [SECURITY.md](SECURITY.md) to report a vulnerability.
 
@@ -299,8 +307,8 @@ See [SECURITY.md](SECURITY.md) to report a vulnerability.
 
 [GNU AGPL-3.0](LICENSE). Running a modified version as a network service requires
 publishing your source. For a commercial license without the AGPL obligations,
-contact **Wholesphere**.
+contact Wholesphere.
 
 ---
 
-<div align="center"><sub>Calus is built and maintained by <b>Wholesphere</b>.</sub></div>
+<div align="center"><sub>Calus is built and maintained by Wholesphere.</sub></div>
