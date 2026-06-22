@@ -4,6 +4,12 @@ CALUS.patterns.loader
 Bootstraps the learning engine's threat corpus with all pre-built patterns.
 Runs automatically on first CALUS use — seeds the DB so learning starts
 with a strong foundation instead of from zero.
+
+NOTE: this register()/all_patterns() path is LEGACY and is not what the live
+detector uses. The production rule loader is
+calus.detection.scored_engine.build_from_package (an AST walk over the pattern
+packages that compiles the ~27k active rules). The register() registry can be
+empty (all_patterns() == 0) and that is expected.
 """
 from __future__ import annotations
 import logging
