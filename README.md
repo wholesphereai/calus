@@ -284,6 +284,14 @@ Resolution order when forwarding: caller's bearer key → saved vault key → en
   encrypted vault and are only decrypted in memory to forward a request.
 - **Secrets/PII are redacted** before any text or tool-call arguments are stored.
 - Run the proxy on an encrypted volume and set a high-entropy `CALUS_SECRET`.
+- **Securing the data plane.** `/v1/*` is **unauthenticated by default** so Calus
+  stays drop-in. That's fine on localhost / a private network, but if you expose
+  the port, set **`CALUS_PROXY_TOKEN`** — callers must then present it
+  (`X-Calus-Proxy-Token` header or `Authorization: Bearer …`, constant-time
+  checked) or the request is rejected. Leaving it blank on a public port turns the
+  proxy into an open relay that spends your stored provider keys.
+- Verdict is surfaced inline via `x-calus-flagged` / `x-calus-confidence` /
+  `x-calus-owasp` response headers, so a SIEM can act on it without the dashboard.
 
 See [SECURITY.md](SECURITY.md) to report a vulnerability.
 
