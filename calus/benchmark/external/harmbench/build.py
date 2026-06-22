@@ -18,6 +18,10 @@ scope, so those are the headline set. We deliberately do NOT report a single
 "HarmBench score" — that phrasing implies model refusal, which is not what Calus
 measures. False-positive rate is measured against the shared benign control.
 """
+import logging
+logging.basicConfig(level=logging.INFO, format="%(message)s")
+log = logging.getLogger(__name__)
+
 import os
 
 from .._download import fetch_text
@@ -55,8 +59,8 @@ def main(argv=None):
                 "input prompts, CAIS 2024)\n")
         f.write("\n".join(standard) + "\n")
     n_benign = write_benign_control(os.path.join(HERE, "benign.txt"))
-    print(f"wrote {len(standard)} HarmBench standard behaviors + {n_benign} benign control")
-    print("now run:  python -m calus.benchmark.harness --dataset harmbench")
+    log.info(f"wrote {len(standard)} HarmBench standard behaviors + {n_benign} benign control")
+    log.info("now run:  python -m calus.benchmark.harness --dataset harmbench")
     return 0
 
 

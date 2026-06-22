@@ -23,6 +23,10 @@ designed to catch. We therefore build both, as separate splits:
 
 The benign control for the artifact splits is the 100 benign JBB behaviors.
 """
+import logging
+logging.basicConfig(level=logging.INFO, format="%(message)s")
+log = logging.getLogger(__name__)
+
 import glob
 import json
 import os
@@ -92,7 +96,7 @@ def main(argv=None):
     with open(os.path.join(HERE, "benign.txt"), "w", encoding="utf-8") as f:
         f.write("# JBB-Behaviors benign behaviors (topic-matched control)\n")
         f.write("\n".join(benign) + "\n")
-    print(f"wrote {len(attacks)} harmful + {len(benign)} benign JBB behaviors")
+    log.info(f"wrote {len(attacks)} harmful + {len(benign)} benign JBB behaviors")
 
     # Jailbreak artifacts (the real detection target), per attack family + combined.
     combined, seen = [], set()
@@ -106,12 +110,12 @@ def main(argv=None):
             if p not in seen:
                 seen.add(p)
                 combined.append(p)
-        print(f"  {method:5s}: {len(prompts)} jailbreak prompts")
+        log.info(f"  {method:5s}: {len(prompts)} jailbreak prompts")
     with open(os.path.join(HERE, "artifacts_all.txt"), "w", encoding="utf-8") as f:
         f.write("# JBB jailbreak artifacts — all families combined\n")
         f.write("\n".join(combined) + "\n")
-    print(f"  ALL  : {len(combined)} unique jailbreak prompts")
-    print("now run:  python -m calus.benchmark.harness --dataset jailbreakbench")
+    log.info(f"  ALL  : {len(combined)} unique jailbreak prompts")
+    log.info("now run:  python -m calus.benchmark.harness --dataset jailbreakbench")
     return 0
 
 

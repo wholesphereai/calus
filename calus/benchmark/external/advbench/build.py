@@ -18,6 +18,10 @@ benign split, so precision/false-positive rate is measured against a shared,
 published benign control set — the 100 genuinely-benign JBB-Behaviors prompts
 (see `external/_benign_control.py`) — which the harness loads automatically.
 """
+import logging
+logging.basicConfig(level=logging.INFO, format="%(message)s")
+log = logging.getLogger(__name__)
+
 import os
 
 from .._download import fetch_text
@@ -53,8 +57,8 @@ def main(argv=None):
                 "arXiv 2307.15043)\n")
         f.write("\n".join(goals) + "\n")
     n_benign = write_benign_control(os.path.join(HERE, "benign.txt"))
-    print(f"wrote {len(goals)} AdvBench harmful goals + {n_benign} benign control")
-    print("now run:  python -m calus.benchmark.harness --dataset advbench")
+    log.info(f"wrote {len(goals)} AdvBench harmful goals + {n_benign} benign control")
+    log.info("now run:  python -m calus.benchmark.harness --dataset advbench")
     return 0
 
 

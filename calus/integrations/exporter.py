@@ -1,9 +1,12 @@
 import hashlib
 import json
+import logging
 import os
 from datetime import datetime
 from pathlib import Path
 from typing import List, Optional
+
+log = logging.getLogger(__name__)
 
 
 def export_json(
@@ -85,5 +88,5 @@ def export_json(
     with open(dest, "w", encoding="utf-8") as f:
         json.dump(report, f, indent=2, ensure_ascii=False)
 
-    print(f"[CALUS] Report exported → {dest}")
+    log.info("[CALUS] Report exported -> %s", dest)
     return str(dest)

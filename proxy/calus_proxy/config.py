@@ -131,12 +131,14 @@ class Settings:
                 pass
         except Exception:
             pass
-        # printed ONCE on first generation only (the file existed branch returns above)
-        print(f"[calus-proxy] No CALUS_ADMIN_TOKEN set — generated one and saved it to\n"
-              f"             {path}\n"
-              f"             token: {self.admin_token}\n"
-              f"             STORE THIS SECURELY. It stays the same across restarts.\n"
-              f"             Set CALUS_ADMIN_TOKEN to override.")
+        # logged ONCE on first generation only (the file existed branch returns above)
+        log.warning(
+            "No CALUS_ADMIN_TOKEN set — generated one and saved it to\n"
+            "             %s\n"
+            "             token: %s\n"
+            "             STORE THIS SECURELY. It stays the same across restarts.\n"
+            "             Set CALUS_ADMIN_TOKEN to override.",
+            path, self.admin_token)
         return self.admin_token
 
 
