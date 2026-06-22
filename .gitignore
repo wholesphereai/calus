@@ -217,6 +217,9 @@ proxy/.env
 *.sqlite3
 calus_proxy.db
 .calus_admin_token
+.calus_vault_secret
+proxy/.calus_admin_token
+proxy/.calus_vault_secret
 
 # node / frontend
 node_modules/
