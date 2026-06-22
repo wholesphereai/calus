@@ -14,6 +14,8 @@ import json
 import time
 import uuid
 import asyncio
+import hmac
+import logging
 from typing import Optional
 
 from fastapi import FastAPI, Request, Header, HTTPException, Depends, Query
@@ -26,19 +28,44 @@ import calus
 from .config import get_settings
 from .store import Store
 
+logging.basicConfig(level=logging.INFO,
+                    format="%(asctime)s %(levelname)s %(name)s %(message)s")
+log = logging.getLogger("calus_proxy")
+
 settings = get_settings()
 ADMIN_TOKEN = settings.ensure_admin_token()
+PROXY_TOKEN = settings.proxy_token
 store = Store(settings.db_path)
 
 # warm the detector once at startup so the first request isn't slow
 _detector_ready = False
 
+# Keys that select the upstream endpoint — stripping them prevents a caller from
+# redirecting the request (and the vault key) to an attacker-controlled host (SSRF
+# / key exfiltration). Anything ending in _url/_base is stripped too.
+_ENDPOINT_OVERRIDE_KEYS = {"api_base", "base_url", "api_version", "custom_llm_provider"}
+
+# providers we recognise and will attach a vault/env key for
+_KNOWN_PROVIDERS = {
+    "openai", "anthropic", "gemini", "groq", "mistral", "cohere",
+    "azure", "bedrock", "vertex_ai", "ollama", "together_ai", "replicate",
+    "perplexity", "deepseek", "xai", "fireworks_ai", "huggingface",
+}
+
+# CORS: data-plane auth is a custom header (not cookies), so credentials are off.
+# With credentials off, a wildcard origin is acceptable; but if any explicit
+# origin is "*" alongside others we drop it to keep the list explicit.
+_cors_origins = list(settings.cors_origins)
+if "*" in _cors_origins and len(_cors_origins) > 1:
+    log.warning("CORS origin '*' mixed with explicit origins — dropping '*'")
+    _cors_origins = [o for o in _cors_origins if o != "*"]
+
 app = FastAPI(title="Calus Proxy", version="1.0.0",
               description="OpenAI-compatible LLM proxy with inline Calus detection (observe-only).")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
-    allow_credentials=True,
+    allow_origins=_cors_origins,
+    allow_credentials=False,          # auth is a custom header, never cookies
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -47,8 +74,25 @@ app.add_middleware(
 @app.on_event("startup")
 async def _warm():
     global _detector_ready
+    if not PROXY_TOKEN:
+        log.warning("CALUS_PROXY_TOKEN is not set — the data plane (/v1/*) is "
+                    "UNAUTHENTICATED. This keeps the proxy drop-in, but the port "
+                    "must NOT be publicly exposed. Set CALUS_PROXY_TOKEN to require a token.")
     await asyncio.get_event_loop().run_in_executor(None, calus.get_detector)
     _detector_ready = True
+    log.info("detector warm; proxy ready")
+
+
+def _require_proxy_token(request: Request):
+    """Constant-time data-plane token check. No-op when CALUS_PROXY_TOKEN unset."""
+    if not PROXY_TOKEN:
+        return
+    presented = request.headers.get("x-calus-proxy-token") or ""
+    auth = request.headers.get("authorization") or ""
+    if not presented and auth.lower().startswith("bearer "):
+        presented = auth.split(" ", 1)[1].strip()
+    if not hmac.compare_digest(presented, PROXY_TOKEN):
+        raise HTTPException(status_code=401, detail="invalid or missing data-plane token")
 
 
 # ----------------------------- helpers --------------------------------------
@@ -113,6 +157,20 @@ def _tools_of(body: dict) -> list:
     return sorted({x for x in out if x})
 
 
+def _safe_redact(text: str) -> str:
+    """Redact `text`, FAILING CLOSED: if redaction raises, mask everything rather
+    than risk storing a secret in cleartext."""
+    if not settings.redact_stored_text:
+        return text
+    if not isinstance(text, str) or not text:
+        return text
+    try:
+        return calus.redact(text).text
+    except Exception:
+        log.warning("redaction failed — masking text to fail closed", exc_info=True)
+        return "[REDACTED]"
+
+
 def _tool_calls_of(message: dict) -> list:
     """Tool calls the model actually requested, with redacted arguments."""
     out = []
@@ -120,33 +178,28 @@ def _tool_calls_of(message: dict) -> list:
         fn = tc.get("function") or {} if isinstance(tc, dict) else {}
         name = fn.get("name") or "tool"
         args = fn.get("arguments") or ""
-        if settings.redact_stored_text and isinstance(args, str) and args:
-            try:
-                args = calus.redact(args).text
-            except Exception:
-                pass
+        if isinstance(args, str) and args:
+            args = _safe_redact(args)
         out.append({"name": name, "arguments": str(args)[:1000]})
     # legacy single function_call
     fc = (message or {}).get("function_call")
     if isinstance(fc, dict) and fc.get("name"):
         a = fc.get("arguments") or ""
-        if settings.redact_stored_text and isinstance(a, str) and a:
-            try:
-                a = calus.redact(a).text
-            except Exception:
-                pass
+        if isinstance(a, str) and a:
+            a = _safe_redact(a)
         out.append({"name": fc["name"], "arguments": str(a)[:1000]})
     return out
 
 
-def _scan_and_store(text: str, direction: str, model: str, latency_ms=None,
-                    usage=None, trace_id=None, agent=None, tools=None,
-                    tool_calls=None) -> dict:
+async def _scan_and_store(text: str, direction: str, model: str, latency_ms=None,
+                          usage=None, trace_id=None, agent=None, tools=None,
+                          tool_calls=None) -> dict:
     """Scan text with Calus and persist the verdict. Returns the verdict dict.
 
     Records the row even when `text` is empty if the turn carried tool calls —
     an agent's tool-call turn often has no message content but is exactly what we
-    want to observe."""
+    want to observe. CPU-bound calus calls run off the event loop so requests
+    don't block each other."""
     tools = tools or []
     tool_calls = tool_calls or []
     has_payload = bool(text.strip()) or bool(tool_calls) or bool(tools)
@@ -154,14 +207,15 @@ def _scan_and_store(text: str, direction: str, model: str, latency_ms=None,
         return {}
 
     if text.strip():
-        r = calus.scan(text)
+        r = await asyncio.to_thread(calus.scan, text)
         flagged = bool(r.flagged) and r.confidence >= settings.flag_threshold
         owasp = getattr(r, "owasp", "") or ""
         owasp_name = getattr(r, "owasp_name", "") or ""
         reasons = list(getattr(r, "reasons", []) or [])
         # reasons can include the matched snippet of user text — redact it too
+        # (fail closed: if redaction errors, mask the whole reason string)
         if settings.redact_stored_text:
-            reasons = [calus.redact(x).text for x in reasons]
+            reasons = [await asyncio.to_thread(_safe_redact, x) for x in reasons]
         tiers = list(getattr(r, "tiers_run", []) or [])
         confidence = round(float(r.confidence), 3)
     else:
@@ -170,9 +224,15 @@ def _scan_and_store(text: str, direction: str, model: str, latency_ms=None,
     stored_text, findings = None, []
     if settings.store_text and text.strip():
         if settings.redact_stored_text:
-            red = calus.redact(text)
-            stored_text = red.text[:2000]
-            findings = sorted({k for k, _ in red.findings})
+            try:
+                red = await asyncio.to_thread(calus.redact, text)
+                stored_text = red.text[:2000]
+                findings = sorted({k for k, _ in red.findings})
+            except Exception:
+                # fail closed — never store the raw text if redaction failed
+                log.warning("redaction failed for stored_text — masking", exc_info=True)
+                stored_text = "[REDACTED]"
+                findings = []
         else:
             stored_text = text[:2000]
 
@@ -203,8 +263,18 @@ def _bearer(authorization: Optional[str]) -> Optional[str]:
 @app.post("/v1/chat/completions")
 @app.post("/chat/completions")
 async def chat_completions(request: Request, authorization: Optional[str] = Header(None)):
+    _require_proxy_token(request)
+
+    trace_id = uuid.uuid4().hex
+
+    # body-size limit: read raw bytes and reject oversized payloads before parsing
+    raw = await request.body()
+    if len(raw) > settings.max_body_bytes:
+        raise HTTPException(status_code=413, detail="request body too large")
     try:
-        body = await request.json()
+        body = json.loads(raw)
+        if not isinstance(body, dict):
+            raise ValueError("body must be a JSON object")
     except Exception:
         raise HTTPException(status_code=400, detail="invalid JSON body")
 
@@ -213,37 +283,60 @@ async def chat_completions(request: Request, authorization: Optional[str] = Head
     stream = bool(body.get("stream"))
 
     # request-scoped context for the dashboard (agent tracing)
-    trace_id = uuid.uuid4().hex
     agent = _agent_of(body, request)
     tools = _tools_of(body)
 
     # scan the INPUT (never blocks — just records). We use the latest user turn,
     # not the whole replayed history, so each call shows its own prompt.
-    _scan_and_store(_newest_input_text(messages), "input", model, trace_id=trace_id,
-                    agent=agent, tools=tools)
+    await _scan_and_store(_newest_input_text(messages), "input", model, trace_id=trace_id,
+                          agent=agent, tools=tools)
 
     # forward upstream via LiteLLM. The provider key is resolved in priority:
     #   1. the caller's bearer (used in-flight, NEVER stored), else
     #   2. a key saved in the encrypted vault for this provider, else
     #   3. whatever LiteLLM finds in the environment.
+    provider = _provider_of(model)
     api_key = _bearer(authorization)
-    if not api_key:
+    if not api_key and provider in _KNOWN_PROVIDERS:
         try:
-            api_key = store.key_for_provider(_provider_of(model))
+            api_key = store.key_for_provider(provider)
         except Exception:
             api_key = None
-    call_kwargs = dict(body)                 # forwarded untouched (detection-only)
-    if api_key:
+
+    # SSRF / key-exfiltration guard: never let the caller redirect the upstream
+    # endpoint (which would send our vault key to an attacker's host). Strip every
+    # endpoint-override key from the forwarded body.
+    call_kwargs = {
+        k: v for k, v in body.items()
+        if k not in _ENDPOINT_OVERRIDE_KEYS
+        and not (isinstance(k, str) and (k.endswith("_url") or k.endswith("_base")))
+    }
+    call_kwargs["timeout"] = settings.upstream_timeout_s
+    # only attach a provider key for a known provider prefix
+    if api_key and provider in _KNOWN_PROVIDERS:
         call_kwargs["api_key"] = api_key
 
     t0 = time.perf_counter()
     try:
         resp = await litellm.acompletion(**call_kwargs)
+    except asyncio.TimeoutError:
+        log.error("upstream timeout (trace_id=%s)", trace_id)
+        return JSONResponse(status_code=504,
+                            content={"error": {"message": "upstream request timed out",
+                                               "type": "upstream_timeout"}})
     except Exception as e:
-        # transparent error passthrough (OpenAI error shape)
+        # Don't leak the raw upstream error (may contain keys). Log server-side,
+        # return a generic message. Timeout exceptions map to 504.
+        name = type(e).__name__.lower()
+        if "timeout" in name:
+            log.error("upstream timeout (trace_id=%s): %r", trace_id, e)
+            return JSONResponse(status_code=504,
+                                content={"error": {"message": "upstream request timed out",
+                                                   "type": "upstream_timeout"}})
+        log.error("upstream request failed (trace_id=%s)", trace_id, exc_info=True)
         return JSONResponse(status_code=getattr(e, "status_code", 502),
-                            content={"error": {"message": str(e)[:500],
-                                               "type": type(e).__name__}})
+                            content={"error": {"message": "upstream request failed",
+                                               "type": "upstream_error"}})
 
     # ---- streaming ----
     if stream:
@@ -261,8 +354,8 @@ async def chat_completions(request: Request, authorization: Optional[str] = Head
                 yield "data: [DONE]\n\n"
                 if settings.scan_responses:
                     dt = (time.perf_counter() - t0) * 1000
-                    _scan_and_store("".join(acc), "output", model, latency_ms=dt,
-                                    trace_id=trace_id, agent=agent)
+                    await _scan_and_store("".join(acc), "output", model, latency_ms=dt,
+                                          trace_id=trace_id, agent=agent)
         return StreamingResponse(gen(), media_type="text/event-stream")
 
     # ---- non-streaming ----
@@ -274,20 +367,38 @@ async def chat_completions(request: Request, authorization: Optional[str] = Head
             out_text = msg.get("content") or ""
         except Exception:
             msg, out_text = {}, ""
-        _scan_and_store(out_text, "output", model, latency_ms=dt, usage=d.get("usage"),
-                        trace_id=trace_id, agent=agent, tool_calls=_tool_calls_of(msg))
+        await _scan_and_store(out_text, "output", model, latency_ms=dt, usage=d.get("usage"),
+                              trace_id=trace_id, agent=agent, tool_calls=_tool_calls_of(msg))
     return JSONResponse(content=d)
 
 
 # ----------------------------- dashboard API --------------------------------
 def require_admin(x_admin_token: Optional[str] = Header(None)):
-    if not x_admin_token or x_admin_token != ADMIN_TOKEN:
+    # constant-time compare to avoid leaking the token via timing
+    if not hmac.compare_digest(x_admin_token or "", ADMIN_TOKEN):
         raise HTTPException(status_code=401, detail="invalid or missing X-Admin-Token")
 
 
 @app.get("/healthz")
 async def healthz():
-    return {"ok": True, "detector_ready": _detector_ready}
+    # readiness gate: 503 until the detector is warm so orchestrators don't route
+    # traffic before the engine can scan it
+    if not _detector_ready:
+        return JSONResponse(status_code=503,
+                            content={"ok": False, "detector_ready": False})
+    return {"ok": True, "detector_ready": True}
+
+
+@app.get("/v1/models")
+@app.get("/models")
+async def list_models(request: Request):
+    """Minimal OpenAI-style model list so clients that probe /v1/models don't
+    break. Static — the actual model is chosen per-request via `model`."""
+    _require_proxy_token(request)
+    now = int(time.time())
+    data = [{"id": m, "object": "model", "created": now, "owned_by": "calus-proxy"}
+            for m in ("gpt-4o", "gpt-4o-mini", "claude-3-5-sonnet", "gemini-1.5-pro")]
+    return {"object": "list", "data": data}
 
 
 @app.get("/api/admin-token", dependencies=[Depends(require_admin)])
@@ -370,7 +481,10 @@ async def api_keys_list():
 
 @app.post("/api/keys", dependencies=[Depends(require_admin)])
 async def api_keys_add(request: Request):
-    body = await request.json()
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="invalid JSON body")
     provider = (body.get("provider") or "").strip()
     secret = (body.get("key") or body.get("secret") or "").strip()
     label = (body.get("label") or "").strip()
@@ -399,7 +513,10 @@ async def api_keys_reveal(kid: str):
 async def api_keys_update(kid: str, request: Request):
     if kid.startswith("env:"):
         raise HTTPException(status_code=400, detail="env keys are read-only — edit proxy/.env")
-    body = await request.json()
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="invalid JSON body")
     label = body.get("label")
     secret = (body.get("key") or body.get("secret") or "").strip() or None
     if not store.update_key(kid, label=label, secret=secret):

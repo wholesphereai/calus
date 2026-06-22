@@ -14,7 +14,19 @@ _RULES = [
  ("PRIVATE_KEY", re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH |DSA |PGP )?PRIVATE KEY-----[\s\S]*?-----END (?:RSA |EC |OPENSSH |DSA |PGP )?PRIVATE KEY-----")),
  ("AWS_KEY",     re.compile(r"\b(?:AKIA|ASIA|AGPA|AIDA)[A-Z0-9]{16}\b")),
  ("JWT",         re.compile(r"\beyJ[A-Za-z0-9_\-]{8,}\.[A-Za-z0-9_\-]{8,}\.[A-Za-z0-9_\-]{8,}\b")),
- ("API_KEY",     re.compile(r"\bsk-[A-Za-z0-9]{20,}\b|\bgh[pousr]_[A-Za-z0-9]{36,}\b|\bxox[baprs]-[A-Za-z0-9-]{10,}\b|\b(?:sk|pk|rk)_live_[A-Za-z0-9]{16,}\b|\bAIza[A-Za-z0-9_\-]{35}\b")),
+ ("API_KEY",     re.compile(
+     r"\bsk-ant-[A-Za-z0-9_\-]{20,}\b"                  # Anthropic
+     r"|\bsk-[A-Za-z0-9]{20,}\b"                        # OpenAI-style
+     r"|\bgsk_[A-Za-z0-9]{20,}\b"                       # Groq
+     r"|\bgh[pousr]_[A-Za-z0-9]{36,}\b"                 # GitHub
+     r"|\bglpat-[A-Za-z0-9_\-]{20,}\b"                  # GitLab PAT
+     r"|\bhf_[A-Za-z0-9]{20,}\b"                        # HuggingFace
+     r"|\br8_[A-Za-z0-9]{20,}\b"                        # Replicate
+     r"|\bxai-[A-Za-z0-9]{20,}\b"                       # xAI
+     r"|\bxox[baprs]-[A-Za-z0-9-]{10,}\b"               # Slack
+     r"|\b(?:sk|pk|rk)_live_[A-Za-z0-9]{16,}\b"         # Stripe-style
+     r"|\bAIza[A-Za-z0-9_\-]{35}\b"                     # Google
+     r"|\b[A-Za-z0-9_\-]{32,}\b")),                     # high-entropy fallback
  ("CREDIT_CARD", re.compile(r"\b(?:4\d{3}|5[1-5]\d{2}|6011|3[47]\d{2})[ -]?\d{4}[ -]?\d{4}[ -]?\d{4}\b")),
  ("IBAN",        re.compile(r"\b[A-Z]{2}\d{2}[A-Z0-9]{11,30}\b")),
  ("SSN",         re.compile(r"\b(?!000|666|9\d\d)\d{3}-(?!00)\d{2}-(?!0000)\d{4}\b")),
