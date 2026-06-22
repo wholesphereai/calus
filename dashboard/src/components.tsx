@@ -1,5 +1,11 @@
 import { useState, type ReactNode } from "react";
 import type { Stats, Threat, Bucket, LogRow, CallRow, AgentRow, KeyRow } from "./types";
+import {
+  LayoutGrid, Users, ShieldAlert, Activity, KeyRound, Plug,
+  Copy, Check, Eye, EyeOff, Pencil, Trash2, X, AlertCircle,
+  ArrowUpRight, ArrowDownRight, Wrench, Inbox, Lock, Cpu, Clock,
+  Radio, ArrowRight, CornerDownLeft, MessageSquare, Plus, Info,
+} from "lucide-react";
 
 /* ===================== mini markdown (bold / lists / paragraphs) ===================== */
 function inline(text: string): ReactNode[] {
@@ -63,7 +69,11 @@ function fmtAgo(ts: number): string {
 }
 
 export function Tag({ flagged }: { flagged: boolean }) {
-  return <span className={"tag " + (flagged ? "attack" : "clean")}>{flagged ? "FLAGGED" : "CLEAN"}</span>;
+  return (
+    <span className={"tag " + (flagged ? "attack" : "clean")}>
+      <span className="pip" />{flagged ? "Flagged" : "Clean"}
+    </span>
+  );
 }
 
 /* a full-sentence explanation of WHY a call was flagged (shown on press) */
@@ -77,56 +87,70 @@ export function flagExplain(c: { owasp?: string | null; owasp_name?: string | nu
   return "The text matched one or more deterministic attack patterns.";
 }
 
-/* ===================== icons (monochrome, stroke=currentColor) ===================== */
-const PATHS: Record<string, string> = {
-  overview: "M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z",
-  agents: "M16 11a4 4 0 1 0-8 0 M2 21a8 8 0 0 1 20 0",
-  threats: "M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z",
-  live: "M4 6h16M4 12h16M4 18h10",
-  keys: "M15 7a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM11 11L3 19v2h2l1-1h2v-2h2l2-2",
-  connect: "M9 7H6a4 4 0 0 0 0 8h3M15 7h3a4 4 0 0 1 0 8h-3M8 11h8",
+/* ===================== icons (lucide, mapped by nav id) ===================== */
+const NAV_ICONS: Record<string, typeof LayoutGrid> = {
+  overview: LayoutGrid, agents: Users, threats: ShieldAlert, live: Activity, keys: KeyRound, connect: Plug,
 };
 export function Icon({ name }: { name: string }) {
+  const Cmp = NAV_ICONS[name] || LayoutGrid;
+  return <Cmp className="ic" strokeWidth={1.8} aria-hidden />;
+}
+
+/* ===================== empty + skeleton ===================== */
+export function Empty({ icon: IconCmp = Inbox, title, sub }: { icon?: typeof Inbox; title: string; sub?: ReactNode }) {
   return (
-    <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-      <path d={PATHS[name] || ""} />
-    </svg>
+    <div className="empty">
+      <IconCmp className="ic" aria-hidden />
+      <div className="et">{title}</div>
+      {sub && <div className="es">{sub}</div>}
+    </div>
+  );
+}
+function SkeletonRows({ cols, rows = 5 }: { cols: number; rows?: number }) {
+  return (
+    <>
+      {Array.from({ length: rows }).map((_, r) => (
+        <div className="sk-row" key={r}>
+          {Array.from({ length: cols }).map((_, c) => (
+            <span key={c} className="sk sk-line" style={{ flex: c === cols - 1 ? "0 0 60px" : 1, opacity: 1 - r * 0.12 }} />
+          ))}
+        </div>
+      ))}
+    </>
   );
 }
 
 /* ===================== stat cards ===================== */
 export function StatCards({ stats }: { stats: Stats | null }) {
   const s = stats;
+  const flagPct = s ? Math.round(s.flag_rate * 1000) / 10 : 0;
+  const cards = [
+    { icon: Cpu, label: "Calls scanned", num: s ? s.total.toLocaleString() : null,
+      foot: s ? <><span className="tnum">{s.last_24h.toLocaleString()}</span> in last 24h</> : null },
+    { icon: ShieldAlert, label: "Flagged", accent: true, num: s ? s.flagged.toLocaleString() : null,
+      foot: s ? <><span className={"trend " + (flagPct > 0 ? "up" : "down")}>
+        {flagPct > 0 ? <ArrowUpRight className="ic" /> : <ArrowDownRight className="ic" />}{flagPct}%</span> of all calls</> : null },
+    { icon: Users, label: "Agents seen", num: s ? s.agents.toLocaleString() : null, foot: "distinct identities" },
+    { icon: Clock, label: "Avg scan time", num: s ? <>{s.avg_latency_ms.toFixed(0)}<span className="u">ms</span></> : null,
+      foot: "round-trip incl. provider" },
+  ];
   return (
     <div className="grid-stats">
-      <div className="card stat">
-        <div className="label">Calls scanned</div>
-        <div className="num">{s ? s.total.toLocaleString() : "—"}</div>
-        <div className="foot">{s ? s.last_24h.toLocaleString() + " in last 24h" : ""}</div>
-      </div>
-      <div className="card stat alert">
-        <div className="label">Flagged</div>
-        <div className="num">{s ? s.flagged.toLocaleString() : "—"}</div>
-        <div className="foot">{s ? Math.round(s.flag_rate * 1000) / 10 + "% of all calls" : ""}</div>
-      </div>
-      <div className="card stat">
-        <div className="label">Agents seen</div>
-        <div className="num">{s ? s.agents.toLocaleString() : "—"}</div>
-        <div className="foot">distinct identities</div>
-      </div>
-      <div className="card stat">
-        <div className="label">Avg scan time</div>
-        <div className="num">{s ? s.avg_latency_ms.toFixed(0) : "—"}<span className="u">ms</span></div>
-        <div className="foot">round-trip incl. provider</div>
-      </div>
+      {cards.map((c) => (
+        <div className={"card stat" + (c.accent ? " accent" : "")} key={c.label}>
+          <div className="label"><c.icon className="ic" />{c.label}</div>
+          <div className="num">{c.num ?? <span className="sk" style={{ width: 84, height: 30, borderRadius: 8 }} />}</div>
+          <div className="foot">{c.num != null ? c.foot : <span className="sk" style={{ width: 110, height: 12 }} />}</div>
+        </div>
+      ))}
     </div>
   );
 }
 
-/* ===================== time chart (pure SVG, monochrome) ===================== */
-export function TimeChart({ data }: { data: Bucket[] }) {
-  const W = 640, H = 168, pad = 6;
+/* ===================== time chart (pure SVG, indigo accent) ===================== */
+export function TimeChart({ data, loading }: { data: Bucket[]; loading?: boolean }) {
+  const W = 640, H = 180, pad = 6;
+  if (loading && data.length === 0) return <div className="chart-wrap"><span className="sk" style={{ width: "100%", height: 180, borderRadius: 10, display: "block" }} /></div>;
   const max = Math.max(1, ...data.map((d) => d.total));
   const n = Math.max(1, data.length - 1);
   const x = (i: number) => pad + (i * (W - pad * 2)) / n;
@@ -141,37 +165,40 @@ export function TimeChart({ data }: { data: Bucket[] }) {
   const line = (key: "total" | "flagged") =>
     data.map((d, i) => `${i === 0 ? "M" : "L"} ${x(i)} ${y(d[key])}`).join(" ");
   return (
-    <div>
-      <svg className="chart" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
-        <defs>
-          <linearGradient id="gTot" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="rgba(140,140,140,0.22)" />
-            <stop offset="100%" stopColor="rgba(140,140,140,0)" />
-          </linearGradient>
-          <linearGradient id="gFlag" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="rgba(255,255,255,0.30)" />
-            <stop offset="100%" stopColor="rgba(255,255,255,0)" />
-          </linearGradient>
-        </defs>
-        <path d={area("total")} fill="url(#gTot)" />
-        <path d={line("total")} fill="none" stroke="var(--muted)" strokeWidth="1.4" />
-        <path d={area("flagged")} fill="url(#gFlag)" />
-        <path d={line("flagged")} fill="none" stroke="var(--ink)" strokeWidth="1.8" />
-      </svg>
-      <div className="legend">
-        <span><i style={{ background: "var(--muted)" }} />Total</span>
-        <span><i style={{ background: "var(--ink)" }} />Flagged</span>
+    <>
+      <div className="chart-wrap">
+        <svg className="chart" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" role="img" aria-label="Traffic over the last 24 hours">
+          <defs>
+            <linearGradient id="gTot" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="rgba(91,91,214,0.14)" />
+              <stop offset="100%" stopColor="rgba(91,91,214,0)" />
+            </linearGradient>
+            <linearGradient id="gFlag" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="rgba(209,69,59,0.16)" />
+              <stop offset="100%" stopColor="rgba(209,69,59,0)" />
+            </linearGradient>
+          </defs>
+          <path d={area("total")} fill="url(#gTot)" />
+          <path d={line("total")} fill="none" stroke="#5b5bd6" strokeWidth="1.6" vectorEffect="non-scaling-stroke" />
+          <path d={area("flagged")} fill="url(#gFlag)" />
+          <path d={line("flagged")} fill="none" stroke="#d1453b" strokeWidth="1.8" vectorEffect="non-scaling-stroke" />
+        </svg>
       </div>
-    </div>
+      <div className="legend">
+        <span><i style={{ background: "#5b5bd6" }} />Total traffic</span>
+        <span><i style={{ background: "#d1453b" }} />Flagged</span>
+      </div>
+    </>
   );
 }
 
 /* ===================== threats (OWASP) ===================== */
-export function Threats({ threats }: { threats: Threat[] }) {
+export function Threats({ threats, loading }: { threats: Threat[]; loading?: boolean }) {
   const max = Math.max(1, ...threats.map((t) => t.count));
-  if (threats.length === 0) return <div className="empty">No threats recorded yet.</div>;
+  if (loading && threats.length === 0) return <div style={{ padding: "0 20px 8px" }}><SkeletonRows cols={3} rows={4} /></div>;
+  if (threats.length === 0) return <Empty icon={ShieldAlert} title="No threats recorded yet" sub="Flagged traffic mapped to the OWASP LLM Top 10 will appear here." />;
   return (
-    <div>
+    <div className="threats">
       {threats.map((t) => (
         <div className="threat-row" key={t.owasp}>
           <div className="owasp-code">{t.owasp}</div>
@@ -179,7 +206,7 @@ export function Threats({ threats }: { threats: Threat[] }) {
             <div className="nm">{t.name || "Unmapped"}</div>
             <div className="bar"><span style={{ width: (t.count / max) * 100 + "%" }} /></div>
           </div>
-          <div className="cnt">{t.count}</div>
+          <div className="cnt tnum">{t.count}</div>
         </div>
       ))}
     </div>
@@ -187,57 +214,66 @@ export function Threats({ threats }: { threats: Threat[] }) {
 }
 
 /* ===================== calls (one row per request) ===================== */
-export function CallsTable({ calls, onPick }: { calls: CallRow[]; onPick: (c: CallRow) => void }) {
-  if (calls.length === 0) return <div className="empty">No calls yet. Send a request through the proxy.</div>;
+export function CallsTable({ calls, onPick, loading }: { calls: CallRow[]; onPick: (c: CallRow) => void; loading?: boolean }) {
+  if (loading && calls.length === 0) return <SkeletonRows cols={6} rows={6} />;
+  if (calls.length === 0) return <Empty icon={MessageSquare} title="No calls yet" sub="Send a request through the proxy and it will appear here, scanned in real time." />;
   return (
-    <table>
-      <thead>
-        <tr><th>Time</th><th>Agent</th><th>Prompt</th><th>Model</th><th>Verdict</th><th>Conf</th><th>Tools</th></tr>
-      </thead>
-      <tbody>
-        {calls.map((c) => (
-          <tr key={c.trace_id} onClick={() => onPick(c)}>
-            <td className="mono" style={{ color: "var(--muted)", fontSize: 12 }}>{fmtTime(c.ts)}</td>
-            <td className="mono" style={{ fontSize: 12 }}>{c.agent || "—"}</td>
-            <td className="prompt-cell">{c.prompt || <span style={{ color: "var(--muted-2)" }}>—</span>}</td>
-            <td><div className="model">{(c.model || "—").split("/").pop()}</div><div className="prov">{c.provider}</div></td>
-            <td><Tag flagged={c.flagged} /></td>
-            <td className="conf">{c.confidence != null ? c.confidence.toFixed(2) : "—"}</td>
-            <td>
-              <div className="toolrow">
-                {c.tool_calls.length ? c.tool_calls.map((t, i) => <span className="toolchip" key={i}>{t.name}</span>)
-                  : c.tools.length ? c.tools.map((t) => <span className="toolchip" key={t}>{t}</span>)
-                  : <span style={{ color: "var(--muted-2)" }}>—</span>}
-              </div>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <div className="tbl-scroll">
+      <table>
+        <thead>
+          <tr><th>Time</th><th>Agent</th><th>Prompt</th><th>Model</th><th>Verdict</th><th>Conf</th><th>Tools</th></tr>
+        </thead>
+        <tbody>
+          {calls.map((c) => (
+            <tr key={c.trace_id} className="clickable" onClick={() => onPick(c)}>
+              <td className="cell-time mono">{fmtTime(c.ts)}</td>
+              <td className="cell-agent mono">{c.agent || <span style={{ color: "var(--muted-2)" }}>—</span>}</td>
+              <td className="prompt-cell">{c.prompt || <span style={{ color: "var(--muted-2)" }}>—</span>}</td>
+              <td><div className="model">{(c.model || "—").split("/").pop()}</div>{c.provider && <div className="prov">{c.provider}</div>}</td>
+              <td><Tag flagged={c.flagged} /></td>
+              <td className="conf">{c.confidence != null ? c.confidence.toFixed(2) : "—"}</td>
+              <td>
+                <div className="chips">
+                  {c.tool_calls.length ? c.tool_calls.map((t, i) => <span className="toolchip" key={i}><Wrench className="ic" />{t.name}</span>)
+                    : c.tools.length ? c.tools.map((t) => <span className="toolchip" key={t}><Wrench className="ic" />{t}</span>)
+                    : <span style={{ color: "var(--muted-2)" }}>—</span>}
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
 /* ===================== agents ===================== */
-export function AgentsTable({ agents, onPick }: { agents: AgentRow[]; onPick: (a: AgentRow) => void }) {
-  if (agents.length === 0) return <div className="empty">No agents yet. Set an agent name via the OpenAI <span className="mono">user</span> field or the <span className="mono">X-Calus-Agent</span> header.</div>;
+export function AgentsTable({ agents, onPick, loading }: { agents: AgentRow[]; onPick: (a: AgentRow) => void; loading?: boolean }) {
+  if (loading && agents.length === 0) return <SkeletonRows cols={6} rows={5} />;
+  if (agents.length === 0) return (
+    <Empty icon={Users} title="No agents yet"
+      sub={<>Set an agent name via the OpenAI <span className="mono">user</span> field or the <span className="mono">X-Calus-Agent</span> header to see each agent here.</>} />
+  );
   return (
-    <table>
-      <thead>
-        <tr><th>Agent</th><th>Calls</th><th>Flagged</th><th>Tools available</th><th>Models</th><th>Last seen</th></tr>
-      </thead>
-      <tbody>
-        {agents.map((a) => (
-          <tr key={a.agent} onClick={() => onPick(a)}>
-            <td><div className="agent-cell"><span className="av">{(a.agent || "?").slice(0, 1)}</span><span className="mono" style={{ fontSize: 12.5 }}>{a.agent}</span></div></td>
-            <td className="mono">{a.calls}</td>
-            <td className="mono">{a.flagged > 0 ? <span className="tag attack">{a.flagged}</span> : <span style={{ color: "var(--muted-2)" }}>0</span>}</td>
-            <td><div className="toolrow">{a.tools.length ? a.tools.slice(0, 5).map((t) => <span className="toolchip" key={t}>{t}</span>) : <span style={{ color: "var(--muted-2)" }}>none</span>}</div></td>
-            <td className="mono" style={{ fontSize: 12 }}>{a.models.map((m) => m.split("/").pop()).join(", ")}</td>
-            <td style={{ color: "var(--muted)", fontSize: 12 }}>{fmtAgo(a.last_ts)}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <div className="tbl-scroll">
+      <table>
+        <thead>
+          <tr><th>Agent</th><th>Calls</th><th>Flagged</th><th>Tools available</th><th>Models</th><th>Last seen</th></tr>
+        </thead>
+        <tbody>
+          {agents.map((a) => (
+            <tr key={a.agent} className="clickable" onClick={() => onPick(a)}>
+              <td><div className="agent-cell"><span className="av">{(a.agent || "?").slice(0, 1)}</span><span className="nm">{a.agent}</span></div></td>
+              <td className="mono tnum">{a.calls}</td>
+              <td>{a.flagged > 0 ? <span className="tag attack"><span className="pip" />{a.flagged}</span> : <span style={{ color: "var(--muted-2)" }} className="mono">0</span>}</td>
+              <td><div className="chips">{a.tools.length ? a.tools.slice(0, 5).map((t) => <span className="toolchip" key={t}><Wrench className="ic" />{t}</span>) : <span style={{ color: "var(--muted-2)" }}>none</span>}</div></td>
+              <td className="mono" style={{ fontSize: 12, color: "var(--muted)" }}>{a.models.map((m) => m.split("/").pop()).join(", ")}</td>
+              <td className="cell-time">{fmtAgo(a.last_ts)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
@@ -252,10 +288,11 @@ function TraceTimeline({ rows }: { rows: LogRow[] }) {
     <div className="trace">
       {rows.map((r) => {
         const isTool = r.direction === "input" && looksJson(r.text_redacted);
-        const lbl = r.direction === "output" ? "◂ model output" : isTool ? "↩ tool result" : "▸ user / prompt";
+        const LblIcon = r.direction === "output" ? CornerDownLeft : isTool ? Wrench : ArrowRight;
+        const lbl = r.direction === "output" ? "Model output" : isTool ? "Tool result" : "User / prompt";
         return (
         <div className={"tnode" + (r.flagged ? " flag" : "")} key={r.id}>
-          <div className="lbl">{lbl} · {fmtTime(r.ts)} {r.flagged && "· FLAGGED"}</div>
+          <div className="lbl"><LblIcon className="ic" />{lbl} · {fmtTime(r.ts)}{r.flagged && " · Flagged"}</div>
           {r.text_redacted && (r.direction === "output"
             ? <div className="body"><Markdown text={r.text_redacted} /></div>
             : <div className="body trace-text">{r.text_redacted}</div>)}
@@ -266,7 +303,7 @@ function TraceTimeline({ rows }: { rows: LogRow[] }) {
             </div>
           ))}
           {r.tools.length > 0 && r.direction === "input" && !isTool && (
-            <div className="toolrow" style={{ marginTop: 6 }}>{r.tools.map((t) => <span className="toolchip" key={t}>{t}</span>)}</div>
+            <div className="chips" style={{ marginTop: 8 }}>{r.tools.map((t) => <span className="toolchip" key={t}><Wrench className="ic" />{t}</span>)}</div>
           )}
         </div>
         );
@@ -282,19 +319,21 @@ export function LogDetail({ call, trace, onClose }: { call: CallRow; trace: LogR
   return (
     <>
       <div className="drawer-bg" onClick={onClose} />
-      <div className="drawer">
-        <button className="close" onClick={onClose}>×</button>
-        <h3>Call detail</h3>
-        <div style={{ marginBottom: 14 }}><Tag flagged={call.flagged} /></div>
-        <div className="row"><span className="k">Agent</span><span className="mono">{call.agent || "—"}</span></div>
-        <div className="row"><span className="k">Model</span><span className="mono">{call.model || "—"} · {call.provider}</span></div>
-        <div className="row"><span className="k">Confidence</span><span className="mono">{call.confidence != null ? call.confidence.toFixed(3) : "—"}</span></div>
-        {call.owasp && <div className="row"><span className="k">OWASP</span><span>{call.owasp} · {call.owasp_name || ""}</span></div>}
-        <div className="row"><span className="k">Latency</span><span className="mono">{call.latency_ms != null ? call.latency_ms.toFixed(0) + " ms" : "—"}</span></div>
+      <div className="drawer" role="dialog" aria-label="Call detail">
+        <div className="drawer-head">
+          <h3>Call detail</h3>
+          <button className="close" onClick={onClose} aria-label="Close"><X className="ic" /></button>
+        </div>
+        <div style={{ marginBottom: 16 }}><Tag flagged={call.flagged} /></div>
+        <div className="row"><span className="k">Agent</span><span className="v mono">{call.agent || "—"}</span></div>
+        <div className="row"><span className="k">Model</span><span className="v mono">{call.model || "—"}{call.provider ? ` · ${call.provider}` : ""}</span></div>
+        <div className="row"><span className="k">Confidence</span><span className="v mono tnum">{call.confidence != null ? call.confidence.toFixed(3) : "—"}</span></div>
+        {call.owasp && <div className="row"><span className="k">OWASP</span><span className="v">{call.owasp} · {call.owasp_name || ""}</span></div>}
+        <div className="row"><span className="k">Latency</span><span className="v mono tnum">{call.latency_ms != null ? call.latency_ms.toFixed(0) + " ms" : "—"}</span></div>
 
         {call.findings.length > 0 && (
           <div className="blk"><div className="t">Secrets / PII found (redacted)</div>
-            <div>{call.findings.map((f) => <span className="finding" key={f}>{f}</span>)}</div></div>
+            <div className="chips">{call.findings.map((f) => <span className="finding" key={f}>{f}</span>)}</div></div>
         )}
         {call.flagged && (
           <div className="blk"><div className="t">Why it was flagged</div>
@@ -305,12 +344,12 @@ export function LogDetail({ call, trace, onClose }: { call: CallRow; trace: LogR
                 <div className="hl">{matched}</div>
               </div>
             )}
-            {otherReasons.length > 0 && <div className="reason-tech mono">{otherReasons.join(" · ")}</div>}
+            {otherReasons.length > 0 && <div className="reason-tech">{otherReasons.join(" · ")}</div>}
           </div>
         )}
         <div className="blk">
           <div className="t">Conversation — request → tool calls → output</div>
-          {trace.length ? <TraceTimeline rows={trace} /> : <div className="empty">no trace</div>}
+          {trace.length ? <TraceTimeline rows={trace} /> : <Empty icon={MessageSquare} title="No trace available" />}
         </div>
       </div>
     </>
@@ -320,12 +359,13 @@ export function LogDetail({ call, trace, onClose }: { call: CallRow; trace: LogR
 /* ===================== API key vault ===================== */
 const PROVIDERS = ["openai", "groq", "anthropic", "gemini", "mistral", "cohere", "together", "azure"];
 
-export function KeysPanel({ keys, onAdd, onReveal, onDelete, onUpdate }: {
+export function KeysPanel({ keys, onAdd, onReveal, onDelete, onUpdate, loading }: {
   keys: KeyRow[];
   onAdd: (provider: string, key: string, label: string) => Promise<void>;
   onReveal: (id: string) => Promise<string>;
   onDelete: (id: string) => Promise<void>;
   onUpdate: (id: string, body: { label?: string; key?: string }) => Promise<void>;
+  loading?: boolean;
 }) {
   const [provider, setProvider] = useState("openai");
   const [label, setLabel] = useState("");
@@ -360,70 +400,77 @@ export function KeysPanel({ keys, onAdd, onReveal, onDelete, onUpdate }: {
   };
 
   return (
-    <div>
+    <>
       <div className="banner">
-        Keys are stored <b>encrypted at rest</b> and shown masked — the full value is only fetched on demand via reveal.
-        Calus uses a saved key to forward upstream when a request doesn't carry its own. Provider keys are <b>never</b> written to the call log.
+        <Lock className="ic" />
+        <span>Keys are stored <b>encrypted at rest</b> and shown masked — the full value is only fetched on demand via reveal.
+        Calus uses a saved key to forward upstream when a request doesn't carry its own. Provider keys are <b>never</b> written to the call log.</span>
       </div>
-      <div className="card">
+      <div className="card flush">
         <div className="keyform">
-          <select value={provider} onChange={(e) => setProvider(e.target.value)}>
+          <select className="field" value={provider} onChange={(e) => setProvider(e.target.value)} aria-label="Provider">
             {PROVIDERS.map((p) => <option key={p} value={p}>{p}</option>)}
           </select>
-          <input placeholder="label (e.g. prod)" value={label} onChange={(e) => setLabel(e.target.value)} />
-          <input placeholder="paste provider API key" type="password" value={secret}
-            onChange={(e) => setSecret(e.target.value)} onKeyDown={(e) => e.key === "Enter" && add()} />
-          <button className="btn" onClick={add} disabled={busy}>{busy ? "Saving…" : "Add key"}</button>
+          <input className="field" placeholder="label (e.g. prod)" value={label} onChange={(e) => setLabel(e.target.value)} aria-label="Label" />
+          <input className="field" placeholder="paste provider API key" type="password" value={secret}
+            onChange={(e) => setSecret(e.target.value)} onKeyDown={(e) => e.key === "Enter" && add()} aria-label="API key" />
+          <button className="btn" onClick={add} disabled={busy}><Plus className="ic" />{busy ? "Saving…" : "Add key"}</button>
         </div>
-        {keys.length === 0 ? <div className="empty">No keys saved yet.</div> : (
-          <table>
-            <thead><tr><th>Provider</th><th>Label</th><th>Key</th><th></th></tr></thead>
-            <tbody>
-              {keys.map((k) => {
-                const isEnv = k.source === "env";
-                const isEditing = editing === k.id;
-                return (
-                  <tr key={k.id} style={{ cursor: "default" }}>
-                    <td><span className="owasp-pill">{k.provider}</span></td>
-                    <td>
-                      {isEditing ? (
-                        <input className="mono" style={{ width: 120 }} value={editLabel}
-                          placeholder="label" onChange={(e) => setEditLabel(e.target.value)} />
-                      ) : (k.label || <span style={{ color: "var(--muted-2)" }}>—</span>)}
-                      {isEnv && <span className="finding" style={{ marginLeft: 8 }}>.env</span>}
-                    </td>
-                    <td className="mono" style={{ fontSize: 12.5 }}>
-                      {isEditing ? (
-                        <input className="mono" style={{ width: 200 }} type="password" value={editKey}
-                          placeholder="new key (optional)" onChange={(e) => setEditKey(e.target.value)} />
-                      ) : (revealed[k.id] || k.masked)}
-                    </td>
-                    <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-                      {isEditing ? (
-                        <>
-                          <button className="btn sm" onClick={() => saveEdit(k.id)}>Save</button>{" "}
-                          <button className="btn ghost sm" onClick={() => setEditing("")}>Cancel</button>
-                        </>
-                      ) : (
-                        <>
-                          <button className="btn ghost sm" onClick={() => reveal(k.id)}>{revealed[k.id] ? "Hide" : "See full"}</button>{" "}
-                          <button className="btn ghost sm" onClick={() => copy(k.id)}>{copied === k.id ? "Copied" : "Copy"}</button>
-                          {!isEnv && <>{" "}
-                            <button className="btn ghost sm" onClick={() => startEdit(k)}>Edit</button>{" "}
-                            <button className="btn ghost sm" onClick={() => onDelete(k.id)}>Delete</button>
-                          </>}
-                          {isEnv && <span style={{ color: "var(--muted-2)", fontSize: 11, marginLeft: 6 }}>.env · read-only</span>}
-                        </>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+        {loading && keys.length === 0 ? <SkeletonRows cols={4} rows={3} />
+          : keys.length === 0 ? <Empty icon={KeyRound} title="No keys saved yet" sub="Add an upstream provider key above. Calus forwards it only when a request doesn't carry its own." />
+          : (
+          <div className="tbl-scroll">
+            <table>
+              <thead><tr><th>Provider</th><th>Label</th><th>Key</th><th style={{ textAlign: "right" }}>Actions</th></tr></thead>
+              <tbody>
+                {keys.map((k) => {
+                  const isEnv = k.source === "env";
+                  const isEditing = editing === k.id;
+                  return (
+                    <tr key={k.id}>
+                      <td><span className="owasp-pill">{k.provider}</span></td>
+                      <td>
+                        {isEditing ? (
+                          <input className="field mono" style={{ width: 120 }} value={editLabel}
+                            placeholder="label" onChange={(e) => setEditLabel(e.target.value)} />
+                        ) : (k.label || <span style={{ color: "var(--muted-2)" }}>—</span>)}
+                        {isEnv && <span className="env-tag">.env</span>}
+                      </td>
+                      <td className="key-masked">
+                        {isEditing ? (
+                          <input className="field mono" style={{ width: 220 }} type="password" value={editKey}
+                            placeholder="new key (optional)" onChange={(e) => setEditKey(e.target.value)} />
+                        ) : (revealed[k.id] || k.masked)}
+                      </td>
+                      <td>
+                        <div className="key-actions">
+                          {isEditing ? (
+                            <>
+                              <button className="btn sm" onClick={() => saveEdit(k.id)}><Check className="ic" />Save</button>
+                              <button className="btn ghost sm" onClick={() => setEditing("")}>Cancel</button>
+                            </>
+                          ) : (
+                            <>
+                              <button className="btn ghost sm" onClick={() => reveal(k.id)}>{revealed[k.id] ? <><EyeOff className="ic" />Hide</> : <><Eye className="ic" />Reveal</>}</button>
+                              <button className="btn ghost sm" onClick={() => copy(k.id)}>{copied === k.id ? <><Check className="ic" />Copied</> : <><Copy className="ic" />Copy</>}</button>
+                              {!isEnv && <>
+                                <button className="btn ghost sm" onClick={() => startEdit(k)}><Pencil className="ic" />Edit</button>
+                                <button className="btn danger sm" onClick={() => onDelete(k.id)}><Trash2 className="ic" />Delete</button>
+                              </>}
+                              {isEnv && <span className="env-note">.env · read-only</span>}
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
-    </div>
+    </>
   );
 }
 
@@ -433,7 +480,7 @@ function CodeBlock({ code }: { code: string }) {
   const copy = () => { navigator.clipboard?.writeText(code); setCopied(true); setTimeout(() => setCopied(false), 1200); };
   return (
     <div className="code">
-      <button className="copy" onClick={copy}>{copied ? "copied" : "copy"}</button>
+      <button className="copy" onClick={copy}>{copied ? <><Check className="ic" />copied</> : <><Copy className="ic" />copy</>}</button>
       <pre>{code}</pre>
     </div>
   );
@@ -483,23 +530,29 @@ llm = ChatOpenAI(
        "messages":[{"role":"user","content":"hello"}]}'`,
   };
   const tabs = [["env", "No-code (env var)"], ["openai", "OpenAI SDK"], ["claude", "Claude Code"], ["langchain", "LangChain"], ["curl", "curl"]];
+  const steps = [
+    ["Route through Calus", "Set the base URL (above). Keep your own provider key — Calus passes it upstream and never stores it."],
+    ["Name your agents", "Pass user (or an X-Calus-Agent header) so each agent and its tool calls show up separately in the console."],
+    ["Watch live", "Threats, OWASP mapping, agents, and every tool call appear here in real time. Detection-only — traffic is never altered."],
+  ];
   return (
     <div className="card">
       <div className="banner">
-        <b>Drop-in, no SDK.</b> Calus sits between your AI tools and the providers. Point your app at the URL below and every call gets
-        instant threat detection, agent &amp; tool-call observability — with no code changes and nothing blocked.
+        <Plug className="ic" />
+        <span><b>Drop-in, no SDK.</b> Calus sits between your AI tools and the providers. Point your app at the URL below and every call gets
+        instant threat detection, agent &amp; tool-call observability — with no code changes and nothing blocked.</span>
       </div>
-      <div className="row">
-        <span className="k">Admin token</span>
+      <div className="endpoint-row" style={{ borderTop: "1px solid var(--line)", marginTop: 18 }}>
+        <span className="k" style={{ color: "var(--muted)", fontWeight: 500 }}>Admin token</span>
         <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span className="mono" style={{ fontSize: 12.5 }}>{show ? token : masked}</span>
-          <button className="btn ghost sm" onClick={() => setShow(!show)}>{show ? "Hide" : "Reveal"}</button>
-          <button className="btn ghost sm" onClick={copyToken}>{copied ? "Copied" : "Copy"}</button>
+          <span className="mono" style={{ fontSize: 12.5, color: "var(--fg-2)" }}>{show ? token : masked}</span>
+          <button className="btn ghost sm" onClick={() => setShow(!show)}>{show ? <><EyeOff className="ic" />Hide</> : <><Eye className="ic" />Reveal</>}</button>
+          <button className="btn ghost sm" onClick={copyToken}>{copied ? <><Check className="ic" />Copied</> : <><Copy className="ic" />Copy</>}</button>
         </span>
       </div>
-      <div className="row" style={{ borderBottom: "none", marginBottom: 6 }}>
-        <span className="k">Your proxy endpoint</span>
-        <span className="mono">{url}/v1</span>
+      <div className="endpoint-row" style={{ borderTop: "1px solid var(--line)", marginBottom: 14 }}>
+        <span className="k" style={{ color: "var(--muted)", fontWeight: 500 }}>Your proxy endpoint</span>
+        <span className="mono" style={{ color: "var(--fg-2)" }}>{url}/v1</span>
       </div>
       <div className="tabs">
         {tabs.map(([k, lbl]) => (
@@ -507,10 +560,14 @@ llm = ChatOpenAI(
         ))}
       </div>
       <CodeBlock code={snippets[tab]} />
-      <div className="steps" style={{ marginTop: 18 }}>
-        <div className="step"><div className="n">1</div><div><h4>Route through Calus</h4><div style={{ color: "var(--muted)", fontSize: 13 }}>Set the base URL (above). Keep your own provider key — Calus passes it upstream and never stores it.</div></div></div>
-        <div className="step"><div className="n">2</div><div><h4>Name your agents</h4><div style={{ color: "var(--muted)", fontSize: 13 }}>Pass <span className="mono">user</span> (or an <span className="mono">X-Calus-Agent</span> header) so each agent and its tool calls show up separately in the console.</div></div></div>
-        <div className="step"><div className="n">3</div><div><h4>Watch live</h4><div style={{ color: "var(--muted)", fontSize: 13 }}>Threats, OWASP mapping, agents, and every tool call appear here in real time. Detection-only — traffic is never altered.</div></div></div>
+      <div className="steps">
+        {steps.map(([h, p], i) => (
+          <div className="step" key={i}>
+            <div className="n">{i + 1}</div>
+            <h4>{h}</h4>
+            <p>{p}</p>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -529,8 +586,11 @@ export function TokenGate({ onSubmit, error }: { onSubmit: (t: string) => void; 
         <input type="password" placeholder="admin token" value={val} autoFocus
           onChange={(e) => setVal(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") onSubmit(val); }} />
         <button className="btn" onClick={() => onSubmit(val)}>Connect</button>
-        {error && <div className="err">{error}</div>}
+        {error && <div className="err"><AlertCircle className="ic" />{error}</div>}
       </div>
     </div>
   );
 }
+
+/* re-export icons used directly by App */
+export { Radio, Info };
