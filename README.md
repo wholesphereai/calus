@@ -305,9 +305,8 @@ See [SECURITY.md](SECURITY.md) to report a vulnerability.
 
 ## License
 
-[GNU AGPL-3.0](LICENSE). Running a modified version as a network service requires
-publishing your source. For a commercial license without the AGPL obligations,
-contact Wholesphere.
+[MIT](LICENSE). Use it freely, including in commercial and closed-source
+products. Just keep the copyright and license notice.
 
 ---
 

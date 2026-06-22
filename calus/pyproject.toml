@@ -7,7 +7,7 @@ name = "calus"
 version = "6.0.0"
 description = "Calus — open-source AI-security detection: tiered prompt-injection/jailbreak/agent-abuse detection mapped to OWASP LLM Top 10"
 readme = "README.md"
-license = "AGPL-3.0-or-later"
+license = "MIT"
 requires-python = ">=3.9"
 keywords = ["security","langgraph","agents","prompt-injection","self-improving","threat-detection","red-team"]
 classifiers = [

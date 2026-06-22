@@ -52,4 +52,4 @@ python -m calus.benchmark.harness --dataset agentdojo
 
 See [`docs/`](docs) for architecture, threat coverage, and accuracy notes.
 
-Licensed under [AGPL-3.0](LICENSE).
+Licensed under the [MIT License](LICENSE).
