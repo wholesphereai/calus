@@ -12,13 +12,65 @@ import os
 import hmac
 import base64
 import hashlib
+import logging
+import secrets
+
+log = logging.getLogger("calus_proxy.crypto")
 
 _MAGIC = b"clk1"          # calus key vault, format v1
 _ROUNDS = 200_000
 
+# cache the persisted vault secret so we don't re-read/regenerate on every call
+_persisted_secret: str = None
+
+
+def _secret_path() -> str:
+    """Path to the persisted random vault secret — next to the admin token, in
+    the proxy's config dir (reuses config's db-derived directory)."""
+    try:
+        from .config import get_settings
+        d = get_settings().config_dir()
+    except Exception:
+        d = "."
+    return os.path.join(d, ".calus_vault_secret")
+
+
+def _persisted_vault_secret() -> str:
+    """Load (or generate-and-persist once) a random vault secret. Used only when
+    CALUS_SECRET is not set explicitly. NEVER a static literal."""
+    global _persisted_secret
+    if _persisted_secret:
+        return _persisted_secret
+    path = _secret_path()
+    try:
+        if os.path.exists(path):
+            s = open(path, encoding="utf-8").read().strip()
+            if s:
+                _persisted_secret = s
+                return s
+    except Exception:
+        pass
+    s = secrets.token_urlsafe(32)
+    try:
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(s)
+        try:
+            os.chmod(path, 0o600)        # owner-only where supported
+        except Exception:
+            pass
+    except Exception:
+        # if we cannot persist, still use the in-memory value for this process
+        pass
+    _persisted_secret = s
+    log.warning(
+        "CALUS_SECRET is not set; using a persisted random vault secret at %s. "
+        "Set CALUS_SECRET explicitly in production so the vault stays decryptable "
+        "if this file is lost.", path)
+    return s
+
 
 def _server_secret() -> bytes:
-    s = os.getenv("CALUS_SECRET") or os.getenv("CALUS_ADMIN_TOKEN") or "calus-insecure-default"
+    s = os.getenv("CALUS_SECRET") or _persisted_vault_secret()
     return s.encode("utf-8")
 
 

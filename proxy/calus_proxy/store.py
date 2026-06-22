@@ -82,6 +82,13 @@ class Store:
     def _conn(self):
         conn = sqlite3.connect(self.path, timeout=10)
         conn.row_factory = sqlite3.Row
+        # WAL + a busy timeout keep concurrent request writes and dashboard reads
+        # from tripping "database is locked".
+        try:
+            conn.execute("PRAGMA journal_mode=WAL")
+            conn.execute("PRAGMA busy_timeout=5000")
+        except Exception:
+            pass
         try:
             yield conn
             conn.commit()

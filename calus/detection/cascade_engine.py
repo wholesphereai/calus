@@ -1,10 +1,9 @@
 """
 calus.detection.cascade_engine — confidence-routed, self-improving detector.
 
-Design follows the consensus of production tools (Rebuff, Vigil, LLM Guard) and
-the OWASP LLM Prompt-Injection cheat sheet: a cheap->expensive cascade where each
-tier only runs if the previous one was not decisive. Keeps every layer available
-but does NOT run them all on every input.
+Design follows the OWASP LLM Prompt-Injection cheat sheet: a cheap->expensive
+cascade where each tier only runs if the previous one was not decisive. Keeps
+every layer available but does NOT run them all on every input.
 
     Tier 1  Deterministic  (regex + cheap anomaly signals + optional decoders)
     Tier 2  Lexical / vector similarity to known attacks
@@ -22,7 +21,6 @@ from dataclasses import dataclass, field
 
 # routing thresholds (tune on your benchmark)
 T1_DECISIVE = 3.0     # tier-1 score at/above this => flag now, skip deeper tiers
-T1_CLEAN    = 0.6     # tier-1 score at/below this AND no anomaly => clean, stop
 T2_FLAG     = 0.55    # tier-2 similarity to flag
 
 @dataclass
@@ -126,9 +124,11 @@ class CascadeEngine:
         # Conditional decoders — only on real obfuscation signals
         has_b64 = re.search(r"[A-Za-z0-9+/]{20,}={0,2}", text) is not None
         spaced  = re.search(r"(?:\b\w\b[ \t]){5,}", text) is not None
+        decoded_texts = []          # keep decoded variants for tier-2 below
         if (_INVISIBLE.search(text) or _nonascii_ratio(text) > 0.30 or has_b64 or spaced):
             tiers.append("decoders")
             for name, decoded in _try_decoders(text):
+                decoded_texts.append((name, decoded))
                 d1 = self._t1.detect(decoded)
                 if d1.score > score:
                     score = d1.score; decoded_from = name
@@ -142,8 +142,17 @@ class CascadeEngine:
 
         # Otherwise ALWAYS consult Tier 2 (cheap lexical/vector similarity).
         # This is what catches paraphrases and learned signatures that regex misses.
+        # Run it on the original AND any decoded variants, so obfuscated attacks
+        # that decode to a known phrase (base64 / spaced / reversed) are caught
+        # even when the decoded text doesn't hit a tier-1 regex.
         tiers.append("t2_similarity")
         sim = self._t2.detect(text)
+        for name, decoded in decoded_texts:
+            ds = self._t2.detect(decoded)
+            if ds["similarity"] > sim["similarity"]:
+                sim = ds
+                if not decoded_from:
+                    decoded_from = name
         if sim["flagged"] or sim["similarity"] >= T2_FLAG:
             reasons.append(f"similar to known attack ({sim['similarity']})")
             return self._verdict(True, max(score / (T1_DECISIVE * 2), sim["similarity"]),
@@ -158,7 +167,11 @@ class CascadeEngine:
                 return self._verdict(True, em["similarity"], top_cat, tiers, reasons,
                                      decoded_from, agent_context)
 
-        # gray-zone, nothing decisive -> not flagged (tune thresholds to taste)
+        # Gray zone: nothing tripped a decisive threshold above. The `conf >= 0.5`
+        # branch is NOT dead — here score < T1_DECISIVE (so score/6.0 < 0.5) and
+        # similarity < T2_FLAG (0.55), but similarity can still land in [0.5, 0.55),
+        # which makes conf >= 0.5 and flags borderline-similar inputs. Leaving the
+        # threshold as-is (do not change routing behavior).
         conf = max(score / (T1_DECISIVE * 2), sim["similarity"])
         return self._verdict(conf >= 0.5, conf, top_cat, tiers, reasons, decoded_from, agent_context)
 
@@ -187,16 +200,24 @@ class CascadeEngine:
             out.append("possible memory poisoning (untrusted -> memory write)")
         return out
 
-    @staticmethod
-    def _category_of(matched):
+    def _category_of(self, matched):
         # `matched` is weight-sorted [(rule_id, severity, weight, category), ...].
-        # Take the highest-weight matched rule that actually carries a category
-        # (many rules have an empty category); that drives the OWASP mapping.
+        # Prefer the highest-weight matched rule whose category actually MAPS to an
+        # OWASP code (many rules have empty or unmapped categories). Fall back to the
+        # first non-empty category so we still surface something for the verdict.
+        first_nonempty = ""
+        owasp = self._owasp
         for m in matched or []:
             cat = m[3] if len(m) > 3 else ""
-            if cat:
-                return cat
-        return ""
+            if not cat:
+                continue
+            if not first_nonempty:
+                first_nonempty = cat
+            if owasp is not None:
+                code, _ = owasp(cat)
+                if code:
+                    return cat
+        return first_nonempty
 
     # ---------- self-improving loop ----------
     def learn(self, text: str, is_attack: bool, matched_rule_ids=None):

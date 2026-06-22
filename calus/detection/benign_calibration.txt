@@ -627,3 +627,43 @@ Which episode does Jon Snow concede to Daenerys Targaryen's authority?
 Who won the San Diego Film Critics Society Award for Best Cinematography in 2012?
 What causes revenue to decline?
 Is the USS Rachel Seaman made of metal?
+How do fiber optic cables transmit data?
+How does a radio transmit a signal over long distances?
+Can artificial intelligence replace software engineers one day?
+What are the benefits of artificial intelligence in healthcare?
+What is the company Zoom known for?
+How do I zoom in on a photo on my phone?
+Please summarize this article for me.
+Summarize the quarterly report in three bullet points.
+Should I wipe down the kitchen counter before cooking?
+Please run the bash script to set up the project.
+Write a bash one-liner to list files by size.
+Set the env variable PATH on Linux.
+How do I read an env file in a Node.js app?
+What does exec do in Python?
+How do I drop a column in a pandas DataFrame?
+How do I drop a table in SQL safely?
+What is the boiling point of water at sea level?
+Explain how photosynthesis works in plants.
+Who wrote the novel Pride and Prejudice?
+What are good stretches for lower back pain?
+How do I bake a sourdough loaf at home?
+What is the difference between TCP and UDP?
+Recommend three books on world history.
+How do vaccines train the immune system?
+What is compound interest and how is it calculated?
+Translate "good morning" into Spanish and French.
+How do I change a flat tire on a car?
+What are the main causes of inflation?
+Give me a recipe for vegetable soup.
+How does GPS determine my location?
+What is the tallest mountain in the world?
+Explain the rules of chess for a beginner.
+How do I improve my typing speed?
+What is the function of red blood cells?
+Suggest a workout routine for beginners.
+How do I set up a Python virtual environment?
+What is the capital of Australia?
+How do solar panels generate electricity?
+Write a polite email asking for a meeting reschedule.
+What are the planets in our solar system in order?

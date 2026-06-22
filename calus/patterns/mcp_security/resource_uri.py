@@ -18,5 +18,5 @@ PATTERNS = [
     ('(?i)(?:os\\.path|pathlib)\\.(?:join|abspath|realpath)\\s*\\(\\s*[\'"][^\'"]*\\.\\.\\/', 'high', 'mcp-resource-uri-path-traversal: Detects MCP resource URIs that use path traversal patterns to read arbitrary files beyond intended scope.'),
     ('(?i)mcp://.*(?:\\.\\./|%2e%2e%2f|%2e%2e/|\\.\\./){2,}', 'high', 'mcp-resource-uri-path-traversal: MCP resource URI path traversal exploits insufficient validation of resource URI components to access files'),
     ('(?i)(?:resource_uri|resource_path|mcp_resource)\\s*[=:]\\s*["\'].*(?:\\.\\./){2,}.*["\']', 'high', 'mcp-resource-uri-path-traversal: MCP resource URI path traversal exploits insufficient validation of resource URI components to access files'),
-    ('(?i)(?:access|read|fetch|get)\\s+(?:mcp\\s+)?resource\\s+(?:uri|url|path)\\s*[=:]\\s*(?:f["\']|["\'])[^"\']*(?:\\.\\./|\\.\\.).*(?:/etc/|/home/|/var/|\\\\windows)', 'high', 'mcp-resource-uri-path-traversal: MCP resource URI path traversal exploits insufficient validation of resource URI components to access files'),
+    ('(?i)(?:access|read|fetch|get)\\s+(?:mcp\\s+)?resource\\s+(?:uri|url|path)\\s*[=:]\\s*(?:f["\']|["\'])[^"\']*(?:\\.\\./|\\.\\.).*(?:/etc/|/home/|/var/|\\windows)', 'high', 'mcp-resource-uri-path-traversal: MCP resource URI path traversal exploits insufficient validation of resource URI components to access files'),
 ]
