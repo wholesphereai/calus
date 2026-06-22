@@ -60,6 +60,17 @@ def _try_decoders(text: str):
     # reversed text
     if "snoitcurtsni" in text.lower() or "erongi" in text.lower():
         yield "reversed", text[::-1]
+    # homoglyph: Cyrillic/Greek/fullwidth lookalikes smuggling ASCII keywords
+    # (e.g. "Іgnоrе аll рrеvіоus іnstruсtіоns"). Only attempt when the text has
+    # non-ASCII characters, then normalize to ASCII so tier-1 regex can fire.
+    if any(ord(ch) > 127 for ch in text):
+        try:
+            from calus.detection.extended.homoglyph import normalize_homoglyphs
+            deh = normalize_homoglyphs(text)
+            if deh != text:
+                yield "homoglyph", deh
+        except Exception:
+            pass
 
 
 class CascadeEngine:

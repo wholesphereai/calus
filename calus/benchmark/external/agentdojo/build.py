@@ -21,6 +21,10 @@ attack × injection task, so the numbers reflect the current upstream suite.
 Output: `attacks.txt` (one injection string per line) and `benign.txt`
 (legitimate same-domain text), consumed by `calus.benchmark.harness`.
 """
+import logging
+logging.basicConfig(level=logging.INFO, format="%(message)s")
+log = logging.getLogger(__name__)
+
 import argparse
 import os
 
@@ -168,7 +172,7 @@ def main(argv=None):
             attacks, benign = build_live()
             src = "live agentdojo package"
         except Exception as e:
-            print(f"[!] live mode unavailable ({e}); falling back to bundled.")
+            log.info(f"[!] live mode unavailable ({e}); falling back to bundled.")
             attacks, benign = build_bundled(); src = "bundled (fallback)"
     else:
         attacks, benign = build_bundled(); src = "bundled templates"
@@ -179,8 +183,8 @@ def main(argv=None):
     with open(os.path.join(HERE, "benign.txt"), "w", encoding="utf-8") as f:
         f.write("# AgentDojo same-domain benign text\n")
         f.write("\n".join(benign) + "\n")
-    print(f"wrote {len(attacks)} attacks + {len(benign)} benign from {src}")
-    print("now run:  python -m calus.benchmark.harness --dataset agentdojo")
+    log.info(f"wrote {len(attacks)} attacks + {len(benign)} benign from {src}")
+    log.info("now run:  python -m calus.benchmark.harness --dataset agentdojo")
     return 0
 
 

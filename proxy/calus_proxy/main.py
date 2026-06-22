@@ -16,6 +16,7 @@ import uuid
 import asyncio
 import hmac
 import logging
+from contextlib import asynccontextmanager
 from typing import Optional
 
 from fastapi import FastAPI, Request, Header, HTTPException, Depends, Query
@@ -60,8 +61,30 @@ if "*" in _cors_origins and len(_cors_origins) > 1:
     log.warning("CORS origin '*' mixed with explicit origins — dropping '*'")
     _cors_origins = [o for o in _cors_origins if o != "*"]
 
+@asynccontextmanager
+async def _lifespan(app: FastAPI):
+    # ---- startup ----
+    global _detector_ready
+    if not PROXY_TOKEN:
+        log.warning("CALUS_PROXY_TOKEN is not set — the data plane (/v1/*) is "
+                    "UNAUTHENTICATED. This keeps the proxy drop-in, but the port "
+                    "must NOT be publicly exposed. Set CALUS_PROXY_TOKEN to require a token.")
+    det = await asyncio.get_event_loop().run_in_executor(None, calus.get_detector)
+    _detector_ready = True
+    # Log the REAL loaded rule/signature counts from the detector's info (the
+    # production build_from_package loader), not the dead register() registry.
+    info = getattr(det, "info", {}) or {}
+    active = info.get("active_rules", "?")
+    sigs = info.get("attack_signatures", "?")
+    log.info("Calus engine: %s active rules, %s attack signatures loaded", active, sigs)
+    log.info("detector warm; proxy ready")
+    yield
+    # ---- shutdown (nothing to clean up) ----
+
+
 app = FastAPI(title="Calus Proxy", version="1.0.0",
-              description="OpenAI-compatible LLM proxy with inline Calus detection (observe-only).")
+              description="OpenAI-compatible LLM proxy with inline Calus detection (observe-only).",
+              lifespan=_lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_cors_origins,
@@ -71,16 +94,13 @@ app.add_middleware(
 )
 
 
-@app.on_event("startup")
-async def _warm():
-    global _detector_ready
-    if not PROXY_TOKEN:
-        log.warning("CALUS_PROXY_TOKEN is not set — the data plane (/v1/*) is "
-                    "UNAUTHENTICATED. This keeps the proxy drop-in, but the port "
-                    "must NOT be publicly exposed. Set CALUS_PROXY_TOKEN to require a token.")
-    await asyncio.get_event_loop().run_in_executor(None, calus.get_detector)
-    _detector_ready = True
-    log.info("detector warm; proxy ready")
+@app.exception_handler(Exception)
+async def _unhandled_exception_handler(request: Request, exc: Exception):
+    """Any unhandled error in a route returns a generic body — never a stack
+    trace or internal detail (which could leak keys/prompt content)."""
+    log.error("unhandled error on %s", request.url.path, exc_info=True)
+    return JSONResponse(status_code=500,
+                        content={"error": "detection failed", "code": 500})
 
 
 def _require_proxy_token(request: Request):
@@ -250,7 +270,24 @@ async def _scan_and_store(text: str, direction: str, model: str, latency_ms=None
         latency_ms=latency_ms, prompt_tokens=pt, completion_tokens=ct,
         text_redacted=stored_text, findings=findings,
     )
-    return {"id": rid, "flagged": flagged, "confidence": confidence, "owasp": owasp}
+    return {"id": rid, "flagged": flagged, "confidence": confidence,
+            "owasp": owasp, "reasons": reasons, "tiers": tiers}
+
+
+def _verdict_headers(verdict: dict) -> dict:
+    """Build the x-calus-* response headers from an INPUT scan verdict so callers
+    can see the detection result inline. `x-calus-patterns` is a short, comma-
+    joined list of matched reasons/rule categories truncated to ~200 chars."""
+    if not verdict:
+        return {}
+    reasons = verdict.get("reasons") or []
+    patterns = ", ".join(str(r) for r in reasons)[:200]
+    return {
+        "x-calus-flagged": "true" if verdict.get("flagged") else "false",
+        "x-calus-confidence": str(verdict.get("confidence", 0.0)),
+        "x-calus-owasp": str(verdict.get("owasp") or ""),
+        "x-calus-patterns": patterns,
+    }
 
 
 def _bearer(authorization: Optional[str]) -> Optional[str]:
@@ -287,9 +324,11 @@ async def chat_completions(request: Request, authorization: Optional[str] = Head
     tools = _tools_of(body)
 
     # scan the INPUT (never blocks — just records). We use the latest user turn,
-    # not the whole replayed history, so each call shows its own prompt.
-    await _scan_and_store(_newest_input_text(messages), "input", model, trace_id=trace_id,
-                          agent=agent, tools=tools)
+    # not the whole replayed history, so each call shows its own prompt. Capture
+    # the verdict so we can surface it on the response via x-calus-* headers.
+    input_verdict = await _scan_and_store(_newest_input_text(messages), "input", model,
+                                          trace_id=trace_id, agent=agent, tools=tools)
+    calus_headers = _verdict_headers(input_verdict)
 
     # forward upstream via LiteLLM. The provider key is resolved in priority:
     #   1. the caller's bearer (used in-flight, NEVER stored), else
@@ -356,7 +395,8 @@ async def chat_completions(request: Request, authorization: Optional[str] = Head
                     dt = (time.perf_counter() - t0) * 1000
                     await _scan_and_store("".join(acc), "output", model, latency_ms=dt,
                                           trace_id=trace_id, agent=agent)
-        return StreamingResponse(gen(), media_type="text/event-stream")
+        return StreamingResponse(gen(), media_type="text/event-stream",
+                                 headers=calus_headers)
 
     # ---- non-streaming ----
     dt = (time.perf_counter() - t0) * 1000
@@ -369,7 +409,7 @@ async def chat_completions(request: Request, authorization: Optional[str] = Head
             msg, out_text = {}, ""
         await _scan_and_store(out_text, "output", model, latency_ms=dt, usage=d.get("usage"),
                               trace_id=trace_id, agent=agent, tool_calls=_tool_calls_of(msg))
-    return JSONResponse(content=d)
+    return JSONResponse(content=d, headers=calus_headers)
 
 
 # ----------------------------- dashboard API --------------------------------

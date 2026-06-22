@@ -261,18 +261,19 @@ def print_summary(
     CYAN   = "\033[96m"; WHITE  = "\033[97m"; BG_RED = "\033[41m"
 
     period = f" (last {last})" if last else " (all time)"
-    print(f"\n{CYAN}{BOLD}╔══ CALUS DB MONITOR{period} {'═'*28}╗{RESET}")
-    print(f"{CYAN}║{RESET}  DB            : CALUS.db")
-    print(f"{CYAN}║{RESET}  Total scanned : {BOLD}{s['total']}{RESET}")
-    print(f"{CYAN}║{RESET}  Threats       : {RED}{BOLD}{s['threats']}{RESET}")
-    print(f"{CYAN}║{RESET}  Critical      : {BG_RED}{WHITE}{BOLD}{s['critical']}{RESET}")
-    print(f"{CYAN}║{RESET}  Warning       : {YELLOW}{BOLD}{s['warning']}{RESET}")
-    print(f"{CYAN}║{RESET}  Clean         : {GREEN}{s['clean']}{RESET}")
-
+    lines = [
+        f"\n{CYAN}{BOLD}╔══ CALUS DB MONITOR{period} {'═'*28}╗{RESET}",
+        f"{CYAN}║{RESET}  DB            : CALUS.db",
+        f"{CYAN}║{RESET}  Total scanned : {BOLD}{s['total']}{RESET}",
+        f"{CYAN}║{RESET}  Threats       : {RED}{BOLD}{s['threats']}{RESET}",
+        f"{CYAN}║{RESET}  Critical      : {BG_RED}{WHITE}{BOLD}{s['critical']}{RESET}",
+        f"{CYAN}║{RESET}  Warning       : {YELLOW}{BOLD}{s['warning']}{RESET}",
+        f"{CYAN}║{RESET}  Clean         : {GREEN}{s['clean']}{RESET}",
+    ]
     if s["top_threat_nodes"]:
-        print(f"{CYAN}╠{'═'*56}╣{RESET}")
-        print(f"{CYAN}║{RESET}  Top threat nodes:")
+        lines.append(f"{CYAN}╠{'═'*56}╣{RESET}")
+        lines.append(f"{CYAN}║{RESET}  Top threat nodes:")
         for t in s["top_threat_nodes"]:
-            print(f"{CYAN}║{RESET}    {RED}•{RESET} {t['node']} — {BOLD}{t['count']}{RESET} hits")
-
-    print(f"{CYAN}╚{'═'*56}╝{RESET}\n")
+            lines.append(f"{CYAN}║{RESET}    {RED}•{RESET} {t['node']} — {BOLD}{t['count']}{RESET} hits")
+    lines.append(f"{CYAN}╚{'═'*56}╝{RESET}\n")
+    log.info("\n".join(lines))

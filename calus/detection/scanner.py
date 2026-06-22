@@ -21,7 +21,9 @@ Full scan pipeline — all detection layers run on every message:
     patterns mined from threat corpus
 """
 from __future__ import annotations
-import asyncio, time
+import asyncio, time, logging
+
+_log = logging.getLogger(__name__)
 
 from calus.detection.core.aho import detect as aho_detect
 from calus.detection.core.encoding import detect as encoding_detect
@@ -138,7 +140,8 @@ def scan(
     try:
         from calus.learning.engine import scan_with_learned
         learned = scan_with_learned(text)
-    except Exception: pass
+    except Exception as e:
+        _log.debug("learned-pattern layer skipped: %s", e)
 
     # Layer 6: Production cascade engine. The legacy stack lacks the cascade's
     # calibrated regex/similarity tiers, so consult the real engine and merge its

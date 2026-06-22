@@ -4,6 +4,9 @@ Catches attacks encoded as binary strings (01001001 01100111 ...).
 Inspired by: calus BinaryConverter.
 """
 import re
+import logging
+
+_log = logging.getLogger(__name__)
 
 _BIN_PATTERN = re.compile(r"\b([01]{8})([ ]+[01]{8}){4,}\b")
 _ATTACK_WORDS = {"ignore","disregard","bypass","override","jailbreak","dan","system","unrestricted"}
@@ -13,8 +16,10 @@ def _decode(text: str) -> str:
     chars = []
     for p in parts:
         if re.match(r"^[01]{8}$", p):
-            try: chars.append(chr(int(p, 2)))
-            except: pass
+            try:
+                chars.append(chr(int(p, 2)))
+            except (ValueError, OverflowError) as e:
+                _log.debug("binary decode skipped chunk %r: %s", p, e)
     return "".join(chars)
 
 def detect(text: str) -> dict:

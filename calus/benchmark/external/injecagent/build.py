@@ -29,6 +29,10 @@ Outputs (consumed by the harness's `injecagent` splits):
   attacks_direct_harm.txt / benign_direct_harm.txt   (dh_base)
   attacks_data_exfil.txt / benign_data_exfil.txt     (ds_base)
 """
+import logging
+logging.basicConfig(level=logging.INFO, format="%(message)s")
+log = logging.getLogger(__name__)
+
 import os
 
 from .._download import fetch_text
@@ -110,10 +114,10 @@ def main(argv=None):
         a, b = _attacks_and_benign(cases)
         na, nb = _write(stem, a, b)
         total += na
-        print(f"  {stem:12s}: {na:4d} injected attacks + {nb:4d} clean benign")
-    print(f"wrote InjecAgent splits "
+        log.info(f"  {stem:12s}: {na:4d} injected attacks + {nb:4d} clean benign")
+    log.info(f"wrote InjecAgent splits "
           f"(standard={len(splits['standard'])} + enhanced={len(splits['enhanced'])} cases)")
-    print("now run:  python -m calus.benchmark.harness --dataset injecagent")
+    log.info("now run:  python -m calus.benchmark.harness --dataset injecagent")
     return 0
 
 

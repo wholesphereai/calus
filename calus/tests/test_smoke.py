@@ -24,5 +24,7 @@ def test_similarity_layer():
     assert not s.detect("what is a good recipe for bread")["flagged"]
 
 if __name__ == "__main__":
+    import logging
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     test_owasp_mapping(); test_aho_corasick(); test_similarity_layer()
-    print("all smoke tests passed")
+    logging.getLogger(__name__).info("all smoke tests passed")

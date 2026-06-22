@@ -18,6 +18,10 @@ IMPORTANT for a trustworthy number: use attacks the patterns were NOT built from
 and genuinely benign text. The external/* sets are held-out third-party
 benchmarks; the bundled datasets are a smoke benchmark, not proof.
 """
+import logging
+logging.basicConfig(level=logging.INFO, format="%(message)s")
+log = logging.getLogger(__name__)
+
 import argparse
 import os
 import time
@@ -100,8 +104,8 @@ def score(det, attacks_path, benign_path, sweep=False):
     FP = sum(1 for f, _ in B if f)
     FN = len(A) - TP
     rec, prec, f1 = prf(TP, FP, FN)
-    print(f"  scanned {n} inputs in {dt:.1f}s ({ms:.1f} ms/scan)")
-    print(f"  DEFAULT verdict      recall={rec*100:5.1f}%  precision={prec*100:5.1f}%"
+    log.info(f"  scanned {n} inputs in {dt:.1f}s ({ms:.1f} ms/scan)")
+    log.info(f"  DEFAULT verdict      recall={rec*100:5.1f}%  precision={prec*100:5.1f}%"
           f"  F1={f1*100:5.1f}%   (TP={TP} FP={FP} FN={FN}, n_attack={len(A)} n_benign={len(B)})")
 
     # Fixed 0.20 operating point (the point reported for AgentDojo in the README).
@@ -109,17 +113,17 @@ def score(det, attacks_path, benign_path, sweep=False):
     FP2 = sum(1 for _, c in B if c >= 0.20)
     FN2 = len(A) - TP2
     r2, p2, f2 = prf(TP2, FP2, FN2)
-    print(f"  confidence >= 0.20   recall={r2*100:5.1f}%  precision={p2*100:5.1f}%"
+    log.info(f"  confidence >= 0.20   recall={r2*100:5.1f}%  precision={p2*100:5.1f}%"
           f"  F1={f2*100:5.1f}%   (TP={TP2} FP={FP2} FN={FN2})")
 
     if sweep:
-        print(f"  {'thresh':>9} {'recall':>8} {'precision':>10} {'F1':>7} {'FP':>10}")
+        log.info(f"  {'thresh':>9} {'recall':>8} {'precision':>10} {'F1':>7} {'FP':>10}")
         for t in [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]:
             tp = sum(1 for _, c in A if c >= t)
             fp = sum(1 for _, c in B if c >= t)
             fn = len(A) - tp
             rr, pp, ff = prf(tp, fp, fn)
-            print(f"  {t:>9.2f} {rr*100:>7.1f}% {pp*100:>9.1f}% {ff*100:>6.1f}% {fp:>6}/{len(B)}")
+            log.info(f"  {t:>9.2f} {rr*100:>7.1f}% {pp*100:>9.1f}% {ff*100:>6.1f}% {fp:>6}/{len(B)}")
     return {"recall": rec, "precision": prec, "f1": f1,
             "recall20": r2, "precision20": p2, "f1_20": f2,
             "fp": FP, "n_benign": len(B), "n_attack": len(A)}
@@ -137,19 +141,19 @@ def main(argv=None):
     a = ap.parse_args(argv)
 
     import calus
-    print("loading engine ...")
+    log.info("loading engine ...")
     det = calus.get_detector()
 
     # Explicit file pair overrides the dataset registry.
     if a.attacks or a.benign:
         a.attacks = a.attacks or os.path.join(HERE, "datasets", "attacks.txt")
         a.benign = a.benign or os.path.join(HERE, "datasets", "benign.txt")
-        print(f"\n# custom: {a.attacks} vs {a.benign}")
+        log.info(f"\n# custom: {a.attacks} vs {a.benign}")
         score(det, a.attacks, a.benign, sweep=a.sweep)
         return 0
 
     if a.dataset == "bundled":
-        print("\n# bundled smoke set")
+        log.info("\n# bundled smoke set")
         score(det, os.path.join(HERE, "datasets", "attacks.txt"),
               os.path.join(HERE, "datasets", "benign.txt"), sweep=a.sweep)
         return 0
@@ -157,9 +161,9 @@ def main(argv=None):
     splits = _splits_for(a.dataset)
     for label, atk, ben in splits:
         if not (os.path.exists(atk) and os.path.exists(ben)):
-            print(f"\n# {label}: MISSING test files — run the dataset's build.py first")
+            log.info(f"\n# {label}: MISSING test files — run the dataset's build.py first")
             continue
-        print(f"\n# {label}")
+        log.info(f"\n# {label}")
         score(det, atk, ben, sweep=a.sweep)
     return 0
 

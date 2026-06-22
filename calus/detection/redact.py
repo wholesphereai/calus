@@ -3,8 +3,8 @@ perimeter. Detection-and-redaction (the enforcement side of categories 07/08).
 
     from calus import redact
     out = redact("my key is sk-abc123... and SSN 123-45-6789")
-    print(out.text)      # 'my key is [API_KEY-1a2b] and SSN [SSN-3c4d]'
-    print(out.findings)  # [('API_KEY', 'sk-abc...'), ('SSN', '123-45-6789')]
+    out.text       # 'my key is [API_KEY-1a2b] and SSN [SSN-3c4d]'
+    out.findings   # [('API_KEY', 'sk-abc...'), ('SSN', '123-45-6789')]
 """
 import re, hashlib
 from dataclasses import dataclass, field

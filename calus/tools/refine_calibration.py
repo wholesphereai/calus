@@ -20,6 +20,10 @@ fires on benign. Re-run after editing the benign corpus or the keep-list.
 
     python -m calus.tools.refine_calibration
 """
+import logging
+logging.basicConfig(level=logging.INFO, format="%(message)s")
+log = logging.getLogger(__name__)
+
 import json, os, re, hashlib, warnings
 warnings.filterwarnings("ignore")
 from .calibrate import load_patterns, PKG
@@ -41,7 +45,7 @@ def main(argv=None):
     benign = _load_lines(BENIGN_FILE)
     keep_markers = _load_lines(KEEP_FILE)
     if not benign:
-        print("no benign corpus at", BENIGN_FILE, "- nothing to do")
+        log.info("no benign corpus at %s - nothing to do", BENIGN_FILE)
         return 1
 
     deact = kept = tested = 0
@@ -68,10 +72,10 @@ def main(argv=None):
                 break
     json.dump(cal, open(CAL, "w"))
     active = sum(1 for v in cal.values() if v.get("active", True))
-    print(f"tested {tested} active patterns")
-    print(f"deactivated {deact} over-broad (fire on normal traffic); "
+    log.info(f"tested {tested} active patterns")
+    log.info(f"deactivated {deact} over-broad (fire on normal traffic); "
           f"kept {kept} via allowlist")
-    print(f"active patterns now: {active}")
+    log.info(f"active patterns now: {active}")
     return 0
 
 

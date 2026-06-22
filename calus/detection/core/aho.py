@@ -1,5 +1,8 @@
 import re
+import logging
 from typing import Any
+
+_log = logging.getLogger(__name__)
 
 try:
     import ahocorasick
@@ -32,13 +35,13 @@ def _build(words: list[str]) -> ahocorasick.Automaton:
     return A
 
 
-print("[CALUS] Loading detection engine...", flush=True)
+_log.info("[CALUS] Loading detection engine...")
 
 _DIRECT_AC = _build(DIRECT_PHRASES)           # ~300 phrases  exact match
 _VERB_AC   = _build(VERBS)                    # ~60  words    proximity trigger
 _OBJECT_AC = _build(OBJECTS)                  # ~60  words    proximity target
 
-print("[CALUS] Detection engine ready.", flush=True)
+_log.info("[CALUS] Detection engine ready.")
 
 
 _STRUCTURAL: list[tuple[re.Pattern, str]] = [

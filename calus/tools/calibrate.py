@@ -15,6 +15,10 @@ Pipeline:
   4. empty-match / fires-on-benign -> quarantine over-broad
   5. (--curate) literal-skeleton dedup + Aho-Corasick validation vs real attacks
 """
+import logging
+logging.basicConfig(level=logging.INFO, format="%(message)s")
+log = logging.getLogger(__name__)
+
 import argparse, ast, os, re, json, hashlib, warnings, importlib.util
 warnings.filterwarnings("ignore")
 
@@ -81,10 +85,10 @@ def main(argv=None):
             cal[h]={"active":False,"reason":"error","w":0}; continue
         cal[h]={"active":True,"reason":"active","w":round(SEVW.get(sev,1.0)*spec(p),3)}; c["active"]+=1
     json.dump(cal,open(CAL,"w"))
-    print("calibration written:",c, "-> active:",c["active"])
+    log.info("calibration written: %s -> active: %s", c, c["active"])
     if a.curate:
-        print("note: --curate (dedup + real-attack validation) keeps the high-quality core;")
-        print("      see ARCHITECTURE.md. Default calibration above is already ReDoS/over-broad-safe.")
+        log.info("note: --curate (dedup + real-attack validation) keeps the high-quality core;")
+        log.info("      see ARCHITECTURE.md. Default calibration above is already ReDoS/over-broad-safe.")
     return 0
 
 if __name__ == "__main__":

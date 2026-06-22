@@ -22,17 +22,23 @@ from __future__ import annotations
 
 import base64
 import codecs
+import logging
 import random
 import re
 import string
 from typing import List, Tuple
 
+_log = logging.getLogger(__name__)
+
 
 _LEET = str.maketrans("aeioAEIO", "43104310")
 
 def _base64_encode(text: str) -> str:
-    try: return base64.b64encode(text.encode()).decode()
-    except: return ""
+    try:
+        return base64.b64encode(text.encode()).decode()
+    except Exception as e:
+        _log.debug("base64 mutation failed: %s", e)
+        return ""
 
 def _rot13(text: str) -> str:
     return codecs.encode(text, "rot_13")

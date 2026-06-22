@@ -9,9 +9,13 @@ rest and only decrypted in memory to forward a request. Run it from the `proxy/`
 directory (or set CALUS_DB_PATH) so it points at the same database the proxy uses.
 """
 import argparse
+import logging
 
 from .config import get_settings
 from .store import Store
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
+log = logging.getLogger(__name__)
 
 
 def main(argv=None):
@@ -34,15 +38,15 @@ def main(argv=None):
 
     if args.cmd == "add":
         rec = store.add_key(args.provider, args.key, args.label)
-        print(f"added {rec['provider']} key {rec['masked']}  (id {rec['id']})")
+        log.info("added %s key %s  (id %s)", rec['provider'], rec['masked'], rec['id'])
     elif args.cmd == "list":
         rows = store.list_keys()
         if not rows:
-            print("(no keys saved)")
+            log.info("(no keys saved)")
         for r in rows:
-            print(f"  {r['id']}  {r['provider']:10} {r['masked']:14} {r['label']}")
+            log.info("  %s  %-10s %-14s %s", r['id'], r['provider'], r['masked'], r['label'])
     elif args.cmd == "delete":
-        print("deleted" if store.delete_key(args.id) else "not found")
+        log.info("deleted" if store.delete_key(args.id) else "not found")
     return 0
 
 
