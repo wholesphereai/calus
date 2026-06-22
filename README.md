@@ -25,7 +25,7 @@ by the **real engine** against **held-out, third-party academic benchmarks**, wi
 
 > **False-positive rate on normal traffic: 1.1%.** On 2,000 ordinary user messages
 > (Databricks Dolly-15k, held out from calibration), Calus's **default verdict**
-> flags only **1.1%** — the number that matters for production. The tables below
+> flags only **0.90%** — the number that matters for production. The tables below
 > report both the default verdict (the production operating point) and
 > `conf ≥ 0.20` — the higher-recall operating point, where the engine flags any
 > input whose detection-confidence score reaches 0.20.
@@ -34,18 +34,18 @@ by the **real engine** against **held-out, third-party academic benchmarks**, wi
 
 | Benchmark | Setting | Recall | Precision | F1 |
 |---|---|:--:|:--:|:--:|
-| [AgentDojo](https://github.com/ethz-spylab/agentdojo) · NeurIPS 2024 | default | 69% | **100%** | 82% |
+| [AgentDojo](https://github.com/ethz-spylab/agentdojo) · NeurIPS 2024 | default | 82% | **100%** | 90% |
 | | conf ≥ 0.20 | **95%** | 93% | **94%** |
 | [InjecAgent](https://github.com/uiuc-kang-lab/InjecAgent) · ACL 2024 — Standard | default | 35% | 99% | 52% |
 | | conf ≥ 0.20 | 69% | 99% | 82% |
-| [InjecAgent](https://github.com/uiuc-kang-lab/InjecAgent) · ACL 2024 — Enhanced | default | 96% | 99% | 98% |
+| [InjecAgent](https://github.com/uiuc-kang-lab/InjecAgent) · ACL 2024 — Enhanced | default | **100%** | 99% | **100%** |
 | | conf ≥ 0.20 | **100%** | 99% | **99%** |
 
 The Standard split contains subtle injections with no recognizable wrapper; the
 Enhanced setting prepends explicit hacking-prompt syntax that the pattern tier
 catches reliably — which is also how real-world indirect injection typically
 arrives. So Enhanced (Calus catches **100%** of its 1,054 injected tool responses
-at conf ≥ 0.20, **99% precision**) is the more representative number. By attack
+at the default verdict, **99.5% precision**) is the more representative number. By attack
 type (conf ≥ 0.20): data-exfiltration **F1 93%**, direct-harm **F1 66%** — the
 gap is because direct-harm payloads tend to be shorter, less-structured commands
 that carry fewer recognizable injection signatures than the more elaborate

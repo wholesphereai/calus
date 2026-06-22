@@ -28,7 +28,14 @@ async function send<T>(method: string, path: string, token: string, body?: unkno
 
 export const api = {
   base: BASE,
-  adminToken: (t: string) => get<{ token: string }>("/api/admin-token", t),
+  // Localhost one-click auth: the proxy hands the admin token to same-machine
+  // callers only (remote -> 403), so the local demo needs no manual token entry.
+  localAuth: async (): Promise<string> => {
+    const res = await fetch(BASE + "/api/local-auth");
+    if (!res.ok) throw new Error("local-auth unavailable");
+    return (await res.json()).token as string;
+  },
+  adminToken: (t: string) => get<{ token: string; token_file?: string }>("/api/admin-token", t),
   stats: (t: string) => get<Stats>("/api/stats", t),
   threats: (t: string) => get<Threat[]>("/api/threats", t),
   timeseries: (t: string, hours = 24) => get<Bucket[]>(`/api/timeseries?hours=${hours}`, t),

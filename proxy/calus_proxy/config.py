@@ -99,6 +99,11 @@ class Settings:
     def _token_path(self) -> str:
         return os.path.join(self.config_dir(), ".calus_admin_token")
 
+    def admin_token_path(self) -> str:
+        """Public path to the persisted admin token file (shown in the dashboard
+        so a user who forgets the token can recover it)."""
+        return self._token_path()
+
     def ensure_admin_token(self) -> str:
         # an explicit env token always wins
         if self.admin_token:

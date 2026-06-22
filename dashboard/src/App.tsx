@@ -43,7 +43,12 @@ export default function App() {
   const calls = useMemo(() => groupCalls(logs), [logs]);
 
   useEffect(() => {
-    if (!token) { setAuthed(false); return; }
+    if (!token) {
+      // Localhost convenience: pull the admin token from the same-machine proxy
+      // so the local demo is one-click. Remote callers get 403 -> show the gate.
+      api.localAuth().then(setToken).catch(() => setAuthed(false));
+      return;
+    }
     api.check(token).then((ok) => {
       setAuthed(ok);
       if (ok) localStorage.setItem(TOKEN_KEY, token);

@@ -405,7 +405,18 @@ async def list_models(request: Request):
 async def api_admin_token():
     """Echo the current admin token to an already-authenticated client so it can
     be copied for other devices / the proxy config. (You must already hold it.)"""
-    return {"token": ADMIN_TOKEN}
+    return {"token": ADMIN_TOKEN, "token_file": str(settings.admin_token_path())}
+
+
+@app.get("/api/local-auth")
+async def api_local_auth(request: Request):
+    """Hand the admin token to SAME-MACHINE callers only, so the dashboard can
+    auto-authenticate on localhost with no manual entry. Remote callers get 403
+    and must paste the token. This is what makes the local demo one-click."""
+    host = request.client.host if request.client else ""
+    if host not in ("127.0.0.1", "::1", "localhost", "testclient"):
+        raise HTTPException(status_code=403, detail="local-auth is restricted to localhost")
+    return {"token": ADMIN_TOKEN, "token_file": str(settings.admin_token_path())}
 
 
 @app.get("/api/stats", dependencies=[Depends(require_admin)])

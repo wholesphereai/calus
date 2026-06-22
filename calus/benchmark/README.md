@@ -35,7 +35,7 @@ attack template, hidden in tool output. Calus scans the injected string.
 
 | Setting | Recall | Precision | F1 |
 |---|--:|--:|--:|
-| default verdict | 69.4% | 100.0% | 82.0% |
+| default verdict | 82.4% | 100.0% | 90.4% |
 | conf ≥ 0.20 | 95.4% | 92.8% | 94.1% |
 
 ### InjecAgent — UIUC, ACL 2024 Findings
@@ -49,7 +49,7 @@ and control differ only by the injection.
 |---|---|--:|--:|--:|
 | Standard (base) | default | 34.9% | 98.7% | 51.6% |
 | Standard (base) | conf ≥ 0.20 | 69.4% | 98.7% | 81.5% |
-| Enhanced (hacking prompt) | default | 96.1% | 99.5% | 97.8% |
+| Enhanced (hacking prompt) | default | 100.0% | 99.5% | 99.8% |
 | Enhanced (hacking prompt) | conf ≥ 0.20 | 100.0% | 99.1% | 99.5% |
 | Direct harm (base) | conf ≥ 0.20 | 50.0% | 96.2% | 65.8% |
 | Data exfiltration (base) | conf ≥ 0.20 | 87.7% | 97.9% | 92.5% |
@@ -114,10 +114,10 @@ to calibrate the engine.
 
 | Operating point | False-positive rate on normal traffic |
 |---|--:|
-| **default verdict** | **1.1%** |
+| **default verdict** | **0.90%** |
 | conf ≥ 0.20 | ~34% |
 
-The **default verdict** is the production operating point: ~1 in 90 normal messages
+The **default verdict** is the production operating point: ~1 in 110 normal messages
 is flagged. `conf ≥ 0.20` trades that for recall and is only suitable where review
 noise is acceptable. This was achieved by `calus.tools.refine_calibration`, which
 quarantines any pattern that fires on the benign corpus
