@@ -11,8 +11,10 @@ Nothing here auto-modifies detection logic without review — mined regex and
 quarantine suggestions are written to a queue for a human/CI to approve.
 """
 from __future__ import annotations
-import json, os, re, time
+import json, os, re, time, logging
 from collections import Counter
+
+_log = logging.getLogger(__name__)
 
 class FeedbackStore:
     def __init__(self, path="calus_feedback.json"):
@@ -20,8 +22,10 @@ class FeedbackStore:
         self.data = {"attacks": [], "benign_fp": [], "candidate_rules": [],
                      "quarantine_suggestions": []}
         if os.path.exists(path):
-            try: self.data = json.load(open(path, encoding="utf-8"))
-            except Exception: pass
+            try:
+                self.data = json.load(open(path, encoding="utf-8"))
+            except Exception as e:
+                _log.debug("feedback store load failed (%s); starting fresh", e)
 
     def save(self):
         json.dump(self.data, open(self.path, "w", encoding="utf-8"), indent=1)
