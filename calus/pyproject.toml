@@ -58,9 +58,6 @@ packages = [
     "calus.patterns.mcp_injection",
     "calus.patterns.mcp_tool_poisoning",
     "calus.patterns.pii_credentials",
-    "calus.patterns.promptfoo",
-    "calus.patterns.pyrit",
-    "calus.patterns.spikee",
     "calus.patterns.web_attacks",
     "calus.tools",
 ]
