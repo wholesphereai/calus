@@ -534,6 +534,4 @@ See [SECURITY.md](SECURITY.md) to report a vulnerability.
 [MIT](LICENSE). Use it freely, including in commercial and closed-source
 products. Just keep the copyright and license notice.
 
----
 
-<div align="center"><sub>Calus is built and maintained by Wholesphere.</sub></div>
