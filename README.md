@@ -213,32 +213,258 @@ npm run dev                   # http://localhost:5173
 
 ## Point your app at Calus
 
-Set one environment variable and run your app as usual. Calus forwards each call
-with your own provider key (used in-flight, never stored):
+One environment variable is all you need. Calus forwards every call with your own
+provider key — used in-flight, never written to any log or store.
 
 ```bash
 export OPENAI_BASE_URL="http://localhost:8000/v1"
+# that's it — run your app as usual
 ```
 
-Or pass the base URL explicitly:
+The sections below show how to connect from each SDK, and how to name your agents
+so their traffic shows up separately in the dashboard.
+
+---
+
+### Why name your agents?
+
+Without a name, every call lands in the dashboard under **"unknown"** — one flat
+stream with no way to tell which service sent what.
+
+```
+Dashboard (no name)           Dashboard (named)
+─────────────────────         ──────────────────────────────
+Agents                        Agents
+  └─ unknown (47 calls)         ├─ customer-support  (31 calls)
+                                ├─ search-agent      (12 calls)
+                                └─ data-pipeline      (4 calls)
+```
+
+Name an agent one of two ways — they are equivalent, pick whichever fits your SDK:
+
+| Method | How | Best for |
+|---|---|---|
+| `user` field | Standard OpenAI field, part of the request body | OpenAI SDK, any JSON client |
+| `X-Calus-Agent` header | HTTP header, not part of the LLM payload | LangChain, frameworks where `user` isn't exposed |
+
+---
+
+### OpenAI Python SDK
+
+**Without a name** — traffic appears as "unknown" in the dashboard:
 
 ```python
 from openai import OpenAI
 
 client = OpenAI(
-    base_url="http://localhost:8000/v1",   # route through Calus
+    base_url="http://localhost:8000/v1",
     api_key="sk-your-own-key",
 )
-client.chat.completions.create(
-    model="groq/llama-3.3-70b-versatile",   # any provider via prefix
-    user="my-agent",                        # names this agent in the console
-    messages=[{"role": "user", "content": "hello"}],
+
+response = client.chat.completions.create(
+    model="groq/llama-3.3-70b-versatile",
+    messages=[{"role": "user", "content": "Hello"}],
 )
 ```
 
-Name each agent with the OpenAI `user` field (or an `X-Calus-Agent` header) so its
-traffic and tool calls show up separately. The Connect tab in the dashboard has
-copy-paste snippets for the OpenAI SDK, Claude Code, LangChain, and curl.
+**With a name** — use the `user` field; the agent appears by name in the Agents tab:
+
+```python
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="http://localhost:8000/v1",
+    api_key="sk-your-own-key",
+)
+
+response = client.chat.completions.create(
+    model="groq/llama-3.3-70b-versatile",
+    user="my-agent",                         # shows up as "my-agent" in the dashboard
+    messages=[{"role": "user", "content": "Hello"}],
+)
+```
+
+**With a name via header** — use `X-Calus-Agent` if you prefer headers or share one
+client across agents:
+
+```python
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="http://localhost:8000/v1",
+    api_key="sk-your-own-key",
+    default_headers={"X-Calus-Agent": "my-agent"},
+)
+
+response = client.chat.completions.create(
+    model="groq/llama-3.3-70b-versatile",
+    messages=[{"role": "user", "content": "Hello"}],
+)
+```
+
+---
+
+### OpenAI Node.js / TypeScript SDK
+
+```typescript
+import OpenAI from "openai";
+
+const client = new OpenAI({
+  baseURL: "http://localhost:8000/v1",
+  apiKey: "sk-your-own-key",
+  defaultHeaders: { "X-Calus-Agent": "my-agent" },  // name in dashboard
+});
+
+const response = await client.chat.completions.create({
+  model: "groq/llama-3.3-70b-versatile",
+  messages: [{ role: "user", content: "Hello" }],
+});
+```
+
+---
+
+### LangChain (Python)
+
+LangChain's `ChatOpenAI` doesn't expose the `user` body field directly, so use
+`default_headers` instead:
+
+```python
+from langchain_openai import ChatOpenAI
+
+llm = ChatOpenAI(
+    model="groq/llama-3.3-70b-versatile",
+    base_url="http://localhost:8000/v1",
+    api_key="sk-your-own-key",
+    default_headers={"X-Calus-Agent": "my-agent"},  # name in dashboard
+)
+
+response = llm.invoke("Hello")
+```
+
+**Without a name** (traffic appears as "unknown"):
+
+```python
+llm = ChatOpenAI(
+    model="groq/llama-3.3-70b-versatile",
+    base_url="http://localhost:8000/v1",
+    api_key="sk-your-own-key",
+)
+```
+
+---
+
+### Claude Code
+
+Route Claude Code's API calls through Calus by setting the environment variable
+before launching it. Claude Code uses the Anthropic SDK internally, which is
+OpenAI-compatible through Calus's LiteLLM layer.
+
+**Without a name** (appears as "unknown" in dashboard):
+
+```bash
+export ANTHROPIC_BASE_URL="http://localhost:8000"
+claude
+```
+
+**With a name via header** — add it to your `~/.claude/settings.json` or pass it
+as an environment variable so every Claude Code session is tagged:
+
+```bash
+export ANTHROPIC_BASE_URL="http://localhost:8000"
+export CALUS_AGENT_HEADER="claude-code"   # picked up by Calus
+claude
+```
+
+Or configure it permanently in `~/.claude/settings.json`:
+
+```json
+{
+  "env": {
+    "ANTHROPIC_BASE_URL": "http://localhost:8000",
+    "X-Calus-Agent": "claude-code"
+  }
+}
+```
+
+Once set, every prompt you send through Claude Code appears in the Calus dashboard
+under **"claude-code"** with full threat scores and tool-call traces.
+
+---
+
+### curl
+
+**Without a name:**
+
+```bash
+curl http://localhost:8000/v1/chat/completions \
+  -H "Authorization: Bearer sk-your-own-key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "groq/llama-3.3-70b-versatile",
+    "messages": [{"role": "user", "content": "Hello"}]
+  }'
+```
+
+**With a name via header:**
+
+```bash
+curl http://localhost:8000/v1/chat/completions \
+  -H "Authorization: Bearer sk-your-own-key" \
+  -H "Content-Type: application/json" \
+  -H "X-Calus-Agent: my-agent" \
+  -d '{
+    "model": "groq/llama-3.3-70b-versatile",
+    "messages": [{"role": "user", "content": "Hello"}]
+  }'
+```
+
+**With a name via `user` field:**
+
+```bash
+curl http://localhost:8000/v1/chat/completions \
+  -H "Authorization: Bearer sk-your-own-key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "groq/llama-3.3-70b-versatile",
+    "user": "my-agent",
+    "messages": [{"role": "user", "content": "Hello"}]
+  }'
+```
+
+---
+
+### Reading the verdict from response headers
+
+Every response from Calus carries three headers you can read in your app or pipe
+into a SIEM — without touching the dashboard at all:
+
+| Header | Values | Meaning |
+|---|---|---|
+| `x-calus-flagged` | `true` / `false` | Whether Calus flagged this call |
+| `x-calus-confidence` | `0.00` – `1.00` | Detection confidence score |
+| `x-calus-owasp` | e.g. `LLM01`, `LLM06` | OWASP LLM Top 10 category, if flagged |
+
+```python
+import requests
+
+resp = requests.post(
+    "http://localhost:8000/v1/chat/completions",
+    headers={
+        "Authorization": "Bearer sk-your-own-key",
+        "X-Calus-Agent": "my-agent",
+    },
+    json={
+        "model": "groq/llama-3.3-70b-versatile",
+        "messages": [{"role": "user", "content": "Hello"}],
+    },
+)
+
+print(resp.headers.get("x-calus-flagged"))     # "false"
+print(resp.headers.get("x-calus-confidence"))  # "0.12"
+print(resp.headers.get("x-calus-owasp"))       # "" or "LLM01"
+```
+
+The Connect tab in the dashboard has ready-to-paste snippets for every SDK.
 
 ---
 
