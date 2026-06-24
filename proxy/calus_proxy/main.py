@@ -3,7 +3,8 @@ Calus Proxy — an OpenAI-compatible gateway that scans every call with Calus an
 logs the verdicts for a dashboard. DETECTION ONLY: it never blocks, alters, or
 redacts the live traffic — requests and responses pass through untouched.
 
-    uvicorn calus_proxy.main:app --host 0.0.0.0 --port 8000
+    uvicorn calus_proxy.main:app --port 8000               # local dev (127.0.0.1)
+    uvicorn calus_proxy.main:app --host 0.0.0.0 --port 8000  # Docker / network
 
 Point any OpenAI-compatible app at it:
     base_url = "http://localhost:8000/v1"
@@ -78,6 +79,18 @@ async def _lifespan(app: FastAPI):
     sigs = info.get("attack_signatures", "?")
     log.info("Calus engine: %s active rules, %s attack signatures loaded", active, sigs)
     log.info("detector warm; proxy ready")
+    banner = r"""
+   ____      _
+  / ___|__ _| |_   _ ___
+ | |   / _` | | | | / __|
+ | |__| (_| | | |_| \__ \
+  \____\__,_|_|\__,_|___/
+
+  Dashboard   http://localhost:5173
+  Proxy       http://localhost:8000
+  Health      http://localhost:8000/healthz
+"""
+    print(banner, flush=True)
     yield
     # ---- shutdown (nothing to clean up) ----
 

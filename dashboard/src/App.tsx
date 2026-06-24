@@ -1,10 +1,10 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { LogOut, X } from "lucide-react";
+import { LogOut, Sun, Moon } from "lucide-react";
 import { api } from "./api";
 import type { Stats, Threat, Bucket, LogRow, CallRow, AgentRow, KeyRow } from "./types";
 import {
   StatCards, TimeChart, Threats, CallsTable, LogDetail, AgentsTable,
-  KeysPanel, ConnectPanel, TokenGate, Icon, groupCalls, Empty,
+  KeysPanel, ConnectPanel, TokenGate, Icon, groupCalls, Empty, CalusLogoMark,
 } from "./components";
 
 const TOKEN_KEY = "calus_admin_token";
@@ -20,11 +20,28 @@ const NAV: { id: View; label: string; icon: string }[] = [
   { id: "connect", label: "Connect", icon: "connect" },
 ];
 
+function greeting(): string {
+  const h = new Date().getHours();
+  if (h < 12) return "Good morning";
+  if (h < 17) return "Good afternoon";
+  return "Good evening";
+}
+
+const CHART_RANGES: [string, number][] = [["24h", 24], ["7d", 168], ["30d", 720], ["All", 8760]];
+
 export default function App() {
   const [token, setToken] = useState<string>(() => localStorage.getItem(TOKEN_KEY) || "");
   const [authed, setAuthed] = useState<boolean | null>(null);
   const [gateError, setGateError] = useState<string>("");
   const [view, setView] = useState<View>("overview");
+  const [theme, setTheme] = useState<"light" | "dark">(() =>
+    (localStorage.getItem("calus_theme") as "light" | "dark") || "light"
+  );
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("calus_theme", theme);
+  }, [theme]);
 
   const [stats, setStats] = useState<Stats | null>(null);
   const [threats, setThreats] = useState<Threat[]>([]);
@@ -36,9 +53,11 @@ export default function App() {
   const [keysLoaded, setKeysLoaded] = useState(false);
   const [onlyFlagged, setOnlyFlagged] = useState(false);
   const [agentFilter, setAgentFilter] = useState<string>("");
+  const [owaspFilter, setOwaspFilter] = useState<string>("");
   const [picked, setPicked] = useState<CallRow | null>(null);
   const [trace, setTrace] = useState<LogRow[]>([]);
   const [live, setLive] = useState(true);
+  const [chartHours, setChartHours] = useState(24);
 
   const calls = useMemo(() => groupCalls(logs), [logs]);
 
@@ -62,7 +81,7 @@ export default function App() {
       const [s, th, ts, lg, ag] = await Promise.all([
         api.stats(token),
         api.threats(token),
-        api.timeseries(token, 24),
+        api.timeseries(token, chartHours),
         api.logs(token, { limit: 80, flagged: onlyFlagged ? true : undefined, agent: agentFilter || undefined }),
         api.agents(token),
       ]);
@@ -70,7 +89,7 @@ export default function App() {
     } catch {
       setLive(false);
     }
-  }, [token, onlyFlagged, agentFilter]);
+  }, [token, onlyFlagged, agentFilter, chartHours]);
 
   useEffect(() => {
     if (authed) {
@@ -112,69 +131,73 @@ export default function App() {
     <div className="app">
       <aside className="sidebar">
         <div className="brand">
-          <div className="mark">C</div>
-          <div>
-            <h1>Calus</h1>
-            <div className="by">by Wholesphere</div>
-          </div>
+          <a href="https://usecalus.com/" target="_blank" rel="noopener noreferrer" className="mark">
+            <CalusLogoMark size={32} />
+          </a>
         </div>
-        <div className="nav-group-label">Console</div>
         <nav className="nav">
           {NAV.map((n) => (
-            <button key={n.id} className={view === n.id ? "on" : ""}
+            <button key={n.id}
+              className={view === n.id ? "on" : ""}
+              aria-label={n.label}
+              title={n.label}
               aria-current={view === n.id ? "page" : undefined}
-              onClick={() => { setView(n.id); if (n.id !== "live") setAgentFilter(""); }}>
-              <Icon name={n.icon} />{n.label}
-              {n.id === "agents" && agents.length > 0 && <span className="count">{agents.length}</span>}
-              {n.id === "threats" && threats.length > 0 && <span className="count alert">{threats.reduce((a, t) => a + t.count, 0)}</span>}
+              onClick={() => { setView(n.id); if (n.id !== "live") setAgentFilter(""); if (n.id !== "threats") setOwaspFilter(""); }}>
+              <Icon name={n.icon} />
             </button>
           ))}
         </nav>
-        <div className="side-foot">
-          <div className={"conn" + (live ? " live" : "")}><span className="dot" />{live ? "Live" : "Disconnected"}</div>
-          <div className="side-actions">
-            <button title="Sign out" onClick={() => { localStorage.removeItem(TOKEN_KEY); setToken(""); setAuthed(false); }}>
-              <LogOut className="ic" />Sign out
-            </button>
-          </div>
-        </div>
+        <div className="side-foot"></div>
       </aside>
 
       <main className="main">
         <header className="topbar">
           <div className="titles">
             <h2>{titles[view][0]}</h2>
-            <div className="sub">{titles[view][1]}</div>
-          </div>
-          <div className="actions">
-            {view === "live" && (
-              <div className="filters">
-                {agentFilter && <button className="chip on" onClick={() => setAgentFilter("")}>agent: {agentFilter}<X className="x" /></button>}
-                <button className={"chip" + (!onlyFlagged ? " on" : "")} onClick={() => setOnlyFlagged(false)}>All</button>
-                <button className={"chip" + (onlyFlagged ? " on" : "")} onClick={() => setOnlyFlagged(true)}>Flagged</button>
+            {view === "agents" && loaded && (
+              <div className="agent-pills">
+                <span className="agent-pill">{agents.length} total</span>
+                <span className="agent-pill active">
+                  {agents.filter(a => Date.now() / 1000 - a.last_ts < 86400).length} active
+                </span>
               </div>
             )}
-            <div className={"status-pill" + (live ? " live" : "")}><span className="dot" />{live ? "Live" : "Offline"}</div>
+          </div>
+          <div className="actions">
+            <button className="theme-btn" title={theme === "light" ? "Switch to dark" : "Switch to light"}
+              aria-label="Toggle theme" onClick={() => setTheme(t => t === "light" ? "dark" : "light")}>
+              {theme === "light" ? <Moon className="ic" /> : <Sun className="ic" />}
+            </button>
+            <button className="theme-btn" title="Sign out" aria-label="Sign out"
+              onClick={() => { localStorage.removeItem(TOKEN_KEY); setToken(""); setAuthed(false); }}>
+              <LogOut className="ic" />
+            </button>
           </div>
         </header>
 
         <div className="content">
           {view === "overview" && (
             <>
-              <StatCards stats={stats} />
-              <div className="grid-mid">
-                <div className="card flush">
-                  <div className="panel-head"><h3>Traffic · last 24h</h3><span className="hint">total vs flagged</span></div>
-                  <TimeChart data={series} loading={!loaded} />
+              <div className="greeting-card">
+                <div>
+                  <div className="greeting-hi">{greeting()}</div>
+                  <div className="greeting-sub">Here's your security posture at a glance.</div>
                 </div>
-                <div className="card flush">
-                  <div className="panel-head"><h3>Threats by OWASP</h3><span className="hint">flagged only</span></div>
-                  <Threats threats={threats} loading={!loaded} />
-                </div>
+                <div className="greeting-badge">{new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</div>
               </div>
+              <StatCards stats={stats} />
               <div className="card flush">
-                <div className="panel-head"><h3>Recent calls</h3><span className="hint">one row per request</span></div>
-                <CallsTable calls={calls.slice(0, 12)} onPick={pick} loading={!loaded} />
+                <div className="panel-head">
+                  <h3>Traffic</h3>
+                  <div className="time-tabs">
+                    {CHART_RANGES.map(([label, h]) => (
+                      <button key={label} className={chartHours === h ? "on" : ""}
+                        onClick={() => setChartHours(h)}>{label}</button>
+                    ))}
+                  </div>
+                  <span className="hint">total vs flagged</span>
+                </div>
+                <TimeChart data={series} loading={!loaded} />
               </div>
             </>
           )}
@@ -186,23 +209,40 @@ export default function App() {
           )}
 
           {view === "threats" && (
-            <>
-              <StatCards stats={stats} />
-              <div className="card flush">
-                <div className="panel-head"><h3>OWASP LLM Top 10 — flagged traffic</h3><span className="hint">click a call to inspect</span></div>
-                <Threats threats={threats} loading={!loaded} />
+            <div className="card flush">
+              <div className="live-filters">
+                <button className={"chip" + (!owaspFilter ? " on" : "")}
+                  onClick={() => setOwaspFilter("")}>All</button>
+                {threats.map((t) => (
+                  <button key={t.owasp} className={"chip" + (owaspFilter === t.owasp ? " on" : "")}
+                    onClick={() => setOwaspFilter(t.owasp)}>
+                    {t.name || t.owasp}
+                  </button>
+                ))}
               </div>
-              <div className="card flush">
-                <div className="panel-head"><h3>Flagged calls</h3></div>
-                {loaded && calls.filter((c) => c.flagged).length === 0
+              {(() => {
+                const filtered = calls.filter((c) => c.flagged && (!owaspFilter || c.owasp === owaspFilter));
+                return filtered.length === 0 && loaded
                   ? <Empty title="No flagged calls" sub="When traffic trips a detection rule, the offending calls show up here." />
-                  : <CallsTable calls={calls.filter((c) => c.flagged)} onPick={pick} loading={!loaded} />}
-              </div>
-            </>
+                  : <CallsTable calls={filtered} onPick={pick} loading={!loaded} />;
+              })()}
+            </div>
           )}
 
           {view === "live" && (
             <div className="card flush">
+              <div className="live-filters">
+                <button className={"chip" + (!agentFilter && !onlyFlagged ? " on" : "")}
+                  onClick={() => { setAgentFilter(""); setOnlyFlagged(false); }}>All</button>
+                {agents.map((a) => (
+                  <button key={a.agent} className={"chip" + (agentFilter === a.agent ? " on" : "")}
+                    onClick={() => { setAgentFilter(a.agent); setOnlyFlagged(false); }}>
+                    {a.agent}
+                  </button>
+                ))}
+                <button className={"chip" + (onlyFlagged ? " on" : "")}
+                  onClick={() => { setAgentFilter(""); setOnlyFlagged(true); }}>Flagged</button>
+              </div>
               <CallsTable calls={calls} onPick={pick} loading={!loaded} />
             </div>
           )}

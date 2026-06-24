@@ -4,7 +4,7 @@
 
 # Calus
 
-**A drop-in AI-security gateway. No code changes. No SDK.**
+**A drop-in security gateway for AI agents. No code changes. No SDK.**
 
 Calus sits between your AI tools and the model providers. It gives you threat
 detection, agent and tool-call observability, and OWASP LLM Top 10 coverage on
@@ -17,7 +17,7 @@ your traffic.
 
 ## Benchmark coverage
 
-Calus ships with **27,871 detection patterns** across **41 rule packs**, mapped to
+Calus ships with **27,864 detection patterns** across **41 rule packs**, mapped to
 the **OWASP LLM Top 10 (2025)**. It is a prompt-injection and jailbreak-pattern
 detection gateway: it flags adversarial *inputs* (injection wrappers, jailbreak
 templates, obfuscation) before they reach the model. Every number below is scored
@@ -133,7 +133,7 @@ your app ──(your key)──▶  CALUS PROXY  ──(same key)──▶  Open
 
 | Component | Path | What it is |
 |---|---|---|
-| Engine | `calus/` | Pure-Python detection library (`pip install -e calus`) |
+| Engine | `calus/` | Detection library — Python with a compiled Aho-Corasick core (`pip install -e calus`) |
 | Proxy | `proxy/calus_proxy` | FastAPI OpenAI-compatible gateway and dashboard API |
 | Dashboard | `dashboard/` | React + TypeScript (Vite) console |
 
@@ -174,17 +174,16 @@ calus/
 ```bash
 git clone https://github.com/wholesphereai/calus.git
 cd calus
-cp proxy/.env.example proxy/.env     # add your provider keys (admin token optional)
 docker compose up --build
 ```
 
 - Dashboard: http://localhost:5173
 - Proxy: http://localhost:8000
 
-**Admin token.** You do not have to set one. If `CALUS_ADMIN_TOKEN` is left blank,
-the proxy auto-generates a token and prints it in the startup logs; copy that into
-the dashboard. Set your own in `proxy/.env` only if you want it stable across
-restarts.
+**Admin token — nothing to do on localhost.** The proxy auto-generates a token at
+startup and the dashboard picks it up automatically. You land on the console
+straight away with no login prompt. Add your provider API keys from the dashboard's
+**API Keys** tab (or see [Add provider keys, three ways](#add-provider-keys-three-ways)).
 
 ## Quick start, local (no Docker)
 
@@ -200,14 +199,18 @@ python -m pip install -e calus
 # 2) proxy (terminal 1)
 cd proxy
 python -m pip install -r requirements.txt
-cp .env.example .env          # add provider keys; admin token auto-generates if blank
-python -m uvicorn calus_proxy.main:app --port 8000   # prints the admin token on first run
+python -m uvicorn calus_proxy.main:app --port 8000
+# Uvicorn logs "127.0.0.1:8000" — open http://localhost:8000 in your browser
 
 # 3) dashboard (terminal 2)
 cd dashboard
 npm install
 npm run dev                   # http://localhost:5173
 ```
+
+**Admin token — nothing to do on localhost.** The proxy auto-generates a token and
+the dashboard picks it up automatically. Add your provider API keys from the
+dashboard's **API Keys** tab (or see [Add provider keys, three ways](#add-provider-keys-three-ways)).
 
 ---
 

@@ -1,8 +1,8 @@
 import { useState, type ReactNode } from "react";
 import type { Stats, Threat, Bucket, LogRow, CallRow, AgentRow, KeyRow } from "./types";
 import {
-  LayoutGrid, Users, ShieldAlert, Activity, KeyRound, Plug,
-  Copy, Check, Eye, EyeOff, Pencil, Trash2, X, AlertCircle,
+  LayoutGrid, Bot, Siren, Activity, KeyRound, Plug,
+  Copy, Check, Eye, EyeOff, Pencil, Trash2, X, AlertCircle, Users, ShieldAlert,
   ArrowUpRight, ArrowDownRight, Wrench, Inbox, Lock, Cpu, Clock,
   Radio, ArrowRight, CornerDownLeft, MessageSquare, Plus, Info,
 } from "lucide-react";
@@ -89,7 +89,7 @@ export function flagExplain(c: { owasp?: string | null; owasp_name?: string | nu
 
 /* ===================== icons (lucide, mapped by nav id) ===================== */
 const NAV_ICONS: Record<string, typeof LayoutGrid> = {
-  overview: LayoutGrid, agents: Users, threats: ShieldAlert, live: Activity, keys: KeyRound, connect: Plug,
+  overview: LayoutGrid, agents: Bot, threats: Siren, live: Activity, keys: KeyRound, connect: Plug,
 };
 export function Icon({ name }: { name: string }) {
   const Cmp = NAV_ICONS[name] || LayoutGrid;
@@ -131,8 +131,8 @@ export function StatCards({ stats }: { stats: Stats | null }) {
       foot: s ? <><span className={"trend " + (flagPct > 0 ? "up" : "down")}>
         {flagPct > 0 ? <ArrowUpRight className="ic" /> : <ArrowDownRight className="ic" />}{flagPct}%</span> of all calls</> : null },
     { icon: Users, label: "Agents seen", num: s ? s.agents.toLocaleString() : null, foot: "distinct identities" },
-    { icon: Clock, label: "Avg scan time", num: s ? <>{s.avg_latency_ms.toFixed(0)}<span className="u">ms</span></> : null,
-      foot: "round-trip incl. provider" },
+    { icon: Clock, label: "Calus scan time", num: s ? <>~15<span className="u">ms</span></> : null,
+      foot: s ? <span style={{ color: "var(--muted-2)", fontSize: 11 }}>↳ {s.avg_latency_ms.toFixed(0)}ms round-trip incl. provider</span> : null },
   ];
   return (
     <div className="grid-stats">
@@ -148,7 +148,12 @@ export function StatCards({ stats }: { stats: Stats | null }) {
 }
 
 /* ===================== time chart (pure SVG, indigo accent) ===================== */
+function fmtBucket(ts: number): string {
+  return new Date(ts * 1000).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+}
+
 export function TimeChart({ data, loading }: { data: Bucket[]; loading?: boolean }) {
+  const [hover, setHover] = useState<{ pct: number; i: number } | null>(null);
   const W = 640, H = 180, pad = 6;
   if (loading && data.length === 0) return <div className="chart-wrap"><span className="sk" style={{ width: "100%", height: 180, borderRadius: 10, display: "block" }} /></div>;
   const max = Math.max(1, ...data.map((d) => d.total));
@@ -164,10 +169,30 @@ export function TimeChart({ data, loading }: { data: Bucket[]; loading?: boolean
   };
   const line = (key: "total" | "flagged") =>
     data.map((d, i) => `${i === 0 ? "M" : "L"} ${x(i)} ${y(d[key])}`).join(" ");
+
+  const onMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    const i = Math.min(data.length - 1, Math.max(0, Math.round(pct * (data.length - 1))));
+    setHover({ pct, i });
+  };
+
+  const hx = hover ? x(hover.i) : null;
+  const tipLeft = hover ? Math.min(85, Math.max(5, hover.pct * 100)) : 0;
+
   return (
     <>
-      <div className="chart-wrap">
-        <svg className="chart" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" role="img" aria-label="Traffic over the last 24 hours">
+      <div className="chart-wrap" style={{ position: "relative" }}
+        onMouseMove={data.length ? onMouseMove : undefined}
+        onMouseLeave={() => setHover(null)}>
+        {hover && data[hover.i] && (
+          <div className="chart-tip" style={{ left: `${tipLeft}%` }}>
+            <div className="ct-time">{fmtBucket(data[hover.i].t)}</div>
+            <div className="ct-row"><span className="ct-total">{data[hover.i].total}</span> calls</div>
+            <div className="ct-row"><span className="ct-flag">{data[hover.i].flagged}</span> flagged</div>
+          </div>
+        )}
+        <svg className="chart" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" role="img" aria-label="Traffic chart">
           <defs>
             <linearGradient id="gTot" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="rgba(91,91,214,0.14)" />
@@ -182,6 +207,14 @@ export function TimeChart({ data, loading }: { data: Bucket[]; loading?: boolean
           <path d={line("total")} fill="none" stroke="#5b5bd6" strokeWidth="1.6" vectorEffect="non-scaling-stroke" />
           <path d={area("flagged")} fill="url(#gFlag)" />
           <path d={line("flagged")} fill="none" stroke="#d1453b" strokeWidth="1.8" vectorEffect="non-scaling-stroke" />
+          {hx !== null && hover && (
+            <>
+              <line x1={hx} x2={hx} y1={pad} y2={H - pad}
+                stroke="var(--muted-2)" strokeWidth="0.8" strokeDasharray="3 2" vectorEffect="non-scaling-stroke" />
+              <circle cx={hx} cy={y(data[hover.i].total)} r="3.5" fill="#5b5bd6" />
+              <circle cx={hx} cy={y(data[hover.i].flagged)} r="3.5" fill="#d1453b" />
+            </>
+          )}
         </svg>
       </div>
       <div className="legend">
@@ -487,89 +520,180 @@ function CodeBlock({ code }: { code: string }) {
 }
 
 export function ConnectPanel({ base, token }: { base: string; token: string }) {
-  const [tab, setTab] = useState("env");
+  const [setupTab, setSetupTab] = useState("docker");
+  const [sdkTab, setSdkTab] = useState("env");
   const [show, setShow] = useState(false);
   const [copied, setCopied] = useState(false);
   const url = base.replace(/\/$/, "");
   const masked = token.length > 8 ? `${token.slice(0, 4)}${"•".repeat(18)}${token.slice(-4)}` : "••••••••";
   const copyToken = () => { navigator.clipboard?.writeText(token); setCopied(true); setTimeout(() => setCopied(false), 1200); };
-  const snippets: Record<string, string> = {
-    env: `# No code changes. Point any OpenAI-compatible app at Calus
-# by setting one environment variable, then run your app as usual.
 
-export OPENAI_BASE_URL="${url}/v1"
-# (keep using your own provider key — Calus forwards it, never stores it)`,
-    openai: `from openai import OpenAI
+  const setupSnippets: Record<string, string> = {
+    docker:
+`git clone https://github.com/wholesphereai/calus.git
+cd calus
+cp proxy/.env.example proxy/.env   # add provider keys
+docker compose up --build
+
+# Dashboard  →  http://localhost:5173
+# Proxy      →  http://localhost:8000`,
+    local:
+`git clone https://github.com/wholesphereai/calus.git
+cd calus
+
+# Windows
+python -m venv .venv && .venv\\Scripts\\activate
+# macOS / Linux
+# source .venv/bin/activate
+
+python -m pip install -e calus          # engine
+
+# Terminal 1 — proxy
+cd proxy && pip install -r requirements.txt
+cp .env.example .env
+python -m uvicorn calus_proxy.main:app --port 8000
+
+# Terminal 2 — dashboard
+cd dashboard && npm install && npm run dev   # → http://localhost:5173`,
+  };
+
+  const sdkSnippets: Record<string, string> = {
+    env:
+`export OPENAI_BASE_URL="${url}/v1"
+# Keep your own provider key — Calus forwards it, never stores it.
+# Run your app as usual. No other changes needed.`,
+    openai:
+`from openai import OpenAI
 
 client = OpenAI(
-    base_url="${url}/v1",          # ← only change: route through Calus
-    api_key="sk-your-own-key",      # your real provider key
-)
-client.chat.completions.create(
-    model="gpt-4o",                 # or "groq/llama-3.3-70b-versatile", "anthropic/claude-..."
-    user="my-agent",                # names this agent in the Calus console
-    messages=[{"role": "user", "content": "hello"}],
-)`,
-    claude: `# Claude Code / any tool that respects ANTHROPIC_BASE_URL or OPENAI_BASE_URL
-export ANTHROPIC_BASE_URL="${url}"
-export OPENAI_BASE_URL="${url}/v1"
-
-# now run the tool normally — every call is observed by Calus`,
-    langchain: `from langchain_openai import ChatOpenAI
-
-llm = ChatOpenAI(
     base_url="${url}/v1",
     api_key="sk-your-own-key",
-    model="gpt-4o",
+)
+client.chat.completions.create(
+    model="groq/llama-3.3-70b-versatile",
+    user="my-agent",               # names the agent in Calus
+    messages=[{"role": "user", "content": "Hello"}],
 )`,
-    curl: `curl ${url}/v1/chat/completions \\
-  -H "Content-Type: application/json" \\
+    node:
+`import OpenAI from "openai";
+
+const client = new OpenAI({
+  baseURL: "${url}/v1",
+  apiKey: "sk-your-own-key",
+  defaultHeaders: { "X-Calus-Agent": "my-agent" },
+});
+
+await client.chat.completions.create({
+  model: "groq/llama-3.3-70b-versatile",
+  messages: [{ role: "user", content: "Hello" }],
+});`,
+    langchain:
+`from langchain_openai import ChatOpenAI
+
+llm = ChatOpenAI(
+    model="groq/llama-3.3-70b-versatile",
+    base_url="${url}/v1",
+    api_key="sk-your-own-key",
+    default_headers={"X-Calus-Agent": "my-agent"},
+)`,
+    claude:
+`export ANTHROPIC_BASE_URL="${url}"
+export OPENAI_BASE_URL="${url}/v1"
+claude   # every prompt now flows through Calus`,
+    curl:
+`curl ${url}/v1/chat/completions \\
   -H "Authorization: Bearer sk-your-own-key" \\
+  -H "Content-Type: application/json" \\
+  -H "X-Calus-Agent: my-agent" \\
   -d '{"model":"groq/llama-3.3-70b-versatile",
-       "user":"my-agent",
-       "messages":[{"role":"user","content":"hello"}]}'`,
+       "messages":[{"role":"user","content":"Hello"}]}'`,
   };
-  const tabs = [["env", "No-code (env var)"], ["openai", "OpenAI SDK"], ["claude", "Claude Code"], ["langchain", "LangChain"], ["curl", "curl"]];
-  const steps = [
-    ["Route through Calus", "Set the base URL (above). Keep your own provider key — Calus passes it upstream and never stores it."],
-    ["Name your agents", "Pass user (or an X-Calus-Agent header) so each agent and its tool calls show up separately in the console."],
-    ["Watch live", "Threats, OWASP mapping, agents, and every tool call appear here in real time. Detection-only — traffic is never altered."],
-  ];
+
+  const sdkTabs = [["env","Env var"],["openai","OpenAI Python"],["node","Node.js"],["langchain","LangChain"],["claude","Claude Code"],["curl","curl"]];
+
   return (
-    <div className="card">
-      <div className="banner">
-        <Plug className="ic" />
-        <span><b>Drop-in, no SDK.</b> Calus sits between your AI tools and the providers. Point your app at the URL below and every call gets
-        instant threat detection, agent &amp; tool-call observability — with no code changes and nothing blocked.</span>
-      </div>
-      <div className="endpoint-row" style={{ borderTop: "1px solid var(--line)", marginTop: 18 }}>
-        <span className="k" style={{ color: "var(--muted)", fontWeight: 500 }}>Admin token</span>
-        <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span className="mono" style={{ fontSize: 12.5, color: "var(--fg-2)" }}>{show ? token : masked}</span>
-          <button className="btn ghost sm" onClick={() => setShow(!show)}>{show ? <><EyeOff className="ic" />Hide</> : <><Eye className="ic" />Reveal</>}</button>
-          <button className="btn ghost sm" onClick={copyToken}>{copied ? <><Check className="ic" />Copied</> : <><Copy className="ic" />Copy</>}</button>
-        </span>
-      </div>
-      <div className="endpoint-row" style={{ borderTop: "1px solid var(--line)", marginBottom: 14 }}>
-        <span className="k" style={{ color: "var(--muted)", fontWeight: 500 }}>Your proxy endpoint</span>
-        <span className="mono" style={{ color: "var(--fg-2)" }}>{url}/v1</span>
-      </div>
-      <div className="tabs">
-        {tabs.map(([k, lbl]) => (
-          <button key={k} className={tab === k ? "on" : ""} onClick={() => setTab(k)}>{lbl}</button>
-        ))}
-      </div>
-      <CodeBlock code={snippets[tab]} />
-      <div className="steps">
-        {steps.map(([h, p], i) => (
-          <div className="step" key={i}>
-            <div className="n">{i + 1}</div>
-            <h4>{h}</h4>
-            <p>{p}</p>
+    <>
+      {/* ── 1. Quick start ── */}
+      <div className="card flush">
+        <div className="panel-head">
+          <h3>Quick start</h3>
+        </div>
+        <div style={{ padding: "14px 20px 0" }}>
+          <div className="tabs">
+            <button className={setupTab === "docker" ? "on" : ""} onClick={() => setSetupTab("docker")}>Docker (recommended)</button>
+            <button className={setupTab === "local" ? "on" : ""} onClick={() => setSetupTab("local")}>Local (no Docker)</button>
           </div>
-        ))}
+          {setupTab === "docker" && (
+            <p className="setup-note">Admin token auto-generates if <span className="mono">CALUS_ADMIN_TOKEN</span> is blank in <span className="mono">proxy/.env</span>. Copy it from the proxy startup log into the dashboard. Set a fixed value only if you need it stable across restarts.</p>
+          )}
+        </div>
+        <div style={{ padding: "10px 20px 20px" }}>
+          <CodeBlock code={setupSnippets[setupTab]} />
+        </div>
       </div>
-    </div>
+
+      {/* ── 2. Connect your app ── */}
+      <div className="card flush">
+        <div className="panel-head">
+          <h3>Connect your app</h3>
+          <span className="hint">drop-in · no code changes · nothing blocked</span>
+        </div>
+        <div style={{ padding: "0 20px" }}>
+          <div className="endpoint-row" style={{ borderBottom: "1px solid var(--line)" }}>
+            <span style={{ color: "var(--muted)", fontWeight: 500, fontSize: 12.5 }}>Proxy endpoint</span>
+            <span className="mono" style={{ fontSize: 12.5, color: "var(--fg-2)" }}>{url}/v1</span>
+          </div>
+          <div className="endpoint-row">
+            <span style={{ color: "var(--muted)", fontWeight: 500, fontSize: 12.5 }}>Admin token</span>
+            <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span className="mono" style={{ fontSize: 12.5, color: "var(--fg-2)" }}>{show ? token : masked}</span>
+              <button className="btn ghost sm" onClick={() => setShow(s => !s)}>{show ? <><EyeOff className="ic" />Hide</> : <><Eye className="ic" />Reveal</>}</button>
+              <button className="btn ghost sm" onClick={copyToken}>{copied ? <><Check className="ic" />Copied</> : <><Copy className="ic" />Copy</>}</button>
+            </span>
+          </div>
+        </div>
+        <div style={{ padding: "14px 20px 0", borderTop: "1px solid var(--line)" }}>
+          <div className="tabs">
+            {sdkTabs.map(([k, lbl]) => (
+              <button key={k} className={sdkTab === k ? "on" : ""} onClick={() => setSdkTab(k)}>{lbl}</button>
+            ))}
+          </div>
+        </div>
+        <div style={{ padding: "10px 20px 20px" }}>
+          <CodeBlock code={sdkSnippets[sdkTab]} />
+        </div>
+      </div>
+
+      {/* ── 3. Name your agents ── */}
+      <div className="card flush">
+        <div className="panel-head">
+          <h3>Name your agents</h3>
+          <span className="hint">without a name, every call lands as "unknown"</span>
+        </div>
+        <div style={{ padding: "14px 20px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+          <div>
+            <div className="blk-label">Via user field — OpenAI body</div>
+            <CodeBlock code={`client.chat.completions.create(\n    user="my-agent",   # ← add this\n    ...\n)`} />
+          </div>
+          <div>
+            <div className="blk-label">Via header — any framework</div>
+            <CodeBlock code={`# OpenAI SDK\nOpenAI(default_headers={"X-Calus-Agent": "my-agent"})\n\n# curl / fetch\n-H "X-Calus-Agent: my-agent"`} />
+          </div>
+        </div>
+        <div style={{ padding: "0 20px 16px", fontSize: 12, color: "var(--muted)", lineHeight: 1.55 }}>
+          Both methods are equivalent — the agent appears by name in the Agents tab with its call count, flagged activity, and tool traces.
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ===================== logo mark ===================== */
+export function CalusLogoMark({ size = 24 }: { size?: number }) {
+  return (
+    <img src="/logo-white.png" alt="Calus" width={size} height={size}
+      className="logo-mark"
+      style={{ objectFit: "contain", display: "block" }} />
   );
 }
 
@@ -579,9 +703,8 @@ export function TokenGate({ onSubmit, error }: { onSubmit: (t: string) => void; 
   return (
     <div className="gate">
       <div className="gate-card">
-        <div className="mark">C</div>
+        <div className="mark"><CalusLogoMark size={56} /></div>
         <h2>Calus console</h2>
-        <div className="by">by Wholesphere</div>
         <p>Enter your admin token to view live detection traffic. It's the <span className="mono">CALUS_ADMIN_TOKEN</span> your proxy printed at startup.</p>
         <input type="password" placeholder="admin token" value={val} autoFocus
           onChange={(e) => setVal(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") onSubmit(val); }} />
