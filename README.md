@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/logo.png" alt="Calus" width="104" />
+<img src="assets/logo.png" alt="Wholesphere" width="104" />
 
 # Calus
 
@@ -35,8 +35,8 @@ tuning. Reproduce any row with the commands in [`calus/benchmark`](calus/benchma
 
 | Benchmark | Setting | Recall | Precision | F1 |
 |---|---|:--:|:--:|:--:|
-| [AgentDojo](https://github.com/ethz-spylab/agentdojo) · NeurIPS 2024 | default | 82% | **100%** | 90% |
-| | conf >= 0.20 | **95%** | 93% | **94%** |
+| [AgentDojo](https://github.com/ethz-spylab/agentdojo) · NeurIPS 2024 | default | 83% | **100%** | 91% |
+| | conf >= 0.20 | 91% | 95% | **93%** |
 | [InjecAgent](https://github.com/uiuc-kang-lab/InjecAgent) · ACL 2024, Standard | default | 35% | 99% | 52% |
 | | conf >= 0.20 | 69% | 99% | 82% |
 | [InjecAgent](https://github.com/uiuc-kang-lab/InjecAgent) · ACL 2024, Enhanced | default | **100%** | 99% | **100%** |

@@ -135,29 +135,25 @@ def build_bundled():
 
 
 def build_live():
-    """Pull every registered attack × injection task from the installed package."""
+    """Pull every injection task GOAL from the installed agentdojo package and
+    render each through all known attack templates. This is robust to API changes
+    in how AgentDojo instantiates attack objects."""
     from agentdojo.task_suite.load_suites import get_suites  # type: ignore
-    from agentdojo.attacks.attack_registry import load_attack  # type: ignore
-    from agentdojo.agent_pipeline import AgentPipeline  # type: ignore
 
-    attacks = set()
     suites = get_suites("v1")
-    pipeline = AgentPipeline([])  # template-only; we never call a model
+    seen, attacks = set(), []
     for suite in suites.values():
-        for atk_name in ("important_instructions", "ignore_previous", "injecagent"):
-            try:
-                attack = load_attack(atk_name, suite, pipeline)
-            except Exception:
-                continue
-            for inj_task in suite.injection_tasks.values():
-                try:
-                    payloads = attack.attack(inj_task, inj_task)  # returns {placeholder: text}
-                    for text in payloads.values():
-                        line = " ".join(str(text).split())
-                        if line:
-                            attacks.add(line)
-                except Exception:
-                    continue
+        for inj_task in suite.injection_tasks.values():
+            goal = getattr(inj_task, "GOAL", None) or ""
+            for tmpl in TEMPLATES.values():
+                line = " ".join(tmpl.format(
+                    goal=goal,
+                    user="the user",
+                    model="the assistant",
+                ).split())
+                if line and line not in seen:
+                    seen.add(line)
+                    attacks.append(line)
     return sorted(attacks), list(BENIGN)
 
 
