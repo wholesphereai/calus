@@ -74,3 +74,39 @@ jobs:
         run: docker build -t calus-proxy .
       - name: Build dashboard image
         run: docker build -t calus-dashboard ./dashboard
+
+  publish:
+    name: Publish to ghcr.io
+    needs: [engine-and-proxy, dashboard, docker]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push proxy image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/wholesphereai/calus-proxy:latest
+            ghcr.io/wholesphereai/calus-proxy:${{ github.sha }}
+
+      - name: Build and push dashboard image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./dashboard
+          push: true
+          tags: |
+            ghcr.io/wholesphereai/calus-dashboard:latest
+            ghcr.io/wholesphereai/calus-dashboard:${{ github.sha }}

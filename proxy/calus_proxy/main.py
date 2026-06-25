@@ -17,7 +17,9 @@ import uuid
 import asyncio
 import hmac
 import logging
+import urllib.request as _urllib_req
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Optional
 
 from fastapi import FastAPI, Request, Header, HTTPException, Depends, Query
@@ -38,6 +40,49 @@ settings = get_settings()
 ADMIN_TOKEN = settings.ensure_admin_token()
 PROXY_TOKEN = settings.proxy_token
 store = Store(settings.db_path)
+
+_GITHUB_RELEASES_URL = "https://api.github.com/repos/wholesphereai/calus/releases/latest"
+_version_cache: dict = {}
+
+
+def _read_current_version() -> str:
+    try:
+        return (Path(__file__).parent.parent / "VERSION").read_text().strip()
+    except Exception:
+        return "unknown"
+
+
+def _version_info_sync() -> dict:
+    now = time.time()
+    if _version_cache and now - _version_cache.get("_at", 0) < 3600:
+        return {k: v for k, v in _version_cache.items() if not k.startswith("_")}
+    current = _read_current_version()
+    latest, release_url = current, ""
+    try:
+        req = _urllib_req.Request(
+            _GITHUB_RELEASES_URL,
+            headers={"User-Agent": "calus-proxy", "Accept": "application/vnd.github+json"},
+        )
+        with _urllib_req.urlopen(req, timeout=5) as r:
+            data = json.loads(r.read())
+        tag = (data.get("tag_name") or "").lstrip("v")
+        if tag:
+            latest = tag
+        release_url = data.get("html_url") or ""
+    except Exception:
+        pass
+
+    def _semver(v: str):
+        try:
+            return tuple(int(x) for x in v.split(".")[:3])
+        except Exception:
+            return (0, 0, 0)
+
+    update_available = _semver(latest) > _semver(current)
+    _version_cache.update(_at=now, current=current, latest=latest,
+                          update_available=update_available, release_url=release_url)
+    return {"current": current, "latest": latest,
+            "update_available": update_available, "release_url": release_url}
 
 # warm the detector once at startup so the first request isn't slow
 _detector_ready = False
@@ -440,6 +485,12 @@ async def healthz():
         return JSONResponse(status_code=503,
                             content={"ok": False, "detector_ready": False})
     return {"ok": True, "detector_ready": True}
+
+
+@app.get("/api/version", dependencies=[Depends(require_admin)])
+async def api_version():
+    """Return current version + latest GitHub release. Cached 1 h to avoid rate limits."""
+    return await asyncio.to_thread(_version_info_sync)
 
 
 @app.get("/v1/models")

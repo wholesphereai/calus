@@ -1,4 +1,4 @@
-import type { Stats, Threat, Bucket, LogRow, AgentRow, KeyRow } from "./types";
+import type { Stats, Threat, Bucket, LogRow, AgentRow, KeyRow, VersionInfo } from "./types";
 
 const BASE = (import.meta.env.VITE_PROXY_URL || "http://localhost:8000").replace(/\/$/, "");
 
@@ -58,6 +58,7 @@ export const api = {
   updateKey: (t: string, id: string, body: { label?: string; key?: string }) =>
     send<{ updated: string }>("PUT", `/api/keys/${id}`, t, body),
   deleteKey: (t: string, id: string) => send<{ deleted: string }>("DELETE", `/api/keys/${id}`, t),
+  version: (t: string) => get<VersionInfo>("/api/version", t),
   async check(token: string): Promise<boolean> {
     try {
       await get<Stats>("/api/stats", token);

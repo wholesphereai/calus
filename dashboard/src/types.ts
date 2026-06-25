@@ -86,3 +86,10 @@ export interface KeyRow {
   masked: string;
   source?: "vault" | "env";
 }
+
+export interface VersionInfo {
+  current: string;
+  latest: string;
+  update_available: boolean;
+  release_url: string;
+}

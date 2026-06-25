@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { LogOut, Sun, Moon } from "lucide-react";
+import { LogOut, Sun, Moon, ArrowUpCircle } from "lucide-react";
 import { api } from "./api";
-import type { Stats, Threat, Bucket, LogRow, CallRow, AgentRow, KeyRow } from "./types";
+import type { Stats, Threat, Bucket, LogRow, CallRow, AgentRow, KeyRow, VersionInfo } from "./types";
 import {
   StatCards, TimeChart, Threats, CallsTable, LogDetail, AgentsTable,
   KeysPanel, ConnectPanel, TokenGate, Icon, groupCalls, Empty, CalusLogoMark,
@@ -58,6 +58,7 @@ export default function App() {
   const [trace, setTrace] = useState<LogRow[]>([]);
   const [live, setLive] = useState(true);
   const [chartHours, setChartHours] = useState(24);
+  const [versionInfo, setVersionInfo] = useState<VersionInfo | null>(null);
 
   const calls = useMemo(() => groupCalls(logs), [logs]);
 
@@ -78,18 +79,19 @@ export default function App() {
   const refresh = useCallback(async () => {
     if (!token) return;
     try {
+      const wantFlagged = onlyFlagged || view === "threats";
       const [s, th, ts, lg, ag] = await Promise.all([
         api.stats(token),
         api.threats(token),
         api.timeseries(token, chartHours),
-        api.logs(token, { limit: 80, flagged: onlyFlagged ? true : undefined, agent: agentFilter || undefined }),
+        api.logs(token, { limit: wantFlagged ? 200 : 80, flagged: wantFlagged ? true : undefined, agent: agentFilter || undefined }),
         api.agents(token),
       ]);
       setStats(s); setThreats(th); setSeries(ts); setLogs(lg); setAgents(ag); setLive(true); setLoaded(true);
     } catch {
       setLive(false);
     }
-  }, [token, onlyFlagged, agentFilter, chartHours]);
+  }, [token, onlyFlagged, view, agentFilter, chartHours]);
 
   useEffect(() => {
     if (authed) {
@@ -103,6 +105,12 @@ export default function App() {
     if (token) api.keys(token).then((k) => { setKeys(k); setKeysLoaded(true); }).catch(() => {});
   }, [token]);
   useEffect(() => { if (authed && view === "keys") loadKeys(); }, [authed, view, loadKeys]);
+
+  useEffect(() => {
+    if (authed && token) {
+      api.version(token).then(setVersionInfo).catch(() => {});
+    }
+  }, [authed, token]);
 
   const pick = async (c: CallRow) => {
     setPicked(c); setTrace([]);
@@ -164,6 +172,18 @@ export default function App() {
             )}
           </div>
           <div className="actions">
+            {versionInfo?.update_available && (
+              <a
+                className="update-btn"
+                href={versionInfo.release_url || "https://github.com/wholesphereai/calus/releases"}
+                target="_blank"
+                rel="noopener noreferrer"
+                title={`v${versionInfo.latest} available (you're on v${versionInfo.current})`}
+              >
+                <ArrowUpCircle className="ic" />
+                <span>Update</span>
+              </a>
+            )}
             <button className="theme-btn" title={theme === "light" ? "Switch to dark" : "Switch to light"}
               aria-label="Toggle theme" onClick={() => setTheme(t => t === "light" ? "dark" : "light")}>
               {theme === "light" ? <Moon className="ic" /> : <Sun className="ic" />}
