@@ -79,10 +79,21 @@ class Settings:
     # --- storage ---
     db_path: str = os.getenv("CALUS_DB_PATH", "calus_proxy.db")
 
-    # --- proxy behaviour (detection only; never blocks) ---
+    # --- proxy behaviour ---
     scan_responses: bool = _env_bool("CALUS_SCAN_RESPONSES", True)
     # confidence at/above which a call is recorded as "flagged" in the dashboard
     flag_threshold: float = _env_float("CALUS_FLAG_THRESHOLD", 0.5, lo=0.0, hi=1.0)
+    # Enforcement mode for the layered decision-maker:
+    #   "verdict"  (DEFAULT) -> detection-only: return the decision in x-calus-*
+    #              headers, never stop the request. Keeps Calus a drop-in observer.
+    #   "gateway"  (opt-in)  -> gateway-block: a BLOCK decision stops the request
+    #              (403 on input, or replaces a forbidden tool-call response).
+    # Only "gateway"/"gateway-block"/"block" enable blocking; anything else is verdict.
+    enforce_mode: str = (os.getenv("CALUS_ENFORCE_MODE", "verdict") or "verdict").strip().lower()
+
+    @property
+    def gateway_block(self) -> bool:
+        return self.enforce_mode in ("gateway", "gateway-block", "block")
     # reject request bodies larger than this many bytes (defense against memory abuse)
     max_body_bytes: int = _env_int("CALUS_MAX_BODY_BYTES", 2_000_000, lo=1024)
     # upstream LLM call timeout in seconds

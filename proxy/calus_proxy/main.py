@@ -235,6 +235,88 @@ def _tools_of(body: dict) -> list:
     return sorted({x for x in out if x})
 
 
+def _origin_of(messages: list, request: Request) -> str:
+    """Taxonomy delivery surface of the newest input, for Layer 2's taint origin.
+
+    An explicit `x-calus-origin` (or `x-calus-surface`) header wins — that lets an
+    integrator declare web_content / rag_vector_store / mcp_tool_call / a2a etc.
+    Otherwise we infer from the message role: a `tool`/`function` turn is untrusted
+    `tool_response`; only a genuine `user` turn is the trusted `direct_prompt`.
+
+    FAIL-SAFE: if no recognizable user/tool turn exists (or messages are empty/
+    malformed), we return "unknown" — which Layer 2 treats as UNTRUSTED. An
+    unlabeled or unexpected source is NEVER treated as the trusted user prompt.
+
+    NOTE on RAG-stuffing: if an app injects retrieved/external content *into a user
+    role message* without labeling it, the proxy will see role=user and treat it as
+    trusted. Apps MUST either keep external content in tool/system turns or set
+    `x-calus-origin` (e.g. rag_vector_store). This is documented in the threat
+    model — the proxy cannot infer taint that the caller hides inside a user turn."""
+    o = request.headers.get("x-calus-origin") or request.headers.get("x-calus-surface")
+    if o:
+        return o.strip()[:40]
+    for m in reversed(messages or []):
+        role = m.get("role")
+        if role in ("user", "tool", "function"):
+            return "tool_response" if role in ("tool", "function") else "direct_prompt"
+    return "unknown"
+
+
+def _pending_tool_calls(messages: list) -> list:
+    """Tool calls the agent has already requested in history (the newest assistant
+    turn's tool_calls) — pending RED actions Layer 2 can check against the taint."""
+    return _tool_calls_of(_newest_assistant(messages))
+
+
+def _newest_assistant(messages: list) -> dict:
+    for m in reversed(messages or []):
+        if m.get("role") == "assistant":
+            return m
+    return {}
+
+
+async def _decide(text: str, origin: str, tools: list, tool_calls: list):
+    """Run the layered decision-maker off the event loop. Returns a Decision or
+    None (any failure must not take the proxy down)."""
+    ctx = {"origin": origin, "tools": tools or [], "tool_calls": tool_calls or []}
+    try:
+        return await asyncio.to_thread(calus.decide, text or "", ctx)
+    except Exception:
+        log.warning("calus.decide failed", exc_info=True)
+        return None
+
+
+def _decision_headers(d, enforced: bool = False) -> dict:
+    """x-calus-* headers exposing the layered decision (verdict mode)."""
+    if not d:
+        return {}
+    return {
+        "x-calus-action": getattr(d.action, "value", str(d.action)),
+        "x-calus-consequence": getattr(d.consequence, "value", str(d.consequence)),
+        "x-calus-decision-layers": ",".join(d.layers_run or []),
+        "x-calus-enforced": "true" if enforced else "false",
+    }
+
+
+def _blocked_response(d, headers: dict):
+    """The 403 returned in gateway-block mode when a decision is BLOCK."""
+    return JSONResponse(
+        status_code=403,
+        headers={**headers, "x-calus-enforced": "true"},
+        content={"error": {
+            "message": "blocked by Calus gateway (capability-flow / pattern policy)",
+            "type": "calus_blocked",
+            "calus": {
+                "action": "block",
+                "consequence": getattr(d.consequence, "value", str(d.consequence)),
+                "surface": d.surface,
+                "reasons": list(d.reasons or [])[:6],
+                "owasp_llm": d.owasp_llm, "owasp_agentic": d.owasp_agentic, "cwe": d.cwe,
+            },
+        }},
+    )
+
+
 def _safe_redact(text: str) -> str:
     """Redact `text`, FAILING CLOSED: if redaction raises, mask everything rather
     than risk storing a secret in cleartext."""
@@ -384,9 +466,21 @@ async def chat_completions(request: Request, authorization: Optional[str] = Head
     # scan the INPUT (never blocks — just records). We use the latest user turn,
     # not the whole replayed history, so each call shows its own prompt. Capture
     # the verdict so we can surface it on the response via x-calus-* headers.
-    input_verdict = await _scan_and_store(_newest_input_text(messages), "input", model,
+    input_text = _newest_input_text(messages)
+    input_verdict = await _scan_and_store(input_text, "input", model,
                                           trace_id=trace_id, agent=agent, tools=tools)
     calus_headers = _verdict_headers(input_verdict)
+
+    # Layered decision (L1 patterns + L2 capability-flow graph + decision-maker).
+    # In verdict-mode (default) we only surface it via headers; in gateway-block
+    # mode a BLOCK on the INPUT stops the request before it reaches the provider.
+    origin = _origin_of(messages, request)
+    in_decision = await _decide(input_text, origin, tools, _pending_tool_calls(messages))
+    enforce_in = bool(settings.gateway_block and in_decision and in_decision.blocked)
+    calus_headers.update(_decision_headers(in_decision, enforced=enforce_in))
+    if enforce_in:
+        log.info("gateway-block: input blocked (trace_id=%s surface=%s)", trace_id, origin)
+        return _blocked_response(in_decision, calus_headers)
 
     # forward upstream via LiteLLM. The provider key is resolved in priority:
     #   1. the caller's bearer (used in-flight, NEVER stored), else
@@ -465,8 +559,21 @@ async def chat_completions(request: Request, authorization: Optional[str] = Head
             out_text = msg.get("content") or ""
         except Exception:
             msg, out_text = {}, ""
+        out_calls = _tool_calls_of(msg)
         await _scan_and_store(out_text, "output", model, latency_ms=dt, usage=d.get("usage"),
-                              trace_id=trace_id, agent=agent, tool_calls=_tool_calls_of(msg))
+                              trace_id=trace_id, agent=agent, tool_calls=out_calls)
+        # Output-side decision: the model's requested tool-calls are the pending
+        # actions; check them against the conversation's taint origin. This is where
+        # untrusted-origin -> RED-sink forbidden edges actually surface (e.g. the
+        # model asks to run a shell command after reading untrusted web content).
+        if out_calls:
+            out_decision = await _decide(out_text, origin, tools, out_calls)
+            enforce_out = bool(settings.gateway_block and out_decision and out_decision.blocked)
+            calus_headers.update(_decision_headers(out_decision, enforced=enforce_out))
+            if enforce_out:
+                log.info("gateway-block: output tool-call blocked (trace_id=%s surface=%s)",
+                         trace_id, origin)
+                return _blocked_response(out_decision, calus_headers)
     return JSONResponse(content=d, headers=calus_headers)
 
 

@@ -60,6 +60,45 @@ def learn(text: str, is_attack: bool, matched_rule_ids=None) -> bool:
     return get_detector().learn(text, is_attack, matched_rule_ids)
 
 
+# ---------------- layered decision (L1 + L2 + decision-maker) ----------------
+# The single decision-maker is the ONLY component that blocks. Layers 1 & 2 are
+# deterministic; Layer 3 (model) plugs in via calus.register_model_layer and is
+# consulted only on uncertain + high-consequence cases.
+_decider = None
+
+def get_decision_maker(use_model: bool = True):
+    """Process-wide DecisionMaker singleton (shares the Layer-1 Detector)."""
+    global _decider
+    if _decider is None:
+        from calus.decision import DecisionMaker
+        _decider = DecisionMaker(use_model=use_model)
+    return _decider
+
+def decide(text: str, context: dict | None = None):
+    """Run the full layered pipeline and return a deterministic Decision.
+
+        d = calus.decide(text, {
+                "origin": "tool_response",          # taxonomy delivery surface
+                "tool_calls": [{"name": "run_bash"}],
+                "tools": ["search", "send_email"],
+            })
+        d.action      # "block" | "flag" | "pass"
+        d.blocked, d.flagged, d.consequence, d.surface, d.reasons
+
+    Detection-only by default: callers act on `d.action`. The proxy's opt-in
+    gateway-block mode is what actually stops a request.
+    """
+    return get_decision_maker().decide(text, context)
+
+
+def register_model_layer(layer) -> None:
+    """Register the Layer-3 model hook (callable or object with `.signal`). A
+    registered model can only ADD a signal; it can never override the deterministic
+    decision-maker."""
+    from calus.layers import register_model_layer as _reg
+    _reg(layer)
+
+
 # ---------------- parallel batch scanning ----------------
 # Industry pattern (Snort/Suricata): parallelize ACROSS inputs, not within one.
 # Cross-OS via stdlib multiprocessing (fork on Linux/macOS, spawn on Windows).

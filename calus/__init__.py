@@ -7,7 +7,10 @@ Quick start:
 """
 __version__ = "6.0.0"
 
-from calus.api import scan, scan_batch, learn, redact, Detector, get_detector, Result   # noqa: E402
+from calus.api import (   # noqa: E402
+    scan, scan_batch, learn, redact, Detector, get_detector, Result,
+    decide, get_decision_maker, register_model_layer,
+)
 
 
 def full_scan(*args, **kwargs):
@@ -17,4 +20,5 @@ def full_scan(*args, **kwargs):
     return _full_scan(*args, **kwargs)
 
 
-__all__ = ["scan", "scan_batch", "learn", "redact", "Detector", "get_detector", "Result", "full_scan", "__version__"]
+__all__ = ["scan", "scan_batch", "learn", "redact", "Detector", "get_detector", "Result",
+           "decide", "get_decision_maker", "register_model_layer", "full_scan", "__version__"]
