@@ -109,27 +109,6 @@ Methodology and per-split detail:
   vault** so provider keys are never written to the call log.
 - **Console.** Overview, Agents, Threats, Live calls, API keys, Connect.
 
-## Architecture
-
-```
-your app ──(your key)──▶  CALUS PROXY  ──(same key)──▶  OpenAI / Groq / Anthropic / ...
-                              │
-                    Layer 1 + Layer 2 + decision engine
-                       block / flag / pass + log
-                              │
-                              ▼
-                      CALUS DASHBOARD  (watch live)
-```
-
-| Component | Path | What it is |
-|---|---|---|
-| Engine | `calus/` | Detection library — `layers/` (L1 + L2), `decision/` (the referee), `patterns/`, `benchmark/` |
-| Proxy | `proxy/calus_proxy` | FastAPI OpenAI-compatible gateway + dashboard API |
-| Dashboard | `dashboard/` | React + TypeScript (Vite) console |
-
-> First install takes 1–2 min. After that the proxy boots in ~5 s and verifies in
-> ~15 ms per call. No model downloads, no GPU.
-
 ---
 
 ## Quick start (Docker)
