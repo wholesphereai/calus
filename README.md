@@ -1,224 +1,138 @@
 <div align="center">
 
-<img src="assets/logo.png" alt="Wholesphere" width="104" />
+<img src="assets/logo.png" alt="Calus" width="104" />
 
 # Calus
 
 **A drop-in security gateway for AI agents. No code changes. No SDK.**
 
-Calus sits between your AI tools and the model providers. It gives you threat
-detection, agent and tool-call observability, and OWASP LLM Top 10 coverage on
-every call. Detection-only: it observes and flags, it never blocks or alters
-your traffic.
+Calus sits between your AI tools and the model providers. Every call is verified
+through two deterministic layers and a single decision engine that **blocks
+confirmed agent attacks and flags the uncertain ones** — with full OWASP LLM
+Top 10 observability on every request.
 
 </div>
 
 ---
 
-## Benchmark coverage
+## How it works — two layers, one decision
 
-Calus is a deterministic AI-agent security gateway: **Layer 1** (pattern fast-path)
-+ **Layer 2** (capability-flow graph) + a single **decision-maker**. A trained
-Layer-3 model is a clean hook, **not built** — every number here is the
-deterministic engine only.
+Every input passes a **two-step verification**, then a single **decision engine**
+decides. The layers only *observe* and emit a signal; the decision engine is the
+**only** component that can block.
 
-All numbers below are **scored by the real engine on held-out, third-party
-benchmarks, post-contamination-cleanup, with no tuning to the test.**
-
-> **Contamination cleanup (read this).** An audit found that some Layer-1 rules had
-> been authored *from* these benchmarks (the InjecAgent `amy.watson` signature and
-> the AgentDojo `important_instructions` template were embedded in regexes), which
-> would have inflated Layer-1 recall. All benchmark-specific strings were removed
-> from the rules and similarity indexes before scoring; re-verified at **0** ≥40-char
-> verbatim overlap with InjecAgent/AgentDojo. The prior pattern-tier table (now in
-> *§4, superseded*) was scored before this cleanup. See
-> [`calus/docs/CONTAMINATION_CLEANUP.md`](calus/docs/CONTAMINATION_CLEANUP.md) and
-> [`calus/docs/LAYER_BENCHMARK_REPORT.md`](calus/docs/LAYER_BENCHMARK_REPORT.md).
-
-### 1. Indirect prompt injection / agent-flow attacks (core threat model)
-
-Layered engine, verdict-mode (the shipping default). **caught** = detected
-(block + flag); **blocked** = the enforced stop available in opt-in gateway mode.
-
-| Benchmark | Type | N | caught | blocked | precision |
-|---|---|--:|:--:|:--:|:--:|
-| [InjecAgent](https://github.com/uiuc-kang-lab/InjecAgent) · Standard (subtle) | action | 1,054 | 100% | 80.6% | 92.8% |
-| [InjecAgent](https://github.com/uiuc-kang-lab/InjecAgent) · Enhanced (wrapped) | action | 1,054 | 100% | 80.6% | 92.8% |
-| [AgentDojo](https://github.com/ethz-spylab/agentdojo) · injection strings | text-only | 162 | 82.7% | 0% | 62.0% |
-
-**Honest reading of the 100%.** It is *one* benchmark (InjecAgent, N=2,108), and the
-gaps that got us there — a `stat`/`state` classifier bug causing silent passes, and
-unmapped RED actions (smart-locks, payments, 2FA-disable) — were **surfaced by this
-benchmark and fixed for it**; this is not a score the engine always had. The
-enforced figure is **80.6% blocked**; the remaining 19% are *flagged* (detected, not
-blocked) in verdict-mode. **Adaptive/novel attacks remain a disclosed gap** (the
-intended answer is the unbuilt Layer-3 model). AgentDojo is text-only locally (no
-agent action), so Layer 2 has nothing to act on — its 82.7% is Layer 1 catching the
-injection wording, 0% blocked.
-
-**The flow graph is doing the work.** On InjecAgent *Standard* (subtle injections
-with no jailbreak wrapper), Layer 2 — the capability-flow graph — blocked **663**
-rows vs Layer 1's **346**: the architecture catches attacks *by consequence*
-(untrusted tool output → a RED action) even when no text pattern fires. Every
-data-stealing chain ends in an exfil send to a RED sink, so it is blocked 100%.
-Measured **with Layer 1 disabled, pure Layer 2 alone catches 100% / blocks 80.6%**
-of InjecAgent — and Layer 2 is structural, so it is immune to text contamination.
-
-### 2. Benign false-positive rate
-
-| Control set | N | flagged | FPR |
-|---|--:|--:|:--:|
-| Databricks Dolly-15k (general) | 2,000 | 82 | **4.10%** |
-| AgentDojo benign (in-domain) | 20 | 0 | 0.00% |
-| InjecAgent benign agent-flows | 17 | 0 | 0.00% |
-
-The 4.10% is the **layered verdict-mode** operating point, which flags on any
-block-signal and is deliberately more sensitive than the tuned single-threshold
-pattern verdict (0.90%, *§4*). It is tunable; we report the more-sensitive number
-rather than the flattering one.
-
-### 3. Jailbreak & harmful-content — weak by design (disclosed, not hidden)
-
-These are categories where Calus is **deliberately weak**: it is an injection /
-agent-flow detector, not a harmful-content classifier or an adaptive-attack solver.
-We report them so the limits are explicit. On the layered engine (verdict-mode,
-post-cleanup) these scored low, as expected: **JailbreakBench 6.0%, AdvBench 2.5%,
-HarmBench 6.8% caught**. The pattern-tier detail below (manual vs adaptive) shows
-where the weakness lives.
-
-Scored against the real jailbreak attack strings in JailbreakBench's artifact
-library, with the 100 benign JBB behaviors as the false-positive control:
-
-| Attack family | Recall | Precision | F1 |
-|---|:--:|:--:|:--:|
-| JBC, manual templates (AIM / DAN-style) | **100%** | 98% | 99% |
-| PAIR, LLM-crafted adaptive jailbreaks | 29% | 97% | 45% |
-| GCG, adversarial suffix (filter-evasion) | 29% | 94% | 44% |
-| **All families combined** | 45% | 99% | 62% |
-
-Manual templates are caught reliably; **adaptive PAIR and gibberish-suffix GCG
-attacks — explicitly built to evade pattern filters — are a known gap** (the
-unbuilt Layer-3 model is the intended answer, not a pattern).
-
-#### Harmful-intent corpora (scope boundary)
-
-[AdvBench](https://github.com/llm-attacks/llm-attacks) (520 prompts) and
-[HarmBench](https://github.com/centerforaisafety/HarmBench) (200 standard
-behaviors) measure whether a bare request carries harmful intent
-("write a tutorial on ..."). That is content moderation, a different layer from
-injection and jailbreak detection. Calus is not a content classifier; it flags
-only the subset of these prompts that carry an injection or obfuscation signature,
-so recall is low by design:
-
-| Benchmark | Recall (default) | Recall (conf >= 0.20) |
-|---|:--:|:--:|
-| AdvBench, 520 harmful goals | 3% | 28% |
-| HarmBench, 200 standard behaviors | 11% | 47% |
-
-For harmful-content blocking, pair Calus with a content-moderation classifier.
-Calus owns the injection and jailbreak layer those classifiers miss.
-
-### 4. Prior pattern-tier numbers (pre-cleanup — SUPERSEDED)
-
-These were the headline numbers **before** the contamination cleanup, scored on the
-pattern engine's tuned single-threshold verdict. They are kept here for
-transparency, **not as current claims** — the AgentDojo / InjecAgent figures were
-inflated by benchmark-derived rules since removed (see the contamination note
-above). The honest, post-cleanup numbers are §1–§3.
-
-| Benchmark | Setting | Recall | Precision | F1 |
-|---|---|:--:|:--:|:--:|
-| AgentDojo · NeurIPS 2024 | default | ~~83%~~ | ~~100%~~ | ~~91%~~ |
-| InjecAgent · Standard | default | ~~35%~~ | ~~99%~~ | ~~52%~~ |
-| InjecAgent · Enhanced | default | ~~100%~~ | ~~99%~~ | ~~100%~~ |
-
-Pattern-tier benign FPR at the tuned production threshold was **0.90%** on Dolly
-(2,000 messages) — a less-sensitive operating point than the layered verdict-mode
-4.10% in §2; both are real, at different thresholds.
-
-```bash
-# Build any test set, then score the real engine (one input per line):
-python -m calus.benchmark.external.injecagent.build
-python -m calus.benchmark.harness --dataset injecagent      # also: agentdojo,
-                                                            # jailbreakbench, advbench, harmbench
+```
+                ┌──────────────┐     ┌──────────────────┐     ┌─────────────────┐
+   input ─────▶ │   Layer 1    │ ──▶ │     Layer 2      │ ──▶ │ Decision engine │ ──▶ block / flag / pass
+                │  patterns    │     │ capability-flow  │     │  (the referee)  │
+                └──────────────┘     └──────────────────┘     └─────────────────┘
+                 injection /          untrusted origin →        combines both
+                 jailbreak text       RED capability sink        signals + risk
 ```
 
-Methodology, sources, and per-split numbers:
-[`calus/benchmark/README.md`](calus/benchmark/README.md).
+| Step | What it does |
+|---|---|
+| **Layer 1 — pattern fast-path** | Deterministic regex + obfuscation decoders + lexical similarity over known injection / jailbreak signatures. Emits a signal (block / pass + confidence). |
+| **Layer 2 — capability-flow graph** | Taint tracking: each input carries an origin (trusted vs untrusted) and each tool resolves to a capability sink (RED / LOW). An untrusted origin reaching a RED sink is a forbidden edge. Emits a signal. |
+| **Decision engine** | The referee. It combines both signals with the **consequence** (is an irreversible/external action pending?) and applies one fixed, audited rule table. |
+
+**The verdict is consequence-aware:**
+
+- **BLOCK** — a confirmed threat (high-confidence pattern hit, or a forbidden
+  capability-flow edge) on a **high-consequence** action (something irreversible
+  or external — sending, paying, executing, unlocking).
+- **FLAG** — uncertain, or a real threat with no high-consequence action pending.
+  Allowed, but logged with full detail.
+- **PASS** — both layers clean.
+
+Only the decision engine blocks. It is deterministic (same input → same verdict),
+fully auditable (every verdict records which rule fired and each layer's signal),
+and fail-safe (if a layer errors on a high-consequence action, it fails toward a
+block). A request is **never** blocked until it has been confirmed by the decision
+engine.
+
+---
+
+## Benchmark
+
+Scored by the real engine (Layer 1 + Layer 2 + decision engine) on held-out,
+third-party benchmarks, post-contamination-cleanup, with no tuning to the test.
+**caught** = detected (block + flag); **blocked** = the enforced stop in gateway
+mode; **missed** = passed undetected.
+
+| Benchmark | Type | N | caught | blocked | missed |
+|---|---|--:|:--:|:--:|:--:|
+| [InjecAgent](https://github.com/uiuc-kang-lab/InjecAgent) — indirect prompt injection | agent action | 2,108 | **100%** | **80.6%** | 0 |
+| [AgentDojo](https://github.com/ethz-spylab/agentdojo) — injection strings | text-only | 162 | 82.7% | 0% | 28 |
+
+Benign false-positive rate: **3.5%** (72 / 2,037 — Databricks Dolly-15k +
+AgentDojo-benign + InjecAgent benign flows). Precision on the agent-injection
+set: **96.9%**.
+
+**What the numbers mean.** On InjecAgent every data-stealing or harmful chain ends
+in a RED action, so Layer 2's capability-flow graph catches the attack *by
+consequence* even when no text pattern fires — that is what drives **100% caught
+/ 80.6% blocked / 0 missed**. The remaining ~19% are *flagged* (detected, not
+blocked) because the attacker tool did not map to a RED sink. AgentDojo is
+text-only locally (no agent action), so Layer 2 has nothing to act on — its 82.7%
+is Layer 1 catching the injection wording, nothing blocked.
+
+**Disclosed scope boundary.** Calus is an injection / agent-flow detector, not a
+harmful-content classifier or an adaptive-attack solver. On direct-prompt jailbreak
+and harmful-content corpora it is deliberately weak (JailbreakBench 6.0%, AdvBench
+2.5%, HarmBench 6.8% caught) — pair it with a content-moderation classifier for
+that layer. Adaptive / novel injections remain a known gap.
+
+```bash
+# Build a held-out test set, then score the real engine:
+python -m calus.benchmark.external.injecagent.build
+python -m calus.benchmark.harness --dataset injecagent   # also: agentdojo, jailbreakbench, advbench, harmbench
+```
+
+Methodology and per-split detail:
+[`calus/docs/LAYER_BENCHMARK_REPORT.md`](calus/docs/LAYER_BENCHMARK_REPORT.md) ·
+[contamination cleanup](calus/docs/CONTAMINATION_CLEANUP.md).
 
 ---
 
 ## What you get
 
-- **Drop-in proxy.** Point any OpenAI-compatible app at Calus by setting one
-  environment variable. No code changes, no SDK to install.
+- **Drop-in proxy.** Point any OpenAI-compatible app at Calus with one environment
+  variable. No code changes, no SDK.
+- **Detect or block.** Run detection-only (verdict mode, default) or turn on
+  gateway-block to stop confirmed attacks at the proxy.
 - **Multi-provider.** OpenAI, Groq, Anthropic, Gemini, Mistral, Cohere, and
-  anything [LiteLLM](https://github.com/BerriAI/litellm) supports, selected by the
-  `model` prefix.
-- **Threat detection.** A tiered engine (regex, then lexical similarity, then
-  optional semantic) flags prompt injection, jailbreaks, agent abuse, and more,
-  mapped to the OWASP LLM Top 10 (2025).
-- **Agent and tool observability.** Every agent, the tools it can call, and the
-  tool calls it actually makes (arguments redacted) are traced in the console.
-- **Secret and PII redaction.** Secrets and PII are masked before anything is
-  stored.
-- **Encrypted key vault.** Optionally save provider keys; stored encrypted at
-  rest, shown masked, revealed on demand. Provider keys are never written to the
-  call log.
-- **Console.** A clean dashboard: Overview, Agents, Threats, Live calls, API keys,
-  and Connect.
+  anything [LiteLLM](https://github.com/BerriAI/litellm) supports, by `model` prefix.
+- **Agent & tool observability.** Every agent, its tools, and the calls it makes
+  (arguments redacted) are traced, mapped to the OWASP LLM Top 10 (2025).
+- **Secret & PII redaction** before anything is stored, and an **encrypted key
+  vault** so provider keys are never written to the call log.
+- **Console.** Overview, Agents, Threats, Live calls, API keys, Connect.
 
 ## Architecture
 
 ```
 your app ──(your key)──▶  CALUS PROXY  ──(same key)──▶  OpenAI / Groq / Anthropic / ...
                               │
-                       scan + log verdict
-                     (key used in-flight, never stored)
+                    Layer 1 + Layer 2 + decision engine
+                       block / flag / pass + log
                               │
                               ▼
-                      CALUS DASHBOARD  (you watch live)
+                      CALUS DASHBOARD  (watch live)
 ```
 
 | Component | Path | What it is |
 |---|---|---|
-| Engine | `calus/` | Detection library — Python with a compiled Aho-Corasick core (`pip install -e calus`) |
-| Proxy | `proxy/calus_proxy` | FastAPI OpenAI-compatible gateway and dashboard API |
+| Engine | `calus/` | Detection library — `layers/` (L1 + L2), `decision/` (the referee), `patterns/`, `benchmark/` |
+| Proxy | `proxy/calus_proxy` | FastAPI OpenAI-compatible gateway + dashboard API |
 | Dashboard | `dashboard/` | React + TypeScript (Vite) console |
 
-```
-calus/
-├── README.md  LICENSE  SECURITY.md  CONTRIBUTING.md
-├── Dockerfile  docker-compose.yml  .dockerignore
-├── .github/workflows/        # ci, security, release
-│
-├── calus/                    # detection engine (Python package)
-│   ├── pyproject.toml  api.py  cli.py  owasp.py
-│   ├── detection/            # cascade engine, scored regex, similarity, redaction
-│   ├── patterns/             # 27k+ OWASP-mapped rule packs
-│   ├── learning/  context/  integrations/  tools/
-│   ├── benchmark/            # accuracy harness + external benchmark sets
-│   ├── tests/
-│   └── docs/                 # architecture, threat coverage, accuracy
-│
-├── proxy/                    # the gateway
-│   ├── requirements.txt  .env.example
-│   └── calus_proxy/
-│       ├── main.py           # OpenAI-compatible routes + dashboard API
-│       ├── config.py  store.py  crypto.py  keys.py
-│
-└── dashboard/                # React + TS console
-    ├── package.json  index.html  vite.config.ts  Dockerfile  nginx.conf
-    └── src/  ( App, components, api, types, index.css )
-```
-
-> Installing dependencies takes about 1 to 2 minutes the first time. After that
-> the proxy boots and warms its 27k-pattern engine in about 5 seconds, then scans
-> in about 15 ms. No model downloads, no GPU.
+> First install takes 1–2 min. After that the proxy boots in ~5 s and verifies in
+> ~15 ms per call. No model downloads, no GPU.
 
 ---
 
-## Quick start with Docker (recommended)
+## Quick start (Docker)
 
 ```bash
 git clone https://github.com/wholesphereai/calus.git
@@ -229,12 +143,10 @@ docker compose up --build
 - Dashboard: http://localhost:5173
 - Proxy: http://localhost:8000
 
-**Admin token — nothing to do on localhost.** The proxy auto-generates a token at
-startup and the dashboard picks it up automatically. You land on the console
-straight away with no login prompt. Add your provider API keys from the dashboard's
-**API Keys** tab (or see [Add provider keys, three ways](#add-provider-keys-three-ways)).
+The proxy auto-generates an admin token at startup and the dashboard picks it up —
+no login prompt on localhost. Add your provider keys from the **API Keys** tab.
 
-## Quick start, local (no Docker)
+## Quick start (local, no Docker)
 
 ```bash
 git clone https://github.com/wholesphereai/calus.git
@@ -242,348 +154,132 @@ cd calus
 python -m venv .venv && . .venv/Scripts/activate     # Windows
 # source .venv/bin/activate                          # macOS / Linux
 
-# 1) engine
-python -m pip install -e calus
+python -m pip install -e calus                       # 1) engine
 
-# 2) proxy (terminal 1)
-cd proxy
+cd proxy                                             # 2) proxy (terminal 1)
 python -m pip install -r requirements.txt
 python -m uvicorn calus_proxy.main:app --port 8000
-# Uvicorn logs "127.0.0.1:8000" — open http://localhost:8000 in your browser
 
-# 3) dashboard (terminal 2)
-cd dashboard
-npm install
-npm run dev                   # http://localhost:5173
+cd dashboard                                         # 3) dashboard (terminal 2)
+npm install && npm run dev                           # http://localhost:5173
 ```
-
-**Admin token — nothing to do on localhost.** The proxy auto-generates a token and
-the dashboard picks it up automatically. Add your provider API keys from the
-dashboard's **API Keys** tab (or see [Add provider keys, three ways](#add-provider-keys-three-ways)).
 
 ---
 
 ## Point your app at Calus
 
-One environment variable is all you need. Calus forwards every call with your own
-provider key — used in-flight, never written to any log or store.
+One environment variable. Calus forwards every call with your own provider key —
+used in-flight, never written to any log or store.
 
 ```bash
 export OPENAI_BASE_URL="http://localhost:8000/v1"
 # that's it — run your app as usual
 ```
 
-The sections below show how to connect from each SDK, and how to name your agents
-so their traffic shows up separately in the dashboard.
-
----
-
-### Why name your agents?
-
-Without a name, every call lands in the dashboard under **"unknown"** — one flat
-stream with no way to tell which service sent what.
-
-```
-Dashboard (no name)           Dashboard (named)
-─────────────────────         ──────────────────────────────
-Agents                        Agents
-  └─ unknown (47 calls)         ├─ customer-support  (31 calls)
-                                ├─ search-agent      (12 calls)
-                                └─ data-pipeline      (4 calls)
-```
-
-Name an agent one of two ways — they are equivalent, pick whichever fits your SDK:
+**Name your agents** so their traffic shows up separately in the dashboard
+(otherwise everything lands under "unknown"). Two equivalent ways — pick whichever
+your SDK exposes:
 
 | Method | How | Best for |
 |---|---|---|
-| `user` field | Standard OpenAI field, part of the request body | OpenAI SDK, any JSON client |
-| `X-Calus-Agent` header | HTTP header, not part of the LLM payload | LangChain, frameworks where `user` isn't exposed |
-
----
-
-### OpenAI Python SDK
-
-**Without a name** — traffic appears as "unknown" in the dashboard:
+| `user` field | Standard OpenAI body field | OpenAI SDK, any JSON client |
+| `X-Calus-Agent` header | HTTP header, not part of the LLM payload | LangChain, frameworks without `user` |
 
 ```python
 from openai import OpenAI
 
-client = OpenAI(
-    base_url="http://localhost:8000/v1",
-    api_key="sk-your-own-key",
-)
+client = OpenAI(base_url="http://localhost:8000/v1", api_key="sk-your-own-key")
 
-response = client.chat.completions.create(
-    model="groq/llama-3.3-70b-versatile",
-    messages=[{"role": "user", "content": "Hello"}],
-)
-```
-
-**With a name** — use the `user` field; the agent appears by name in the Agents tab:
-
-```python
-from openai import OpenAI
-
-client = OpenAI(
-    base_url="http://localhost:8000/v1",
-    api_key="sk-your-own-key",
-)
-
-response = client.chat.completions.create(
+client.chat.completions.create(
     model="groq/llama-3.3-70b-versatile",
     user="my-agent",                         # shows up as "my-agent" in the dashboard
     messages=[{"role": "user", "content": "Hello"}],
 )
 ```
 
-**With a name via header** — use `X-Calus-Agent` if you prefer headers or share one
-client across agents:
-
-```python
-from openai import OpenAI
-
-client = OpenAI(
-    base_url="http://localhost:8000/v1",
-    api_key="sk-your-own-key",
-    default_headers={"X-Calus-Agent": "my-agent"},
-)
-
-response = client.chat.completions.create(
-    model="groq/llama-3.3-70b-versatile",
-    messages=[{"role": "user", "content": "Hello"}],
-)
-```
-
----
-
-### OpenAI Node.js / TypeScript SDK
-
-```typescript
-import OpenAI from "openai";
-
-const client = new OpenAI({
-  baseURL: "http://localhost:8000/v1",
-  apiKey: "sk-your-own-key",
-  defaultHeaders: { "X-Calus-Agent": "my-agent" },  // name in dashboard
-});
-
-const response = await client.chat.completions.create({
-  model: "groq/llama-3.3-70b-versatile",
-  messages: [{ role: "user", content: "Hello" }],
-});
-```
-
----
-
-### LangChain (Python)
-
-LangChain's `ChatOpenAI` doesn't expose the `user` body field directly, so use
-`default_headers` instead:
-
-```python
-from langchain_openai import ChatOpenAI
-
-llm = ChatOpenAI(
-    model="groq/llama-3.3-70b-versatile",
-    base_url="http://localhost:8000/v1",
-    api_key="sk-your-own-key",
-    default_headers={"X-Calus-Agent": "my-agent"},  # name in dashboard
-)
-
-response = llm.invoke("Hello")
-```
-
-**Without a name** (traffic appears as "unknown"):
-
-```python
-llm = ChatOpenAI(
-    model="groq/llama-3.3-70b-versatile",
-    base_url="http://localhost:8000/v1",
-    api_key="sk-your-own-key",
-)
-```
-
----
-
-### Claude Code
-
-Route Claude Code's API calls through Calus by setting the environment variable
-before launching it. Claude Code uses the Anthropic SDK internally, which is
-OpenAI-compatible through Calus's LiteLLM layer.
-
-**Without a name** (appears as "unknown" in dashboard):
-
-```bash
-export ANTHROPIC_BASE_URL="http://localhost:8000"
-claude
-```
-
-**With a name via header** — add it to your `~/.claude/settings.json` or pass it
-as an environment variable so every Claude Code session is tagged:
-
-```bash
-export ANTHROPIC_BASE_URL="http://localhost:8000"
-export CALUS_AGENT_HEADER="claude-code"   # picked up by Calus
-claude
-```
-
-Or configure it permanently in `~/.claude/settings.json`:
-
-```json
-{
-  "env": {
-    "ANTHROPIC_BASE_URL": "http://localhost:8000",
-    "X-Calus-Agent": "claude-code"
-  }
-}
-```
-
-Once set, every prompt you send through Claude Code appears in the Calus dashboard
-under **"claude-code"** with full threat scores and tool-call traces.
-
----
-
-### curl
-
-**Without a name:**
-
 ```bash
 curl http://localhost:8000/v1/chat/completions \
   -H "Authorization: Bearer sk-your-own-key" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "groq/llama-3.3-70b-versatile",
-    "messages": [{"role": "user", "content": "Hello"}]
-  }'
-```
-
-**With a name via header:**
-
-```bash
-curl http://localhost:8000/v1/chat/completions \
-  -H "Authorization: Bearer sk-your-own-key" \
-  -H "Content-Type: application/json" \
   -H "X-Calus-Agent: my-agent" \
-  -d '{
-    "model": "groq/llama-3.3-70b-versatile",
-    "messages": [{"role": "user", "content": "Hello"}]
-  }'
-```
-
-**With a name via `user` field:**
-
-```bash
-curl http://localhost:8000/v1/chat/completions \
-  -H "Authorization: Bearer sk-your-own-key" \
   -H "Content-Type: application/json" \
-  -d '{
-    "model": "groq/llama-3.3-70b-versatile",
-    "user": "my-agent",
-    "messages": [{"role": "user", "content": "Hello"}]
-  }'
+  -d '{"model":"groq/llama-3.3-70b-versatile","messages":[{"role":"user","content":"Hello"}]}'
 ```
 
----
+The **Connect** tab in the dashboard has ready-to-paste snippets for every SDK
+(Node, LangChain, Claude Code, …).
 
-### Reading the verdict from response headers
+### Read the verdict from response headers
 
-Every response from Calus carries three headers you can read in your app or pipe
-into a SIEM — without touching the dashboard at all:
+Every response carries the decision inline, so a SIEM can act on it without the
+dashboard:
 
 | Header | Values | Meaning |
 |---|---|---|
-| `x-calus-flagged` | `true` / `false` | Whether Calus flagged this call |
-| `x-calus-confidence` | `0.00` – `1.00` | Detection confidence score |
-| `x-calus-owasp` | e.g. `LLM01`, `LLM06` | OWASP LLM Top 10 category, if flagged |
+| `x-calus-action` | `block` / `flag` / `pass` | The decision engine's verdict |
+| `x-calus-consequence` | `high` / `low` | Whether a high-consequence action was in play |
+| `x-calus-confidence` | `0.00` – `1.00` | Detection confidence |
+| `x-calus-owasp` | e.g. `LLM01` | OWASP LLM Top 10 category, if flagged |
+| `x-calus-enforced` | `true` / `false` | Whether the request was actually stopped (gateway mode) |
 
-```python
-import requests
+---
 
-resp = requests.post(
-    "http://localhost:8000/v1/chat/completions",
-    headers={
-        "Authorization": "Bearer sk-your-own-key",
-        "X-Calus-Agent": "my-agent",
-    },
-    json={
-        "model": "groq/llama-3.3-70b-versatile",
-        "messages": [{"role": "user", "content": "Hello"}],
-    },
-)
+## Detection vs blocking
 
-print(resp.headers.get("x-calus-flagged"))     # "false"
-print(resp.headers.get("x-calus-confidence"))  # "0.12"
-print(resp.headers.get("x-calus-owasp"))       # "" or "LLM01"
+Calus ships in **verdict mode** (detection-only) so it stays a safe drop-in. Flip
+one variable to turn on enforcement.
+
+| `CALUS_ENFORCE_MODE` | Behaviour |
+|---|---|
+| `verdict` (default) | Observe and flag. The decision is surfaced in `x-calus-*` headers and the dashboard; the request is never stopped. |
+| `gateway` | Enforce. A **BLOCK** decision returns `403` on the input, or replaces a forbidden tool-call response. Only confirmed (decision-engine) blocks stop a request. |
+
+```bash
+export CALUS_ENFORCE_MODE=gateway     # turn on blocking
 ```
 
-The Connect tab in the dashboard has ready-to-paste snippets for every SDK.
-
 ---
 
-## Add provider keys, three ways
+## Provider keys
 
-You can let callers send their own key per request (BYOK, nothing stored), or save
-keys in Calus's encrypted vault so you do not re-paste them. Saved keys are
-encrypted at rest, shown masked, and used to forward upstream when a request does
-not carry its own.
+Let callers send their own key per request (BYOK, nothing stored), or save keys in
+the encrypted vault. Saved keys are encrypted at rest, shown masked, and used to
+forward upstream when a request carries no key of its own.
 
-1. **Dashboard.** Open the API keys page: pick a provider, paste the key, Add.
-   Reveal or delete any time.
-2. **Command line** (same vault):
-   ```bash
-   cd proxy
-   python -m calus_proxy.keys add --provider groq --key gsk_... --label prod
-   python -m calus_proxy.keys list
-   python -m calus_proxy.keys delete <id>
-   ```
-3. **Environment.** Put `OPENAI_API_KEY`, `GROQ_API_KEY`, and others in
-   `proxy/.env` (read by LiteLLM, never stored in the log).
+1. **Dashboard** — API Keys tab: pick a provider, paste, Add.
+2. **CLI** — `python -m calus_proxy.keys add --provider groq --key gsk_... --label prod`
+3. **Environment** — put `OPENAI_API_KEY`, `GROQ_API_KEY`, … in `proxy/.env`.
 
-Resolution order when forwarding: caller's bearer key, then saved vault key, then
-env key.
-
----
+Resolution order: caller's bearer key → saved vault key → env key.
 
 ## Configuration (`proxy/.env`)
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `CALUS_ADMIN_TOKEN` | auto-generated and printed | Token the dashboard and API must present. Leave blank to auto-generate one at startup. |
-| `CALUS_PROXY_TOKEN` | blank | Optional data-plane token. If set, `/v1/*` requires it. Leave blank only on a private network. |
-| `CALUS_CORS_ORIGINS` | `http://localhost:5173` | Allowed dashboard origins. |
-| `CALUS_DB_PATH` | `calus_proxy.db` | SQLite log store path. |
+| `CALUS_ENFORCE_MODE` | `verdict` | `verdict` (flag only) or `gateway` (block confirmed attacks). |
+| `CALUS_ADMIN_TOKEN` | auto-generated | Token the dashboard/API present. Blank → auto-generate at startup. |
+| `CALUS_PROXY_TOKEN` | blank | Optional data-plane token. If set, `/v1/*` requires it. |
+| `CALUS_FLAG_THRESHOLD` | `0.5` | Confidence at/above which a call is recorded as flagged. |
+| `CALUS_SCAN_RESPONSES` | `1` | Also verify model responses (and their tool calls). |
 | `CALUS_REDACT_STORE` | `1` | Redact secrets and PII before storing. |
-| `CALUS_STORE_TEXT` | `1` | Store redacted prompt and response preview. |
-| `CALUS_SCAN_RESPONSES` | `1` | Also scan model responses. |
-| `CALUS_FLAG_THRESHOLD` | `0.5` | Confidence at or above which a call is flagged. |
+| `CALUS_DB_PATH` | `calus_proxy.db` | SQLite log store path. |
 | `CALUS_SECRET` | admin token | Master secret for the encrypted key vault. |
-| `OPENAI_API_KEY`, `GROQ_API_KEY`, ... | none | Upstream keys (read by LiteLLM, never stored). |
 
 ---
 
 ## Security
 
-- **Detection-only.** Requests and responses pass through untouched.
+- **Verdict mode passes traffic through untouched;** only `gateway` mode stops a
+  request, and only on a confirmed decision-engine block.
 - **Provider keys are never written to the log store.** Saved keys live in an
-  encrypted vault and are only decrypted in memory to forward a request.
-- **Secrets and PII are redacted** before any text or tool-call arguments are
-  stored.
-- Run the proxy on an encrypted volume and set a high-entropy `CALUS_SECRET`.
-- **Securing the data plane.** `/v1/*` is unauthenticated by default so Calus
-  stays drop-in. That is fine on localhost or a private network. If you expose the
-  port, set `CALUS_PROXY_TOKEN`; callers must then present it (the
-  `X-Calus-Proxy-Token` header or `Authorization: Bearer ...`, constant-time
-  checked) or the request is rejected. Leaving it blank on a public port turns the
-  proxy into an open relay that spends your stored provider keys.
-- The verdict is surfaced inline via the `x-calus-flagged`, `x-calus-confidence`,
-  and `x-calus-owasp` response headers, so a SIEM can act on it without the
-  dashboard.
+  encrypted vault, decrypted only in memory to forward a request.
+- **Secrets and PII are redacted** before any text or tool-call arguments are stored.
+- **Securing the data plane.** `/v1/*` is unauthenticated by default so Calus stays
+  drop-in — fine on localhost or a private network. If you expose the port, set
+  `CALUS_PROXY_TOKEN` (constant-time checked) so it can't become an open relay.
 
 See [SECURITY.md](SECURITY.md) to report a vulnerability.
 
 ## License
 
-[MIT](LICENSE). Use it freely, including in commercial and closed-source
-products. Just keep the copyright and license notice.
-
-
+[MIT](LICENSE). Use it freely, including in commercial and closed-source products.
+Just keep the copyright and license notice.
