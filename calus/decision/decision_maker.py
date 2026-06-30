@@ -23,7 +23,7 @@ The fixed rule table (see policy.RULES for ids+text):
 
     given the usable signals U, the consequence C, and whether any layer degraded D:
       R1  any(BLOCK & HIGH-conf) in U,  C=HIGH                 -> BLOCK
-      R2  any(BLOCK & HIGH-conf) in U,  C=LOW                  -> FLAG
+      R2  any(BLOCK & HIGH-conf) in U,  C=LOW                  -> BLOCK   (confirmed attack)
       R3  any(BLOCK soft | UNCERTAIN) in U,  C=HIGH            -> BLOCK   (safe default)
       R4  any(BLOCK soft | UNCERTAIN) in U,  C=LOW             -> FLAG    (safe default)
       R5  D,  C=HIGH                                           -> BLOCK   (fail-safe)
