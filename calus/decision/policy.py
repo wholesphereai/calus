@@ -30,9 +30,13 @@ class DecisionPolicy:
     l1_med_floor: float = 0.40      # [floor, high) -> MEDIUM (fuzzy / similarity)
 
     # --- consequence -> action maps (the fixed decision rules) ---
-    # a HIGH-confidence block signal resolves to:
+    # a HIGH-confidence (CONFIRMED) block signal resolves to BLOCK regardless of
+    # consequence: an exact known-attack pattern match or a forbidden capability-flow
+    # edge is a confirmed attack, so the decision engine blocks it whether or not a
+    # RED action is already pending. (Only the decision engine blocks — the layers
+    # just emit signals.)
     block_high: DecisionAction = DecisionAction.BLOCK     # HIGH consequence
-    block_low: DecisionAction = DecisionAction.FLAG       # LOW  consequence
+    block_low: DecisionAction = DecisionAction.BLOCK      # LOW  consequence (confirmed)
     # an unresolved / soft / degraded situation resolves to (safe default):
     safe_default_high: DecisionAction = DecisionAction.BLOCK
     safe_default_low: DecisionAction = DecisionAction.FLAG
@@ -64,7 +68,7 @@ POLICY = DecisionPolicy()
 # dashboard/developer can see exactly which rule fired and why).
 RULES: dict[str, str] = {
     "R1_BLOCK_HIGH":       "high-confidence block signal on a HIGH-consequence action → block",
-    "R2_BLOCK_LOW":        "high-confidence block signal on a LOW-consequence action → flag + log",
+    "R2_BLOCK_LOW":        "high-confidence (confirmed) block signal on a LOW-consequence action → block",
     "R3_SAFEDEFAULT_HIGH": "unresolved signal (soft block / uncertain) on a HIGH-consequence action → safe-default block",
     "R4_SAFEDEFAULT_LOW":  "unresolved signal (soft block / uncertain) on a LOW-consequence action → flag + allow",
     "R5_DEGRADED_HIGH":    "a required layer failed/was absent on a HIGH-consequence action → fail-safe block",

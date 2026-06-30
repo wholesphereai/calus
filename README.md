@@ -36,20 +36,21 @@ decides. The layers only *observe* and emit a signal; the decision engine is the
 | **Layer 2 — capability-flow graph** | Taint tracking: each input carries an origin (trusted vs untrusted) and each tool resolves to a capability sink (RED / LOW). An untrusted origin reaching a RED sink is a forbidden edge. Emits a signal. |
 | **Decision engine** | The referee. It combines both signals with the **consequence** (is an irreversible/external action pending?) and applies one fixed, audited rule table. |
 
-**The verdict is consequence-aware:**
+**The verdict:**
 
-- **BLOCK** — a confirmed threat (high-confidence pattern hit, or a forbidden
-  capability-flow edge) on a **high-consequence** action (something irreversible
-  or external — sending, paying, executing, unlocking).
-- **FLAG** — uncertain, or a real threat with no high-consequence action pending.
-  Allowed, but logged with full detail.
+- **BLOCK** — a **confirmed** threat: an exact known-attack pattern match, or a
+  forbidden capability-flow edge (untrusted origin → RED sink). The decision engine
+  blocks it whether or not a high-consequence action is already pending.
+- **FLAG** — **uncertain**: a fuzzy/similarity match or an unresolved posture.
+  Allowed but logged — and escalated to a block only when an irreversible/external
+  (high-consequence) action is in play.
 - **PASS** — both layers clean.
 
-Only the decision engine blocks. It is deterministic (same input → same verdict),
-fully auditable (every verdict records which rule fired and each layer's signal),
-and fail-safe (if a layer errors on a high-consequence action, it fails toward a
-block). A request is **never** blocked until it has been confirmed by the decision
-engine.
+Only the decision engine blocks — **the layers never do, they only emit signals.**
+It is deterministic (same input → same verdict), fully auditable (every verdict
+records which rule fired and each layer's signal), and fail-safe (if a layer errors
+on a high-consequence action, it fails toward a block). A request is **never**
+blocked until it has been confirmed by the decision engine.
 
 ---
 
@@ -62,20 +63,22 @@ mode; **missed** = passed undetected.
 
 | Benchmark | Type | N | caught | blocked | missed |
 |---|---|--:|:--:|:--:|:--:|
-| [InjecAgent](https://github.com/uiuc-kang-lab/InjecAgent) — indirect prompt injection | agent action | 2,108 | **100%** | **80.6%** | 0 |
-| [AgentDojo](https://github.com/ethz-spylab/agentdojo) — injection strings | text-only | 162 | 82.7% | 0% | 28 |
+| [InjecAgent](https://github.com/uiuc-kang-lab/InjecAgent) — indirect prompt injection | agent action | 2,108 | **100%** | **91.4%** | 0 |
+| [AgentDojo](https://github.com/ethz-spylab/agentdojo) — injection strings | text-only | 162 | 82.7% | **75.3%** | 28 |
 
-Benign false-positive rate: **3.5%** (72 / 2,037 — Databricks Dolly-15k +
-AgentDojo-benign + InjecAgent benign flows). Precision on the agent-injection
-set: **96.9%**.
+Benign false-positive rate: **4.0%** flagged (82 / 2,037 — Databricks Dolly-15k +
+AgentDojo-benign + InjecAgent benign flows); of those, **3.5%** are hard-blocks in
+gateway mode. Precision on the agent-injection set: **96.5%**.
 
-**What the numbers mean.** On InjecAgent every data-stealing or harmful chain ends
-in a RED action, so Layer 2's capability-flow graph catches the attack *by
-consequence* even when no text pattern fires — that is what drives **100% caught
-/ 80.6% blocked / 0 missed**. The remaining ~19% are *flagged* (detected, not
-blocked) because the attacker tool did not map to a RED sink. AgentDojo is
-text-only locally (no agent action), so Layer 2 has nothing to act on — its 82.7%
-is Layer 1 catching the injection wording, nothing blocked.
+**What the numbers mean.** A confirmed threat blocks, so detection now converts
+directly into enforcement. On InjecAgent, Layer 2's capability-flow graph catches
+the data-stealing/harmful chains *by consequence* (untrusted tool output → a RED
+action) and Layer 1 catches the injection wording — together **100% caught /
+91.4% blocked / 0 missed**. On AgentDojo (text-only locally — no agent action, so
+Layer 2 has nothing to act on) Layer 1 still detects the injection wording, and
+because a confirmed injection now blocks, **82.7% caught → 75.3% blocked**; the
+gap is the 28 rows Layer 1 doesn't detect (you can't block what you don't catch)
+plus a few fuzzy matches that stay flagged.
 
 **Disclosed scope boundary.** Calus is an injection / agent-flow detector, not a
 harmful-content classifier or an adaptive-attack solver. On direct-prompt jailbreak

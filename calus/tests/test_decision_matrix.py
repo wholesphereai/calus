@@ -64,9 +64,9 @@ MATRIX = [
     ("clean_low",              sig(PASS, H, LC),    sig(PASS, H, LC),    A_PASS,  "R7_PASS"),
     ("clean_high_trusted",     sig(PASS, H, HC),    sig(PASS, H, HC),    A_PASS,  "R7_PASS"),
     ("l1_highblock_high",      sig(BLOCK, H, HC),   sig(PASS, H, HC),    A_BLOCK, "R1_BLOCK_HIGH"),
-    ("l1_highblock_low",       sig(BLOCK, H, LC),   sig(PASS, H, LC),    A_FLAG,  "R2_BLOCK_LOW"),
+    ("l1_highblock_low",       sig(BLOCK, H, LC),   sig(PASS, H, LC),    A_BLOCK, "R2_BLOCK_LOW"),
     ("l2_highblock_high",      sig(PASS, H, HC),    sig(BLOCK, H, HC),   A_BLOCK, "R1_BLOCK_HIGH"),
-    ("l2_highblock_low",       sig(PASS, H, LC),    sig(BLOCK, H, LC),   A_FLAG,  "R2_BLOCK_LOW"),
+    ("l2_highblock_low",       sig(PASS, H, LC),    sig(BLOCK, H, LC),   A_BLOCK, "R2_BLOCK_LOW"),
     ("softblock_high",         sig(PASS, H, HC),    sig(BLOCK, M, HC),   A_BLOCK, "R3_SAFEDEFAULT_HIGH"),
     ("softblock_low",          sig(PASS, H, LC),    sig(BLOCK, M, LC),   A_FLAG,  "R4_SAFEDEFAULT_LOW"),
     ("uncertain_high",         sig(PASS, H, HC),    sig(UNC, L, HC),     A_BLOCK, "R3_SAFEDEFAULT_HIGH"),
@@ -99,9 +99,11 @@ def test_conflict_pass_vs_block_high_block_wins():
     assert d.action is A_BLOCK
 
 
-def test_conflict_block_low_consequence_flags_not_blocks():
+def test_conflict_confirmed_block_low_consequence_blocks():
+    # a CONFIRMED (high-confidence) block is an attack -> the decision engine blocks
+    # it even with no high-consequence action pending.
     d = dm(L1(sig(BLOCK, H, LC)), L2(sig(PASS, H, LC))).decide("x", {})
-    assert d.action is A_FLAG and d.rule == "R2_BLOCK_LOW"
+    assert d.action is A_BLOCK and d.rule == "R2_BLOCK_LOW"
 
 
 # --------------------------------------------------------------------------- #
@@ -262,7 +264,7 @@ def test_explain_is_structured_and_complete():
 def test_policy_is_the_single_surface():
     # the action maps come from POLICY, not hardcoded in the maker
     assert POLICY.action_for_block(HC) is A_BLOCK
-    assert POLICY.action_for_block(LC) is A_FLAG
+    assert POLICY.action_for_block(LC) is A_BLOCK          # confirmed attack blocks at any consequence
     assert POLICY.action_for_safe_default(HC) is A_BLOCK
-    assert POLICY.action_for_safe_default(LC) is A_FLAG
+    assert POLICY.action_for_safe_default(LC) is A_FLAG    # uncertain at low consequence still flags
     assert POLICY.model_verification_enabled is False     # active softening stays OFF
